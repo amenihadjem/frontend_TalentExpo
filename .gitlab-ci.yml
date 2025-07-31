@@ -1,0 +1,26 @@
+variables:
+  url: ''
+  SSH_PRIVATE_KEY: ''
+
+stages:
+  - deployUpadates
+
+deployUpadates:
+  stage: deployUpadates
+  image: node:20.18.1
+  before_script:
+    - apt-get update -qy
+    - apt-get install -y rsync
+  script:
+    - npm install --legacy-peer-deps
+    - |
+      if [ "$CI_COMMIT_BRANCH" == "production" ]; then
+        yarn vite build  || true
+        export url="root@31.220.86.38:/var/www/html/talentai-front"
+        export SSH_PRIVATE_KEY=$SSH_PRIVATE_KEY_EUROPE
+      fi
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+    - rsync -avz --delete --exclude='.htaccess' -e 'ssh -o StrictHostKeyChecking=accept-new' dist/ "$url"
+  only:
+    - production
