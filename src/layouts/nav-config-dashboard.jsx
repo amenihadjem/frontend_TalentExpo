@@ -58,12 +58,12 @@ export const navData = [
           { title: 'CVs', path: paths.dashboard.user.root },
         ],
       },
-      {
-        title: 'Users',
-        path: paths.dashboard.users.root,
-        icon: ICONS.user,
-        children: [{ title: 'List', path: paths.dashboard.users.root }],
-      },
+      // {
+      //   title: 'Users',
+      //   path: paths.dashboard.users.root,
+      //   icon: ICONS.user,
+      //   children: [{ title: 'List', path: paths.dashboard.users.root }],
+      // },
     ],
   },
   /**
