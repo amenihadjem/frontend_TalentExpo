@@ -19,7 +19,7 @@ import axios, { endpoints } from 'src/lib/axios';
 import { Iconify } from 'src/components/iconify';
 
 import { CandidateCard } from './candidate-card';
-import { CandidateCVDisplay } from './candidate-cv-display'; // New component to show detailed CV
+import CandidateCVDisplay from './candidate-cv-display'; // New component to show detailed CV
 
 const rowsPerPage = 12;
 

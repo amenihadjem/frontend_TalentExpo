@@ -9,7 +9,7 @@ import { DashboardContent } from 'src/layouts/dashboard';
 import { Iconify } from 'src/components/iconify';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
-import { CandidateListTable } from '../candidate-list-table.jsx';
+import CandidateListTable from '../candidate-list-table.jsx';
 
 export function UserListView() {
   return (

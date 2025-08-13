@@ -38,9 +38,9 @@ export const endpoints = {
   // kanban: '/api/kanban',
   // calendar: '/api/calendar',
   auth: {
-    me: '/api/auth/me',
-    login: '/api/auth/login',
-    logout: '/api/auth/logout',
+    me: '/auth/me',
+    login: '/auth/login',
+    logout: '/auth/logout',
 
     // signUp: '/api/auth/sign-up',
   },
@@ -53,14 +53,19 @@ export const endpoints = {
     get: '/api/v1/files/job',
   },
   candidates: {
-    search: '/api/opensearch/candidates/search',
-    aggregations: '/api/opensearch/candidates/aggregations',
+    search: '/v2/opensearch/search',
+    agg: '/v2/opensearch/aggregations',
+    one: (id) => `/v2/opensearch/${id}`,
 
     // list: '/api/candidate/list',
     // details: '/api/candidate/details',
     // search: '/api/candidate/search',
   },
   analytics: {
+    map: '/v2/opensearch/agg-by-country',
+
+    ////////////////////////////////////////////////////////
+
     totalCv: '/api/analytics/cv/total',
     newCv: '/api/analytics/candidates/count/new',
     cvByLanguage: '/api/analytics/cv/count/by-language',

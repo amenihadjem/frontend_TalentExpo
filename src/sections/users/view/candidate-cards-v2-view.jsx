@@ -1,4 +1,4 @@
-// src/sections/user/view/user-cards-view.tsx
+// src/sections/user/view/user-cards-view-v2.jsx
 
 import Button from '@mui/material/Button';
 
@@ -10,17 +10,17 @@ import { DashboardContent } from 'src/layouts/dashboard';
 import { Iconify } from 'src/components/iconify';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
-import CandidateCardList from '../candidate-card-list';
+import CandidateCardListV2 from '../candidate-card-list-v2';
 
-export function UserCardsView() {
+export function UserCardsViewV2() {
   return (
     <DashboardContent>
       <CustomBreadcrumbs
-        heading="Candidate cards"
+        heading="Candidate cards (V2)"
         links={[
           { name: 'Dashboard', href: paths.dashboard.root },
           { name: 'Candidates', href: paths.dashboard.user.root },
-          { name: 'Cards' },
+          { name: 'Cards V2' },
         ]}
         action={
           <Button
@@ -35,7 +35,7 @@ export function UserCardsView() {
         sx={{ mb: { xs: 3, md: 5 } }}
       />
 
-      <CandidateCardList />
+      <CandidateCardListV2 />
     </DashboardContent>
   );
 }

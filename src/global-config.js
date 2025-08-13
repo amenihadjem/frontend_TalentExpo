@@ -7,7 +7,7 @@ import packageJson from '../package.json';
 export const CONFIG = {
   appName: 'TalentAI',
   appVersion: packageJson.version,
-  serverUrl: ' https://eventii.me',
+  serverUrl: 'https://api-service.talentexpo.ai/api',
   assetsDir: import.meta.env.VITE_ASSETS_DIR ?? '',
   /**
    * Auth
