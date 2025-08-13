@@ -23,7 +23,7 @@ export async function signInWithPassword({ email, password }) {
         },
       }
     );
-    console.log('Response:', response.status, response.data);
+    console.log('1'), console.log('Response:', response.status, response.data);
     if (response.status !== 201 && response.status !== 200) {
       throw new Error('Login failed');
     }

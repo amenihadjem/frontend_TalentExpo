@@ -4,7 +4,7 @@ import axios, { endpoints } from 'src/lib/axios'; // Import axios and endpoints
 
 import { SocialMediaLinks } from 'src/components/social-media-links';
 
-export function CandidateCVDisplay({ data, onReset }) {
+export default function CandidateCVDisplay({ data, onReset }) {
   const [loadingOriginalCV, setLoadingOriginalCV] = useState(false); // New state for loading original CV
 
   // Helper function to format date string "YYYY-MM-DD" to "MMM YYYY"

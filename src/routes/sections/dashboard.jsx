@@ -25,6 +25,7 @@ const CVUploadView = lazy(() => import('src/pages/dashboard/user/cvupload'));
 // Users
 const UsersProfilePage = lazy(() => import('src/pages/dashboard/users/profile'));
 const UsersCardsPage = lazy(() => import('src/pages/dashboard/users/cards'));
+const UsersCardsV2Page = lazy(() => import('src/pages/dashboard/users/cards-v2'));
 const UsersListPage = lazy(() => import('src/pages/dashboard/users/list'));
 const UsersCreatePage = lazy(() => import('src/pages/dashboard/users/new'));
 const UsersEditPage = lazy(() => import('src/pages/dashboard/users/edit'));
@@ -68,6 +69,7 @@ export const dashboardRoutes = [
         children: [
           { path: 'profile', element: <UserProfilePage /> },
           { path: 'cards', element: <UserCardsPage /> },
+          { path: 'cardsV2', element: <UsersCardsV2Page /> },
           { path: 'list', element: <UserListPage /> },
           { index: true, element: <CVUploadView /> },
           { path: 'new', element: <UserCreatePage /> },
@@ -91,6 +93,7 @@ export const dashboardRoutes = [
         children: [
           { path: 'profile', element: <UsersProfilePage /> },
           { path: 'cards', element: <UsersCardsPage /> },
+          { path: 'cardsV2', element: <UsersCardsV2Page /> },
           { index: true, element: <UsersListPage /> },
 
           { path: 'new', element: <UsersCreatePage /> },
