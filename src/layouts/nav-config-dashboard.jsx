@@ -55,7 +55,7 @@ export const navData = [
         children: [
           { title: 'Cards', path: paths.dashboard.user.cards },
           { title: 'List', path: paths.dashboard.user.list },
-          { title: 'CV Upload', path: paths.dashboard.user.root },
+          { title: 'CVs', path: paths.dashboard.user.root },
         ],
       },
       {

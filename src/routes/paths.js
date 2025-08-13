@@ -75,6 +75,7 @@ export const paths = {
       new: `${ROOTS.DASHBOARD}/users/new`,
       list: `${ROOTS.DASHBOARD}/users/list`,
       cards: `${ROOTS.DASHBOARD}/users/cards`,
+      cardsV2: `${ROOTS.DASHBOARD}/users/cardsV2`,
       cvupload: `${ROOTS.DASHBOARD}/users/cvupload`,
       profile: `${ROOTS.DASHBOARD}/users/profile`,
       account: `${ROOTS.DASHBOARD}/users/account`,

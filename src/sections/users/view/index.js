@@ -9,3 +9,5 @@ export * from './candidate-cards-view';
 export * from './user-create-view';
 
 export * from './user-profile-view';
+
+export * from './candidate-cards-v2-view';

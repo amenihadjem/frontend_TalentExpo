@@ -24,12 +24,17 @@ import { AnalyticsTasks } from '../analytics-tasks';
 import { AnalyticsOrderTimeline } from '../analytics-order-timeline';
 import { AnalyticsTrafficBySite } from '../analytics-traffic-by-site';
 import { AnalyticsConversionRates } from '../analytics-conversion-rates';
+import { countryCounts } from 'src/_mock/mockCandidates';
 
 import { AnalyticsTopSkillsFromCVs } from '../analytics-top-skills-from-cvs';
 import { AnalyticsExperienceSegments } from '../analytics-experience-segments';
 import { AnalyticsLanguageLocationMap } from '../analytics-language-location-map';
 import { AnalyticsIndustrySkills } from '../analytics-industry-skills';
 import { CVsByLanguage } from '../cvs-by-language';
+import { AnalyticsCandidateMap } from '../analytics-candidate-map';
+import { AnalyticsCandidatesBarChart } from '../analytics-candidates-bar-chart'; // <-- import new chart component
+import AnalyticsIndustrySkillsHeatmap from '../analytics-industry-skills-heatmap';
+import AnalyticsEducationLevelDistribution from '../analytics-edudcation-level-distribution';
 
 function formatChartData(rawData) {
   const grouped = {};
@@ -395,6 +400,24 @@ export function OverviewAnalyticsView() {
           justifyContent="space-between"
           sx={{ display: 'flex', alignItems: 'stretch' }}
         >
+          <Grid size={12}>
+            <AnalyticsCandidateMap />
+          </Grid>
+          <Grid size={12}>
+            <AnalyticsCandidatesBarChart countryCounts={countryCounts} />
+          </Grid>
+          <Grid size={12}>
+            <AnalyticsIndustrySkillsHeatmap />
+          </Grid>
+          {/* Centered and isolated AnalyticsEducationLevelDistribution */}
+          <Grid container justifyContent="center" sx={{ width: '100%', my: 3 }}>
+            <Grid item xs={12} md={10} lg={8}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                <AnalyticsEducationLevelDistribution />
+              </Box>
+            </Grid>
+          </Grid>
+
           <Grid item xs={12} md={6} lg={3}>
             <AnalyticsExperienceSegments
               chart={{

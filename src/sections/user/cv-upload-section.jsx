@@ -1,56 +1,88 @@
-import React from 'react';
 import { useDropzone } from 'react-dropzone';
+import React, { useState, useEffect, useRef } from 'react';
 
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import { Box, Paper, Button, Typography, Snackbar, Alert, CircularProgress } from '@mui/material';
 
-import axios, { endpoints } from 'src/lib/axios';
+// Import your mock candidates to simulate processed CV data
+import { MOCK_CANDIDATES } from 'src/_mock/mockV2';
 
-import { CandidateCVDisplay } from './candidate-cv-display'; // Adjust path if needed
+import CandidateCVDisplay from './candidate-cv-display'; // Adjust path if needed
 
-export default function CVUploadSection({ onUploaded, uploadedFile }) {
-  const [successMessage, setSuccessMessage] = React.useState('');
-  const [errorMessage, setErrorMessage] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [cvId, setCvId] = React.useState(null);
-  const [cvData, setCvData] = React.useState(null);
-  const [fetchingCvData, setFetchingCvData] = React.useState(false);
-  const [pollingAttempt, setPollingAttempt] = React.useState(0);
+// Uncomment when ready to use real API
+// import axios, { endpoints } from 'src/lib/axios';
+
+export default function CVUploadSection({ onUploaded }) {
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [cvData, setCvData] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [fetchingCvData, setFetchingCvData] = useState(false);
+  const [pollingAttempt, setPollingAttempt] = useState(0);
+
+  const pollingIntervalRef = useRef(null);
 
   // --- API Key & Signature ---
-  const API_KEY = 'ak_d3402d82d86261cc9354069dc1cef2b596fc9b42a95c5ea1';
-  const API_SIGNATURE = 'sk_4272cd8b0d38f2f939084a2022b228457f89ecafd6e4667be875965e71db2ed5';
+  // const API_KEY = 'ak_d3402d82d86261cc9354069dc1cef2b596fc9b42a95c5ea1';
+  // const API_SIGNATURE = 'sk_4272cd8b0d38f2f939084a2022b228457f89ecafd6e4667be875965e71db2ed5';
 
   // --- Polling Configuration ---
-  // Increased MAX_POLLING_ATTEMPTS and POLLING_INTERVAL_MS based on your provided code
-  const MAX_POLLING_ATTEMPTS = 100;
-  const POLLING_INTERVAL_MS = 30000;
+  // const MAX_POLLING_ATTEMPTS = 100;
+  // const POLLING_INTERVAL_MS = 30000;
 
-  const pollingIntervalRef = React.useRef(null);
-
-  React.useEffect(() => {
+  useEffect(() => {
+    // Cleanup polling on unmount
     return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
+      if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
     };
   }, []);
 
+  // Simulate CV processing delay and return mock data
+  useEffect(() => {
+    if (!uploadedFile) return;
+
+    setLoading(true);
+    setSuccessMessage('');
+    setErrorMessage('');
+    setCvData(null);
+    setFetchingCvData(true);
+    setPollingAttempt(0);
+
+    // Simulate processing delay (2 seconds)
+    const timer = setTimeout(() => {
+      // Random mock candidate data as "processed CV"
+      const randomIndex = Math.floor(Math.random() * MOCK_CANDIDATES.length);
+      const mockCv = MOCK_CANDIDATES[randomIndex];
+
+      setCvData(mockCv);
+      setLoading(false);
+      setFetchingCvData(false);
+      setSuccessMessage('CV processed successfully (mock data).');
+      if (onUploaded) onUploaded(uploadedFile);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [uploadedFile, onUploaded]);
+
   const { getRootProps, getInputProps } = useDropzone({
+    multiple: false,
     onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length === 0) return;
 
-      // Reset all states for a new upload attempt
-      setLoading(true);
+      // Reset states for new upload
       setSuccessMessage('');
       setErrorMessage('');
-      setCvId(null);
       setCvData(null);
       setPollingAttempt(0);
-      onUploaded(null); // Clear local preview of previous file
 
       const file = acceptedFiles[0];
+      setUploadedFile(file);
+
+      // --- Real API Upload Code (commented for now) ---
+      /*
+      setLoading(true);
       const formData = new FormData();
       formData.append('file', file);
 
@@ -63,53 +95,39 @@ export default function CVUploadSection({ onUploaded, uploadedFile }) {
           },
         });
 
-        console.log('CV upload response:', response.data);
-
         const uploadedId = response.data?.data?._id;
         if (uploadedId) {
-          console.log('Uploaded CV ID:', uploadedId);
-          setCvId(uploadedId);
-          onUploaded(file); // Store file locally for preview
-          setSuccessMessage('CV uploaded successfully! Waiting for processing...');
-          // Start polling for CV data after successful upload
+          setPollingAttempt(0);
           pollForCvData(uploadedId);
+          setSuccessMessage('CV uploaded successfully! Waiting for processing...');
         } else {
-          console.warn('CV uploaded successfully, but _id was not found in the response.');
-          onUploaded(file);
-          setErrorMessage(
-            'Upload successful, but could not retrieve CV ID for processing. Please try again.'
-          );
+          setErrorMessage('Upload successful, but CV ID missing. Please try again.');
         }
       } catch (error) {
-        console.error('Upload failed:', error.response ? error.response.data : error.message);
         setErrorMessage(`Upload failed: ${error.response?.data?.error || 'Please try again.'}`);
       } finally {
         setLoading(false);
       }
+      */
     },
   });
 
-  // Function to poll for CV data until it's processed or times out/fails
-  const pollForCvData = async (id) => {
+  // --- Polling function for real API (commented for now) ---
+  /*
+  const pollForCvData = (id) => {
     setFetchingCvData(true);
-    setPollingAttempt(0); // Ensure polling attempt starts from 0 for new polls
-
-    // Clear any existing interval before starting a new one
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-    }
+    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
 
     let attempts = 0;
     pollingIntervalRef.current = setInterval(async () => {
       attempts++;
-      setPollingAttempt(attempts); // Update attempt count for display
+      setPollingAttempt(attempts);
 
       if (attempts > MAX_POLLING_ATTEMPTS) {
         clearInterval(pollingIntervalRef.current);
         setFetchingCvData(false);
-        setErrorMessage('CV processing **failed**: Timed out waiting for data. Please try again.');
-        setSuccessMessage(''); // Clear success message if it failed
-        console.error('Polling for CV data exceeded max attempts. Processing failed.');
+        setErrorMessage('CV processing failed: Timed out.');
+        setSuccessMessage('');
         return;
       }
 
@@ -118,37 +136,24 @@ export default function CVUploadSection({ onUploaded, uploadedFile }) {
           headers: {
             'x-api-key': API_KEY,
             'x-api-signature': API_SIGNATURE,
-            // 'x-api-timestamp': new Date().toISOString(), // Uncomment if your API requires it for signature verification
           },
         });
 
-        console.log(`Polling attempt ${attempts}:`, response.data.data);
+        const data = response.data.data;
 
-        const data = response.data.data; // This 'data' variable holds the nested CV details
-
-        // Check for explicit backend failure statuses or error messages
         if (data && (data.status === 'failed' || data.error_message)) {
           clearInterval(pollingIntervalRef.current);
           setFetchingCvData(false);
-          const backendError = data.error_message || 'An unknown processing error occurred.';
-          setErrorMessage(`CV processing **failed**: ${backendError}`);
+          setErrorMessage(`CV processing failed: ${data.error_message || 'Unknown error.'}`);
           setSuccessMessage('');
-          console.error('Backend reported CV processing failure:', data.error_message);
         } else if (data && data.status === 'completed') {
-          // Success condition: status is 'completed'
-          clearInterval(pollingIntervalRef.current); // Stop polling
-          setCvData(data); // Set the received data (the nested 'data' object)
+          clearInterval(pollingIntervalRef.current);
+          setCvData(data);
           setFetchingCvData(false);
           setSuccessMessage('CV details successfully loaded!');
-          setErrorMessage(''); // Clear any previous error messages
+          setErrorMessage('');
         }
-        // If status is 'pending' or 'in_progress' and no error_message, continue polling
       } catch (error) {
-        console.error(
-          'Error fetching CV data during polling:',
-          error.response ? error.response.data : error.message
-        );
-        // If it's a critical error (like 401/404) or consistently failing, stop polling
         if (
           error.response?.status === 401 ||
           error.response?.status === 404 ||
@@ -156,15 +161,13 @@ export default function CVUploadSection({ onUploaded, uploadedFile }) {
         ) {
           clearInterval(pollingIntervalRef.current);
           setFetchingCvData(false);
-          setErrorMessage(
-            `CV processing **failed**: ${error.response?.data?.error || 'Server error occurred.'}`
-          );
+          setErrorMessage(`CV processing failed: ${error.response?.data?.error || 'Server error.'}`);
           setSuccessMessage('');
         }
-        // For other transient errors, continue polling until max attempts
       }
     }, POLLING_INTERVAL_MS);
   };
+  */
 
   const handleViewFile = () => {
     if (uploadedFile) {
@@ -174,23 +177,23 @@ export default function CVUploadSection({ onUploaded, uploadedFile }) {
   };
 
   const handleReset = () => {
-    // Clear any active polling interval on reset
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     }
-    setCvId(null);
+    setUploadedFile(null);
     setCvData(null);
-    onUploaded(null); // Clear the locally stored file preview
+    setLoading(false);
     setSuccessMessage('');
     setErrorMessage('');
+    setFetchingCvData(false);
     setPollingAttempt(0);
+    if (onUploaded) onUploaded(null);
   };
 
-  // --- Conditional Rendering Logic ---
+  // Rendering logic
 
-  // 1. Show loading state while fetching/polling for CV data
-  if (fetchingCvData) {
+  if (loading || fetchingCvData) {
     return (
       <Box
         display="flex"
@@ -201,16 +204,12 @@ export default function CVUploadSection({ onUploaded, uploadedFile }) {
       >
         <CircularProgress />
         <Typography variant="h6" mt={2}>
-          Processing CV... (Attempt {pollingAttempt} of {MAX_POLLING_ATTEMPTS})
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          This might take a moment.
+          Processing CV... {pollingAttempt > 0 && `(Attempt ${pollingAttempt})`}
         </Typography>
       </Box>
     );
   }
 
-  // 2. Show error message and retry button if processing failed
   if (errorMessage) {
     return (
       <Box textAlign="center" py={4}>
@@ -224,14 +223,20 @@ export default function CVUploadSection({ onUploaded, uploadedFile }) {
     );
   }
 
-  // 3. Show parsed CV data if available (implies success)
   if (cvData) {
-    // Console log cvData right before rendering CandidateCVDisplay
-    console.log('cvData passed to CandidateCVDisplay:', cvData);
-    return <CandidateCVDisplay data={cvData.data} onReset={handleReset} />;
+    return (
+      <Box sx={{ maxWidth: 900, mx: 'auto', px: 2 }}>
+        <CandidateCVDisplay data={cvData} onReset={handleReset} />
+        <Box mt={2} textAlign="center">
+          <Button variant="outlined" color="primary" onClick={handleReset}>
+            Upload Another CV
+          </Button>
+        </Box>
+      </Box>
+    );
   }
 
-  // 4. Default: Show the CV upload section
+  // Default: show upload dropzone
   return (
     <Box textAlign="center" py={4}>
       <Typography variant="h5" gutterBottom>
@@ -239,6 +244,7 @@ export default function CVUploadSection({ onUploaded, uploadedFile }) {
       </Typography>
 
       <Paper
+        {...getRootProps()}
         sx={{
           padding: 4,
           border: '2px dashed #1976d2',
@@ -252,9 +258,8 @@ export default function CVUploadSection({ onUploaded, uploadedFile }) {
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          opacity: loading ? 0.6 : 1, // Visual feedback for initial upload loading
+          opacity: loading ? 0.6 : 1,
         }}
-        {...getRootProps()}
       >
         <input {...getInputProps()} />
         <CloudUploadIcon sx={{ fontSize: 50, color: '#1976d2' }} />
@@ -263,8 +268,7 @@ export default function CVUploadSection({ onUploaded, uploadedFile }) {
         </Typography>
       </Paper>
 
-      {/* Show local file preview if a file was selected but not yet processed/failed */}
-      {uploadedFile && !loading && !fetchingCvData && !cvData && !errorMessage && (
+      {uploadedFile && !loading && (
         <Box mt={3}>
           <Button
             variant="contained"
@@ -277,7 +281,6 @@ export default function CVUploadSection({ onUploaded, uploadedFile }) {
         </Box>
       )}
 
-      {/* Snackbar for success messages */}
       <Snackbar
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         open={!!successMessage}
@@ -289,10 +292,9 @@ export default function CVUploadSection({ onUploaded, uploadedFile }) {
         </Alert>
       </Snackbar>
 
-      {/* Snackbar for general error messages (appears briefly, main error block takes precedence) */}
       <Snackbar
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        open={!!errorMessage && !cvData && !fetchingCvData} // Only show if an error is present and we're not loading or showing main CV data
+        open={!!errorMessage && !cvData && !fetchingCvData}
         autoHideDuration={3000}
         onClose={() => setErrorMessage('')}
       >
