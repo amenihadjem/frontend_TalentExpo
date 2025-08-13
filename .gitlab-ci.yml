@@ -12,10 +12,10 @@ deployUpadates:
     - apt-get update -qy
     - apt-get install -y rsync
   script:
-    - npm install --legacy-peer-deps
+    - yarn install --legacy-peer-deps
     - |
       if [ "$CI_COMMIT_BRANCH" == "production" ]; then
-        yarn vite build  || true
+        yarn build
         export url="root@31.220.86.38:/var/www/html/talentai-front"
         export SSH_PRIVATE_KEY=$SSH_PRIVATE_KEY_EUROPE
       fi
