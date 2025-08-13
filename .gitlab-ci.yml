@@ -23,4 +23,4 @@ deployUpadates:
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
     - rsync -avz --delete --exclude='.htaccess' -e 'ssh -o StrictHostKeyChecking=accept-new' dist/ "$url"
   only:
-    - production
+    - production 
