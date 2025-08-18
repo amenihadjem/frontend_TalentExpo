@@ -252,7 +252,19 @@ export default function CandidateListTable() {
                     <TableCell>{c.inferred_years_experience ?? 'N/A'}</TableCell>
                     <TableCell>
                       <SocialMediaLinks
-                        social_media={[c.linkedin_url, c.facebook_url].filter(Boolean)}
+                        social_media={[
+                          ...(c.linkedin_url
+                            ? [{ platform: 'linkedin', url: c.linkedin_url }]
+                            : []),
+                          ...(c.facebook_url
+                            ? [{ platform: 'facebook', url: c.facebook_url }]
+                            : []),
+                          ...(c.twitter_url ? [{ platform: 'twitter', url: c.twitter_url }] : []),
+                          ...(c.instagram_url
+                            ? [{ platform: 'instagram', url: c.instagram_url }]
+                            : []),
+                          ...(c.github_url ? [{ platform: 'github', url: c.github_url }] : []),
+                        ]}
                       />
                     </TableCell>
                     <TableCell>{c.location_country || 'N/A'}</TableCell>
