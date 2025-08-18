@@ -323,8 +323,8 @@ export function OverviewAnalyticsView() {
       {/* Group 1: Initial AnalyticsWidgetSummary components */}
       {/* This Box ensures consistent outer spacing for the first row of widgets */}
       <Box sx={{ mb: 5 }}>
-        <Grid container spacing={3} justifyContent="space-between">
-          <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
+        <Grid container spacing={1} justifyContent="space-between">
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
             <AnalyticsWidgetSummary
               title="Total CVs"
               total={totalCVs}
@@ -337,7 +337,7 @@ export function OverviewAnalyticsView() {
               }
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
             <AnalyticsWidgetSummary
               title="New CVs"
               total={newCVs}
@@ -350,7 +350,7 @@ export function OverviewAnalyticsView() {
               }
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
             <AnalyticsWidgetSummary
               title="Avg. Skills per CV"
               total={avgSkillsCount}
@@ -363,7 +363,7 @@ export function OverviewAnalyticsView() {
               }
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
             <AnalyticsWidgetSummary
               title="Avg. Exp years"
               total={avgExperience}
@@ -478,72 +478,68 @@ export function OverviewAnalyticsView() {
             CV Processing Status
           </Typography>
         </Grid>
-        {/* This Box ensures consistent outer spacing for the second row of widgets */}
-        <Box sx={{ mb: 5 }}>
-          {' '}
-          {/* Added Box wrapper here */}
-          <Grid
-            container
-            spacing={3}
-            justifyContent="space-between"
-            sx={{ display: 'flex', alignItems: 'stretch' }}
-          >
-            <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-              <AnalyticsWidgetSummary
-                title="Total Processed"
-                total={cvProcessingStatus.total_processed}
-                color="primary"
-                icon={
-                  <img
-                    alt="Total Processed"
-                    src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-total.svg`}
-                  />
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-              <AnalyticsWidgetSummary
-                title="Successful"
-                total={cvProcessingStatus.success_count}
-                color="success"
-                icon={
-                  <img
-                    alt="Successful"
-                    src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-done.svg`}
-                  />
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-              <AnalyticsWidgetSummary
-                title="Failed"
-                total={cvProcessingStatus.fail_count}
-                color="error"
-                icon={
-                  <img
-                    alt="Failed"
-                    src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-failed.svg`}
-                  />
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-              <AnalyticsWidgetSummary
-                title="CVs In Queue"
-                total={cvProcessingStatus.cv_in_queue}
-                color="warning"
-                icon={
-                  <img
-                    alt="CVs In Queue"
-                    src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-progress.svg`}
-                  />
-                }
-              />
-            </Grid>
-          </Grid>
-        </Box>
+
         {/* End of new section */}
       </Grid>
+      {/* This Box ensures consistent outer spacing for the second row of widgets */}
+      <Box sx={{ mb: 5 }}>
+        {' '}
+        {/* Added Box wrapper here */}
+        <Grid container spacing={1} justifyContent="space-between">
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
+            <AnalyticsWidgetSummary
+              title="Total Processed"
+              total={cvProcessingStatus.total_processed}
+              color="primary"
+              icon={
+                <img
+                  alt="Total Processed"
+                  src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-total.svg`}
+                />
+              }
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
+            <AnalyticsWidgetSummary
+              title="Successful"
+              total={cvProcessingStatus.success_count}
+              color="success"
+              icon={
+                <img
+                  alt="Successful"
+                  src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-done.svg`}
+                />
+              }
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
+            <AnalyticsWidgetSummary
+              title="Failed"
+              total={cvProcessingStatus.fail_count}
+              color="error"
+              icon={
+                <img
+                  alt="Failed"
+                  src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-failed.svg`}
+                />
+              }
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
+            <AnalyticsWidgetSummary
+              title="CVs In Queue"
+              total={cvProcessingStatus.cv_in_queue}
+              color="warning"
+              icon={
+                <img
+                  alt="CVs In Queue"
+                  src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-progress.svg`}
+                />
+              }
+            />
+          </Grid>
+        </Grid>
+      </Box>
     </DashboardContent>
   );
 }

@@ -181,6 +181,7 @@ export default function CandidateCard({ candidateData, onSelect, loadingCV }) {
           flex: 1,
           overflowY: 'auto',
           maxHeight: { xs: 'auto', sm: '100%' },
+          position: 'relative',
         }}
       >
         {summary && (
@@ -247,14 +248,34 @@ export default function CandidateCard({ candidateData, onSelect, loadingCV }) {
           </>
         )}
 
-        <Stack direction="row" spacing={1} mt={1}>
-          <Button variant="outlined" href={cvUrl} target="_blank" size="small" onClick={onSelect}>
-            View CV
-          </Button>
-          <Button variant="contained" href={cvUrl} download size="small">
-            Download CV
-          </Button>
-        </Stack>
+        {/* Sticky Buttons at bottom-right with blur */}
+        <Box
+          sx={{
+            position: 'sticky',
+            bottom: 0,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            width: '100%',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'inline-flex', // only wraps the buttons
+              gap: 1,
+              p: '4px 6px',
+              borderRadius: '8px',
+              bgcolor: 'rgba(255, 255, 255, 0.5)',
+              backdropFilter: 'blur(3px)',
+            }}
+          >
+            <Button variant="outlined" href={cvUrl} target="_blank" size="small" onClick={onSelect}>
+              View CV
+            </Button>
+            <Button variant="contained" href={cvUrl} download size="small">
+              Download CV
+            </Button>
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );
