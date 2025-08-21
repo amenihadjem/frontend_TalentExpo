@@ -21,7 +21,6 @@ import CandidateCVDisplay from './candidate-cv-display';
 import { SocialMediaLinks } from 'src/components/social-media-links';
 import axios, { endpoints } from 'src/lib/axios';
 import countriesList from 'i18n-iso-countries';
-// Fix the jsPDF import
 import jsPDF from 'jspdf';
 
 export default function CandidateListTable() {
@@ -112,6 +111,13 @@ export default function CandidateListTable() {
         const normalize = (val) =>
           typeof val === 'string' ? val.trim().replace(/\s+/g, '-') : val;
 
+        // Calculate total pages and adjust size for the last page
+        const actualTotalPages = Math.max(1, Math.ceil(totalCount / size));
+        const isLastPage = page === actualTotalPages;
+        const remainingItems = totalCount - (page - 1) * size;
+        const adjustedSize =
+          isLastPage && remainingItems > 0 ? Math.min(size, remainingItems) : size;
+
         const params = {
           ...(search ? { query: search } : {}),
           ...(filters.countries ? { countries: normalize(filters.countries) } : {}),
@@ -131,17 +137,30 @@ export default function CandidateListTable() {
             ? { maxLinkedinConnections: filters.maxLinkedinConnections }
             : {}),
           page,
-          size,
+          size: adjustedSize,
           ...(sortBy ? { sortBy } : {}),
           ...(sortOrder ? { sortOrder } : {}),
         };
 
+        console.log('API Request Params:', params);
         const res = await axios.get(endpoints.candidates.search, { params });
         const allItems = res.data?.data?.items || [];
         const total = res.data?.data?.total?.value || allItems.length;
+        console.log(`Page ${page}:`, allItems, `Total: ${total}, Adjusted Size: ${adjustedSize}`);
+
+        // Recalculate total pages with updated total
+        const newTotalPages = Math.max(1, Math.ceil(total / size));
+
+        // If the requested page exceeds the total pages, adjust it
+        if (page > newTotalPages && newTotalPages !== 0) {
+          console.log(`Adjusting page from ${page} to ${newTotalPages}`);
+          setPage(newTotalPages);
+          setLoading(false);
+          return;
+        }
 
         setCandidates(allItems);
-        setTotalPages(Math.ceil(total / size));
+        setTotalPages(newTotalPages);
         setTotalCount(total);
 
         if (
@@ -156,6 +175,7 @@ export default function CandidateListTable() {
         setCandidates([]);
         setTotalPages(1);
         setTotalCount(0);
+        setOpenToast(true);
       } finally {
         setLoading(false);
       }
@@ -179,11 +199,15 @@ export default function CandidateListTable() {
     }
   };
 
-  // Enhanced PDF Download function - same as candidate card
+  const handleGoToSecondLastPage = () => {
+    if (totalPages > 1) {
+      setPage(totalPages - 1);
+    }
+  };
+
   const handleDownloadCV = (candidate) => {
     try {
-      console.log('Starting PDF generation...'); // Debug log
-
+      console.log('Starting PDF generation...');
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
@@ -191,17 +215,14 @@ export default function CandidateListTable() {
       const margin = 20;
       const contentWidth = pageWidth - margin * 2;
 
-      // Two-column layout
-      const leftColumnWidth = (contentWidth - 10) / 2; // Left column
-      const rightColumnWidth = (contentWidth - 10) / 2; // Right column
-      const rightColumnX = margin + leftColumnWidth + 10; // Right column X position
+      const leftColumnWidth = (contentWidth - 10) / 2;
+      const rightColumnWidth = (contentWidth - 10) / 2;
+      const rightColumnX = margin + leftColumnWidth + 10;
 
-      // Simplified color scheme - mainly black and gray
-      const textColor = [0, 0, 0]; // Black
-      const grayColor = [100, 100, 100]; // Gray
-      const lightGray = [220, 220, 220]; // Light gray for lines
+      const textColor = [0, 0, 0];
+      const grayColor = [100, 100, 100];
+      const lightGray = [220, 220, 220];
 
-      // Helper function to ensure text is a string
       const safeText = (text) => {
         if (typeof text === 'string') return text;
         if (text === null || text === undefined) return '';
@@ -215,7 +236,6 @@ export default function CandidateListTable() {
         return String(text);
       };
 
-      // Extract data from candidate object
       const name = candidate?.full_name || 'Unknown Name';
       const title = candidate?.job_title || '';
       const location = candidate?.location_name || '';
@@ -229,7 +249,6 @@ export default function CandidateListTable() {
       const experience = candidate?.experience || [];
       const education = candidate?.education || [];
 
-      // Professional profiles
       const profiles = [
         ...(candidate.linkedin_url ? [{ network: 'LinkedIn', url: candidate.linkedin_url }] : []),
         ...(candidate.facebook_url ? [{ network: 'Facebook', url: candidate.facebook_url }] : []),
@@ -237,14 +256,12 @@ export default function CandidateListTable() {
         ...(candidate.github_url ? [{ network: 'GitHub', url: candidate.github_url }] : []),
       ];
 
-      // HEADER - Full width
       doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       doc.setFontSize(24);
       doc.setFont('helvetica', 'bold');
       doc.text(safeText(name).toUpperCase(), margin, y);
       y += 10;
 
-      // Job Title - Full width
       if (title) {
         doc.setFontSize(14);
         doc.setFont('helvetica', 'normal');
@@ -253,7 +270,6 @@ export default function CandidateListTable() {
         y += 8;
       }
 
-      // Company - Full width
       if (company) {
         doc.setFontSize(12);
         doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
@@ -261,7 +277,6 @@ export default function CandidateListTable() {
         y += 15;
       }
 
-      // Contact Information - Right aligned
       const contactStartY = 25;
       let contactY = contactStartY;
       const contactX = pageWidth - margin - 70;
@@ -285,13 +300,11 @@ export default function CandidateListTable() {
         contactY += 6;
       }
 
-      // Full width line separator
       doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
       doc.setLineWidth(0.5);
       doc.line(margin, y, pageWidth - margin, y);
       y += 15;
 
-      // Helper function for section headers
       const createSectionHeader = (title, xPos, yPos, width) => {
         doc.setTextColor(textColor[0], textColor[1], textColor[2]);
         doc.setFontSize(12);
@@ -306,13 +319,9 @@ export default function CandidateListTable() {
         return yPos + 12;
       };
 
-      // Start two-column layout
       let leftY = y;
       let rightY = y;
 
-      // LEFT COLUMN
-
-      // PROFESSIONAL SUMMARY - Left column
       if (summary) {
         leftY = createSectionHeader('PROFESSIONAL SUMMARY', margin, leftY, leftColumnWidth);
 
@@ -324,7 +333,6 @@ export default function CandidateListTable() {
         leftY += summaryLines.length * 5 + 15;
       }
 
-      // CORE COMPETENCIES/SKILLS - Left column
       if (skills.length > 0) {
         leftY = createSectionHeader('CORE COMPETENCIES', margin, leftY, leftColumnWidth);
 
@@ -338,7 +346,6 @@ export default function CandidateListTable() {
         leftY += skillsLines.length * 5 + 15;
       }
 
-      // EDUCATION - Left column
       if (education.length > 0) {
         leftY = createSectionHeader('EDUCATION', margin, leftY, leftColumnWidth);
 
@@ -362,7 +369,6 @@ export default function CandidateListTable() {
           const institution = safeText(edu.institution || edu.school?.name || '');
 
           if (degree || major || institution) {
-            // Institution name
             if (institution) {
               doc.setFontSize(11);
               doc.setFont('helvetica', 'bold');
@@ -372,7 +378,6 @@ export default function CandidateListTable() {
               leftY += instLines.length * 6 + 1;
             }
 
-            // Degree and major
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             const eduText = `${degree}${major ? ` in ${major}` : ''}`;
@@ -382,7 +387,6 @@ export default function CandidateListTable() {
               leftY += eduLines.length * 5 + 1;
             }
 
-            // Dates
             if (edu.dates || (edu.start_date && edu.end_date)) {
               doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
               doc.setFontSize(9);
@@ -392,15 +396,12 @@ export default function CandidateListTable() {
               doc.setTextColor(textColor[0], textColor[1], textColor[2]);
             }
 
-            leftY += 8; // Space between education entries
+            leftY += 8;
           }
         });
         leftY += 10;
       }
 
-      // RIGHT COLUMN
-
-      // PROFESSIONAL EXPERIENCE - Right column
       if (experience && experience.length > 0) {
         rightY = createSectionHeader(
           'PROFESSIONAL EXPERIENCE',
@@ -410,7 +411,6 @@ export default function CandidateListTable() {
         );
 
         experience.forEach((exp) => {
-          // Check if we need more space
           if (rightY > pageHeight - 80) {
             doc.addPage();
             rightY = 30;
@@ -422,7 +422,6 @@ export default function CandidateListTable() {
             );
           }
 
-          // Job Title
           doc.setTextColor(textColor[0], textColor[1], textColor[2]);
           doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
@@ -433,7 +432,6 @@ export default function CandidateListTable() {
           doc.text(titleLines, rightColumnX, rightY);
           rightY += titleLines.length * 6 + 1;
 
-          // Company
           doc.setFontSize(10);
           doc.setFont('helvetica', 'normal');
           const companyName = safeText(
@@ -443,7 +441,6 @@ export default function CandidateListTable() {
           doc.text(companyLines, rightColumnX, rightY);
           rightY += companyLines.length * 5 + 1;
 
-          // Duration
           doc.setFontSize(9);
           doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
 
@@ -473,7 +470,6 @@ export default function CandidateListTable() {
             rightY += 6;
           }
 
-          // Description
           const description =
             exp.description || exp.summary || exp.details || exp.responsibilities || '';
           if (description) {
@@ -485,13 +481,11 @@ export default function CandidateListTable() {
             rightY += descLines.length * 4 + 5;
           }
 
-          rightY += 10; // Space between experience entries
+          rightY += 10;
         });
       }
 
-      // PROFESSIONAL PROFILES - Right column (if space available)
       if (profiles.length > 0) {
-        // Add some space
         rightY += 10;
 
         if (rightY < pageHeight - 60) {
@@ -516,20 +510,15 @@ export default function CandidateListTable() {
         }
       }
 
-      // Footer - Full width
       doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
       doc.setFontSize(8);
       doc.text('Generated by CVFlow', margin, pageHeight - 10);
       doc.text(new Date().toLocaleDateString(), pageWidth - margin - 30, pageHeight - 10);
 
-      console.log('PDF generated successfully'); // Debug log
-
-      // Open PDF in new window
+      console.log('PDF generated successfully');
       const pdfBlob = doc.output('blob');
       const pdfUrl = URL.createObjectURL(pdfBlob);
       window.open(pdfUrl, '_blank');
-
-      // Clean up
       setTimeout(() => {
         URL.revokeObjectURL(pdfUrl);
       }, 10000);
@@ -620,7 +609,7 @@ export default function CandidateListTable() {
 
   if (selectedCandidate) {
     return (
-      <Box sx={{ maxWidth: 900, mx: 'auto', px: 2 }}>
+      <Box sx={{ maxWidth: 1200, mx: 'auto', px: 2 }}>
         <CandidateCVDisplay data={selectedCandidate} onReset={() => setSelectedCandidate(null)} />
       </Box>
     );
@@ -683,6 +672,7 @@ export default function CandidateListTable() {
             onChange={(e) => setSize(Number(e.target.value))}
             size="small"
             sx={{ width: 140 }}
+            inputProps={{ min: 1, max: 50 }}
           />
           <Button variant="contained" size="small" onClick={handleSearchSubmit}>
             Search
@@ -694,6 +684,7 @@ export default function CandidateListTable() {
         {loading ? (
           <Box sx={{ width: '100%', textAlign: 'center', py: 6 }}>
             <CircularProgress />
+            <Box sx={{ mt: 2, color: 'text.secondary' }}>Loading candidates...</Box>
           </Box>
         ) : (
           <Table>
@@ -760,7 +751,7 @@ export default function CandidateListTable() {
                         sx={{ textTransform: 'none' }}
                         onClick={() => handleDownloadCV(c)}
                       >
-                        Download_CV
+                        Download CV
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -768,7 +759,9 @@ export default function CandidateListTable() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={8} align="center">
-                    No candidates found.
+                    {totalCount > 0 && page === totalPages
+                      ? 'No more candidates available.'
+                      : 'No candidates found.'}
                   </TableCell>
                 </TableRow>
               )}
@@ -778,7 +771,27 @@ export default function CandidateListTable() {
       </Paper>
 
       {totalPages > 1 && (
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+        <Box
+          sx={{
+            mt: 3,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 2,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Box sx={{ color: 'text.secondary', fontSize: '0.9em' }}>
+            Page {page} of {totalPages}
+          </Box>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleGoToSecondLastPage}
+            disabled={totalPages <= 1 || page === totalPages - 1}
+          >
+            Go to Second-to-Last Page
+          </Button>
           <Pagination page={page} count={totalPages} onChange={(e, val) => setPage(val)} />
         </Box>
       )}
@@ -789,8 +802,13 @@ export default function CandidateListTable() {
         onClose={() => setOpenToast(false)}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert severity="info" sx={{ width: '100%' }}>
-          {displayCount} candidate{totalCount !== 1 ? 's' : ''} found
+        <Alert
+          severity={candidates.length > 0 || totalCount === 0 ? 'info' : 'error'}
+          sx={{ width: '100%' }}
+        >
+          {totalCount > 0 || candidates.length > 0
+            ? `${displayCount} candidate${totalCount !== 1 ? 's' : ''} found`
+            : 'Error fetching candidates'}
         </Alert>
       </Snackbar>
     </Box>
