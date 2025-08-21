@@ -22,16 +22,16 @@ export default function CandidateCard({ candidateData, onSelect, loadingCV }) {
     candidateData?.title ||
     candidateData?.experience?.[0]?.title?.name ||
     '';
-  const title = titleRaw.trim();
+  const title = titleRaw?.trim();
 
   const locationRaw = candidateData?.location_name || candidateData?.location || '';
-  const location = locationRaw.trim();
+  const location = locationRaw?.trim();
 
   const countryRaw = candidateData?.location_country || '';
-  const country = countryRaw.trim();
+  const country = countryRaw?.trim();
 
   const industryRaw = candidateData?.industry || '';
-  const industry = industryRaw.trim();
+  const industry = industryRaw?.trim();
 
   const yearsExperience =
     candidateData?.yearsExperience ?? candidateData?.inferred_years_experience;
@@ -40,7 +40,7 @@ export default function CandidateCard({ candidateData, onSelect, loadingCV }) {
   const skills = skillsRaw.filter((s) => typeof s === 'string' && s.trim() !== '');
 
   const summaryRaw = candidateData?.cv_metadata?.summary || candidateData?.summary || '';
-  const summary = summaryRaw.trim();
+  const summary = summaryRaw?.trim();
 
   const educationRaw = Array.isArray(candidateData?.education) ? candidateData.education : [];
   const education = educationRaw.filter((edu) => {
@@ -68,14 +68,10 @@ export default function CandidateCard({ candidateData, onSelect, loadingCV }) {
   const displayedSkills = skills.slice(0, maxSkills);
   const remainingSkillsCount = skills.length - maxSkills;
 
-  if (summary === '' && skills.length === 0 && education.length === 0) {
-    return null;
-  }
-
   return (
     <Card
       sx={{
-        height: { xs: 'auto', sm: 320 }, // fixed height on sm and up
+        height: { xs: 'auto', sm: 320 },
         display: 'flex',
         flexDirection: { xs: 'column', sm: 'row' },
         p: 2,
@@ -138,7 +134,7 @@ export default function CandidateCard({ candidateData, onSelect, loadingCV }) {
           )}
         </Box>
 
-        {/* Social icons at bottom */}
+        {/* Social icons */}
         <Stack direction="row" spacing={1}>
           {linkedinProfile?.url && (
             <Tooltip title="LinkedIn">
@@ -248,7 +244,7 @@ export default function CandidateCard({ candidateData, onSelect, loadingCV }) {
           </>
         )}
 
-        {/* Sticky Buttons at bottom-right with blur */}
+        {/* Buttons */}
         <Box
           sx={{
             position: 'sticky',
@@ -260,7 +256,7 @@ export default function CandidateCard({ candidateData, onSelect, loadingCV }) {
         >
           <Box
             sx={{
-              display: 'inline-flex', // only wraps the buttons
+              display: 'inline-flex',
               gap: 1,
               p: '4px 6px',
               borderRadius: '8px',
