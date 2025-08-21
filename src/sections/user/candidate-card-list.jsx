@@ -3,6 +3,8 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid2';
 import Pagination from '@mui/material/Pagination';
 import CircularProgress from '@mui/material/CircularProgress';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
 import CandidateCard from './candidate-card';
 import FilterSearchBar from './filter-search-bar';
@@ -15,7 +17,6 @@ export default function CandidateCardList() {
   const [search, setSearch] = useState('');
 
   const [filters, setFilters] = useState({
-    // jobTitleRoles: '',
     countries: '',
     industries: '',
     skills: [],
@@ -27,12 +28,13 @@ export default function CandidateCardList() {
   const [page, setPage] = useState(1);
   const size = 6;
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingCV, setLoadingCV] = useState(false);
+  const [openToast, setOpenToast] = useState(false);
 
   const [filterOptions, setFilterOptions] = useState({
-    // jobTitles: [],
     countries: [],
     industries: [],
     skills: [],
@@ -40,6 +42,10 @@ export default function CandidateCardList() {
     degrees: [],
   });
 
+  // Track last search/filters to control toast
+  const [lastTrigger, setLastTrigger] = useState({ search: '', filters: {} });
+
+  // Fetch filter options
   useEffect(() => {
     const fetchFilterOptions = async () => {
       try {
@@ -68,7 +74,6 @@ export default function CandidateCardList() {
         });
 
         setFilterOptions({
-          // jobTitles: mapBuckets(agg.available_job_titles?.buckets),
           countries,
           industries: mapBuckets(agg.available_industries?.buckets),
           skills: mapBuckets(agg.available_skills?.buckets),
@@ -82,8 +87,10 @@ export default function CandidateCardList() {
     fetchFilterOptions();
   }, []);
 
+  // Reset page when filters or search change
   useEffect(() => setPage(1), [filters, search]);
 
+  // Fetch candidates
   useEffect(() => {
     const fetchCandidates = async () => {
       setLoading(true);
@@ -92,7 +99,6 @@ export default function CandidateCardList() {
 
         const params = {
           ...(search ? { query: search } : {}),
-          // ...(filters.jobTitleRoles ? { jobTitleRoles: normalize(filters.jobTitleRoles) } : {}),
           ...(filters.countries ? { countries: normalize(filters.countries) } : {}),
           ...(filters.industries ? { industries: normalize(filters.industries) } : {}),
           ...(filters.skills.length ? { skills: filters.skills.map(normalize).join(',') } : {}),
@@ -104,20 +110,31 @@ export default function CandidateCardList() {
 
         const res = await axios.get(endpoints.candidates.search, { params });
         const items = res.data?.data?.items || [];
-        const totalCount = res.data?.data?.total?.value || items.length;
+        const total = res.data?.data?.total?.value || items.length;
 
         setCandidates(items);
-        setTotalPages(Math.ceil(totalCount / size));
+        setTotalPages(Math.ceil(total / size));
+        setTotalCount(total);
+
+        // Show toast only if search or filters changed
+        if (
+          search !== lastTrigger.search ||
+          JSON.stringify(filters) !== JSON.stringify(lastTrigger.filters)
+        ) {
+          setOpenToast(true);
+          setLastTrigger({ search, filters });
+        }
       } catch (err) {
         console.error('Error fetching candidates:', err);
         setCandidates([]);
         setTotalPages(1);
+        setTotalCount(0);
       } finally {
         setLoading(false);
       }
     };
     fetchCandidates();
-  }, [search, filters, page]);
+  }, [search, filters, page, lastTrigger]);
 
   const handleSearchInputChange = (value) => setSearchInput(value);
   const handleSearchSubmit = () => setSearch(searchInput.trim());
@@ -127,8 +144,7 @@ export default function CandidateCardList() {
     setLoadingCV(true);
     try {
       const res = await axios.get(`${endpoints.candidates.one(candidate.id)}`);
-      const fullData = res.data?.data;
-      setSelectedCandidate(fullData);
+      setSelectedCandidate(res.data?.data);
     } catch (err) {
       console.error('Error fetching candidate details:', err);
     } finally {
@@ -145,14 +161,6 @@ export default function CandidateCardList() {
       value: filters.skills,
       onChange: (val) => handleFilterChange('skills', val),
     },
-    // {
-    //   key: 'jobTitleRoles',
-    //   label: 'Job Title',
-    //   type: 'select',
-    //   options: filterOptions.jobTitles,
-    //   value: filters.jobTitleRoles,
-    //   onChange: (val) => handleFilterChange('jobTitleRoles', val),
-    // },
     {
       key: 'countries',
       label: 'Country',
@@ -195,6 +203,8 @@ export default function CandidateCardList() {
     );
   }
 
+  const displayCount = totalCount >= 10000 ? '+10k' : totalCount;
+
   return (
     <Box sx={{ maxWidth: 900, mx: 'auto', px: 2 }}>
       <Box sx={{ mb: 3 }}>
@@ -206,6 +216,12 @@ export default function CandidateCardList() {
           mainFiltersCount={3}
         />
       </Box>
+
+      {!loading && (
+        <Box sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold' }}>
+          {displayCount} candidate{totalCount !== 1 ? 's' : ''} found
+        </Box>
+      )}
 
       {loading ? (
         <Box sx={{ width: '100%', textAlign: 'center', py: 6 }}>
@@ -241,6 +257,17 @@ export default function CandidateCardList() {
           )}
         </>
       )}
+
+      <Snackbar
+        open={openToast}
+        autoHideDuration={3000}
+        onClose={() => setOpenToast(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert severity="info" sx={{ width: '100%' }}>
+          {displayCount} candidate{totalCount !== 1 ? 's' : ''} found
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
