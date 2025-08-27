@@ -63,6 +63,8 @@ export const endpoints = {
   },
   analytics: {
     map: '/v2/opensearch/agg-by-country',
+    stats: '/v2/opensearch/stats',
+    details: '/v2/opensearch/statsDetailed',
 
     ////////////////////////////////////////////////////////
 

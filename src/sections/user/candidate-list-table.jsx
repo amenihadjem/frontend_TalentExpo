@@ -102,89 +102,94 @@ export default function CandidateListTable() {
     fetchFilterOptions();
   }, []);
 
-  useEffect(() => setPage(1), [search, filters, size, sortBy, sortOrder]);
+  const fetchCandidates = async () => {
+    setLoading(true);
+    try {
+      const normalize = (val) => (typeof val === 'string' ? val.trim().replace(/\s+/g, '-') : val);
+
+      // Calculate total pages and adjust size for the last page
+      const actualTotalPages = Math.max(1, Math.ceil(totalCount / size));
+      const isLastPage = page === actualTotalPages;
+      const remainingItems = totalCount - (page - 1) * size;
+      const adjustedSize = isLastPage && remainingItems > 0 ? Math.min(size, remainingItems) : size;
+
+      const params = {
+        ...(search ? { query: search } : {}),
+        ...(filters.countries ? { countries: normalize(filters.countries) } : {}),
+        ...(filters.industries ? { industries: normalize(filters.industries) } : {}),
+        ...(filters.skills.length ? { skills: filters.skills.map(normalize).join(',') } : {}),
+        ...(filters.majors ? { majors: normalize(filters.majors) } : {}),
+        ...(filters.degrees ? { degrees: normalize(filters.degrees) } : {}),
+        ...(filters.jobTitleRoles.length
+          ? { jobTitleRoles: filters.jobTitleRoles.map(normalize).join(',') }
+          : {}),
+        ...(filters.minExperience ? { minExperience: filters.minExperience } : {}),
+        ...(filters.maxExperience ? { maxExperience: filters.maxExperience } : {}),
+        ...(filters.minLinkedinConnections
+          ? { minLinkedinConnections: filters.minLinkedinConnections }
+          : {}),
+        ...(filters.maxLinkedinConnections
+          ? { maxLinkedinConnections: filters.maxLinkedinConnections }
+          : {}),
+        page,
+        size: adjustedSize,
+        ...(sortBy ? { sortBy } : {}),
+        ...(sortOrder ? { sortOrder } : {}),
+      };
+
+      console.log('API Request Params:', params);
+      const res = await axios.get(endpoints.candidates.search, { params });
+      const allItems = res.data?.data?.items || [];
+      const total = res.data?.data?.total?.value || allItems.length;
+      console.log(`Page ${page}:`, allItems, `Total: ${total}, Adjusted Size: ${adjustedSize}`);
+
+      // Recalculate total pages with updated total
+      const newTotalPages = Math.max(1, Math.ceil(total / size));
+
+      // If the requested page exceeds the total pages, adjust it
+      if (page > newTotalPages && newTotalPages !== 0) {
+        console.log(`Adjusting page from ${page} to ${newTotalPages}`);
+        setPage(newTotalPages);
+        setLoading(false);
+        return;
+      }
+
+      setCandidates(allItems);
+      setTotalPages(newTotalPages);
+      setTotalCount(total);
+
+      if (
+        search !== lastTrigger.search ||
+        JSON.stringify(filters) !== JSON.stringify(lastTrigger.filters)
+      ) {
+        setOpenToast(true);
+        setLastTrigger({ search, filters });
+      }
+    } catch (err) {
+      console.error('Error fetching candidates:', err);
+      setCandidates([]);
+      setTotalPages(1);
+      setTotalCount(0);
+      setOpenToast(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCandidates = async () => {
-      setLoading(true);
-      try {
-        const normalize = (val) =>
-          typeof val === 'string' ? val.trim().replace(/\s+/g, '-') : val;
-
-        // Calculate total pages and adjust size for the last page
-        const actualTotalPages = Math.max(1, Math.ceil(totalCount / size));
-        const isLastPage = page === actualTotalPages;
-        const remainingItems = totalCount - (page - 1) * size;
-        const adjustedSize =
-          isLastPage && remainingItems > 0 ? Math.min(size, remainingItems) : size;
-
-        const params = {
-          ...(search ? { query: search } : {}),
-          ...(filters.countries ? { countries: normalize(filters.countries) } : {}),
-          ...(filters.industries ? { industries: normalize(filters.industries) } : {}),
-          ...(filters.skills.length ? { skills: filters.skills.map(normalize).join(',') } : {}),
-          ...(filters.majors ? { majors: normalize(filters.majors) } : {}),
-          ...(filters.degrees ? { degrees: normalize(filters.degrees) } : {}),
-          ...(filters.jobTitleRoles.length
-            ? { jobTitleRoles: filters.jobTitleRoles.map(normalize).join(',') }
-            : {}),
-          ...(filters.minExperience ? { minExperience: filters.minExperience } : {}),
-          ...(filters.maxExperience ? { maxExperience: filters.maxExperience } : {}),
-          ...(filters.minLinkedinConnections
-            ? { minLinkedinConnections: filters.minLinkedinConnections }
-            : {}),
-          ...(filters.maxLinkedinConnections
-            ? { maxLinkedinConnections: filters.maxLinkedinConnections }
-            : {}),
-          page,
-          size: adjustedSize,
-          ...(sortBy ? { sortBy } : {}),
-          ...(sortOrder ? { sortOrder } : {}),
-        };
-
-        console.log('API Request Params:', params);
-        const res = await axios.get(endpoints.candidates.search, { params });
-        const allItems = res.data?.data?.items || [];
-        const total = res.data?.data?.total?.value || allItems.length;
-        console.log(`Page ${page}:`, allItems, `Total: ${total}, Adjusted Size: ${adjustedSize}`);
-
-        // Recalculate total pages with updated total
-        const newTotalPages = Math.max(1, Math.ceil(total / size));
-
-        // If the requested page exceeds the total pages, adjust it
-        if (page > newTotalPages && newTotalPages !== 0) {
-          console.log(`Adjusting page from ${page} to ${newTotalPages}`);
-          setPage(newTotalPages);
-          setLoading(false);
-          return;
-        }
-
-        setCandidates(allItems);
-        setTotalPages(newTotalPages);
-        setTotalCount(total);
-
-        if (
-          search !== lastTrigger.search ||
-          JSON.stringify(filters) !== JSON.stringify(lastTrigger.filters)
-        ) {
-          setOpenToast(true);
-          setLastTrigger({ search, filters });
-        }
-      } catch (err) {
-        console.error('Error fetching candidates:', err);
-        setCandidates([]);
-        setTotalPages(1);
-        setTotalCount(0);
-        setOpenToast(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCandidates();
-  }, [search, filters, page, size, sortBy, sortOrder, lastTrigger]);
+    if (search || Object.values(filters).some((value) => value !== '' && value !== [])) {
+      fetchCandidates();
+    }
+  }, [page, size, sortBy, sortOrder]);
 
   const handleSearchInputChange = (value) => setSearchInput(value);
-  const handleSearchSubmit = () => setSearch(searchInput.trim());
+
+  const handleSearchSubmit = () => {
+    setSearch(searchInput.trim());
+    setPage(1);
+    fetchCandidates();
+  };
+
   const handleFilterChange = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
 
   const handleViewCV = async (candidate) => {
@@ -537,14 +542,14 @@ export default function CandidateListTable() {
       value: filters.skills,
       onChange: (val) => handleFilterChange('skills', val),
     },
-    {
-      key: 'jobTitleRoles',
-      label: 'Job Title',
-      type: 'autocomplete',
-      options: filterOptions.jobTitles,
-      value: filters.jobTitleRoles,
-      onChange: (val) => handleFilterChange('jobTitleRoles', val),
-    },
+    // {
+    //   key: 'jobTitleRoles',
+    //   label: 'Job Title',
+    //   type: 'autocomplete',
+    //   options: filterOptions.jobTitles,
+    //   value: filters.jobTitleRoles,
+    //   onChange: (val) => handleFilterChange('jobTitleRoles', val),
+    // },
     {
       key: 'countries',
       label: 'Country',
@@ -784,14 +789,7 @@ export default function CandidateListTable() {
           <Box sx={{ color: 'text.secondary', fontSize: '0.9em' }}>
             Page {page} of {totalPages}
           </Box>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={handleGoToSecondLastPage}
-            disabled={totalPages <= 1 || page === totalPages - 1}
-          >
-            Go to Second-to-Last Page
-          </Button>
+
           <Pagination page={page} count={totalPages} onChange={(e, val) => setPage(val)} />
         </Box>
       )}

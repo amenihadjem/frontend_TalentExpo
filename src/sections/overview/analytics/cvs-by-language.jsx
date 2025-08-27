@@ -24,16 +24,19 @@ export function CVsByLanguage({
   const chartSeries = chart.series.map((s) => (s.value / total) * 100);
 
   const chartColors = chart.colors ?? [
-    [theme.palette.primary.light, theme.palette.primary.main], // Example: Male
-    [hexAlpha(theme.palette.warning.light, 0.8), hexAlpha(theme.palette.warning.main, 0.8)], // Example: Female
-    [hexAlpha(theme.palette.info.light, 0.8), hexAlpha(theme.palette.info.main, 0.8)], // Example: Other/Unknown
+    [theme.palette.primary.light, theme.palette.primary.main],
+    [hexAlpha(theme.palette.secondary.light, 0.8), hexAlpha(theme.palette.secondary.main, 0.8)],
+    [hexAlpha(theme.palette.success.light, 0.8), hexAlpha(theme.palette.success.main, 0.8)],
+    [hexAlpha(theme.palette.warning.light, 0.8), hexAlpha(theme.palette.warning.main, 0.8)],
+    [hexAlpha(theme.palette.error.light, 0.8), hexAlpha(theme.palette.error.main, 0.8)],
+    [hexAlpha(theme.palette.info.light, 0.8), hexAlpha(theme.palette.info.main, 0.8)],
   ];
 
   const chartOptions = useChart({
     chart: { sparkline: { enabled: true } },
     colors: chartColors.map((color) => color[1]),
-    labels: chart.series.map((item) => item.label), // Example: ['Male', 'Female', 'Other']
-    series: chart.series.map((s) => (s.value / total) * 100), // display percentage arc
+    labels: chart.series.map((item) => item.label),
+    series: chart.series.map((s) => (s.value / total) * 100),
     stroke: { width: 0 },
     fill: {
       type: 'gradient',
@@ -45,6 +48,11 @@ export function CVsByLanguage({
       },
     },
     grid: { padding: { top: -40, bottom: -40 } },
+    tooltip: {
+      y: {
+        formatter: (val) => `${val.toFixed(2)}%`,
+      },
+    },
     plotOptions: {
       radialBar: {
         hollow: { margin: 10, size: '32%' },
@@ -54,19 +62,17 @@ export function CVsByLanguage({
           value: {
             offsetY: 2,
             fontSize: theme.typography.h5.fontSize,
-            formatter: (val) => `${fNumber(val)}%`,
+            formatter: (val) => `${val.toFixed(2)}%`,
           },
-
           name: { offsetY: -10 },
         },
       },
     },
-
     ...chart.options,
   });
 
   return (
-    <Card sx={sx} {...other}>
+    <Card sx={{ height: '100%', ...sx }} {...other}>
       <CardHeader title={title} subheader={subheader} />
 
       <Chart
@@ -77,8 +83,8 @@ export function CVsByLanguage({
         sx={{
           my: 1.5,
           mx: 'auto',
-          width: { xs: 260, xl: 260 },
-          height: { xs: 340, xl: 360 },
+          width: { xs: 240, xl: 240 },
+          height: { xs: 280, xl: 300 },
         }}
       />
 
@@ -92,3 +98,5 @@ export function CVsByLanguage({
     </Card>
   );
 }
+
+export default CVsByLanguage;

@@ -1,45 +1,46 @@
 import React from 'react';
-import { Bar, XAxis, YAxis, Tooltip, BarChart, ResponsiveContainer } from 'recharts';
-
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import Box from '@mui/material/Box';
-import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
 
 export function AnalyticsCandidatesBarChart({ countryCounts }) {
   const theme = useTheme();
 
-  console.log('countryCounts:', countryCounts);
+  // countryCounts is expected as an array now
+  const data = (countryCounts || [])
+    .map((item) => ({
+      country: item.country.charAt(0).toUpperCase() + item.country.slice(1),
+      count: Number(item.count) || 0,
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 20); // top 20
 
-  const data = Object.entries(countryCounts || {}).map(([country, count]) => ({
-    country: country.charAt(0).toUpperCase() + country.slice(1),
-    count,
-  }));
+  const chartHeight = data.length > 0 ? data.length * 40 : 300;
 
-  const topN = 20;
-  const sortedData = data.sort((a, b) => b.count - a.count).slice(0, topN);
-
-  const barHeight = 40;
-  const chartHeight = sortedData.length > 0 ? sortedData.length * barHeight : 300;
-
-  // Fallback data to test
-  // const sortedData = [
-  //   { country: 'USA', count: 10 },
-  //   { country: 'France', count: 5 },
-  //   { country: 'Germany', count: 7 },
-  // ];
+  if (data.length === 0) {
+    return (
+      <Box sx={{ mt: theme.spacing(6), textAlign: 'center' }}>
+        <Typography variant="h6" gutterBottom>
+          Top Candidates Count by Country
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          No data available to display.
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ mt: theme.spacing(6) }}>
       <Typography variant="h6" gutterBottom>
-        Top {topN} Candidates Count by Country
+        Top Candidates Count by Country
       </Typography>
       <ResponsiveContainer width="100%" height={chartHeight}>
         <BarChart
-          width={700}
-          height={chartHeight}
-          data={sortedData}
-          margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
+          data={data}
           layout="vertical"
+          margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
         >
           <XAxis type="number" stroke={theme.palette.text.secondary} tick={{ fontSize: 12 }} />
           <YAxis
