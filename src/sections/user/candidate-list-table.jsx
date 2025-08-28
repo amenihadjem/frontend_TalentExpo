@@ -1,4 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import Skeleton from '@mui/material/Skeleton';
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
 import Paper from '@mui/material/Paper';
@@ -13,7 +19,15 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import TextField from '@mui/material/TextField';
-import { MenuItem, Select, InputLabel } from '@mui/material';
+import {
+  MenuItem,
+  Select,
+  InputLabel,
+  Badge,
+  Checkbox,
+  IconButton,
+  DialogActions,
+} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 import FilterSearchBar from './filter-search-bar';
@@ -22,8 +36,105 @@ import { SocialMediaLinks } from 'src/components/social-media-links';
 import axios, { endpoints } from 'src/lib/axios';
 import countriesList from 'i18n-iso-countries';
 import jsPDF from 'jspdf';
+import GeoCircleSelector from 'src/components/map/GeoCircleSelector';
+import { Add, Close } from '@mui/icons-material';
 
 export default function CandidateListTable() {
+  // Fetch saved tabs from API and fetch candidates for each tab
+  const fetchSavedTabsAndCandidates = async (companyId) => {
+    try {
+      // Replace with your actual endpoint for fetching saved tabs
+      const tabsRes = await axios.get('/api/saved-tabs', { params: { companyId } });
+      const savedTabs = tabsRes.data;
+      if (Array.isArray(savedTabs)) {
+        if (savedTabs.length === 0) {
+          // Example: set three sample tabs if no saved tabs
+          setSearchTabs([
+            {
+              name: 'Engineering Candidates',
+              search: 'engineer',
+              filters: { skills: ['JavaScript', 'React'], countries: 'USA' },
+              saved: true,
+            },
+            {
+              name: 'Marketing Pros',
+              search: 'marketing',
+              filters: { skills: ['SEO', 'Content'], countries: 'UK' },
+              saved: true,
+            },
+            {
+              name: 'Default Search',
+              search: '',
+              filters: {},
+              saved: false,
+            },
+          ]);
+        } else {
+          // For each tab, fetch candidates using its params
+          for (const tab of savedTabs) {
+            const { params } = tab;
+            try {
+              const candidatesRes = await axios.get(endpoints.candidates.search, { params });
+              const candidates = candidatesRes.data?.data?.items || [];
+              console.log(`Candidates for tab '${tab.tabName}':`, candidates);
+            } catch (err) {
+              console.error(`Error fetching candidates for tab '${tab.tabName}':`, err);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      setSearchTabs([
+        {
+          id: 1,
+          name: 'Engineering Candidates',
+          search: 'engineer',
+          filters: { skills: ['JavaScript', 'React'], countries: '' },
+          saved: true,
+        },
+        {
+          id: 2,
+          name: 'Marketing Pros',
+          search: 'marketing',
+          filters: { skills: ['SEO', 'Content'], countries: '' },
+          saved: true,
+        },
+        {
+          id: 3,
+          name: 'Default Search',
+          search: '',
+          filters: {},
+          saved: false,
+        },
+      ]);
+      console.error('Error fetching saved tabs:', err);
+    }
+  };
+  // Tab state
+  const [searchTabs, setSearchTabs] = useState([
+    {
+      name: 'Default Search',
+      search: '',
+      filters: {
+        countries: '',
+        industries: '',
+        skills: [],
+        majors: [],
+        degrees: '',
+        jobTitleRoles: [],
+        minExperience: '',
+        maxExperience: '',
+        minLinkedinConnections: '',
+        maxLinkedinConnections: '',
+      },
+      saved: false,
+    },
+  ]);
+  const [activeTab, setActiveTab] = useState(0);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saveName, setSaveName] = useState('');
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+  const [tabToClose, setTabToClose] = useState(null);
   const theme = useTheme();
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -34,21 +145,21 @@ export default function CandidateListTable() {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [loadingCV, setLoadingCV] = useState(false);
   const [openToast, setOpenToast] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
 
+  const handleSelectRow = (id) => {
+    setSelectedRows((prev) => {
+      const newSelected = prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id];
+      console.log('Selected users:', newSelected);
+      return newSelected;
+    });
+  };
+  const [geoLocationStatus, setGeoLocationStatuse] = useState(false);
+  const [geoRange, setGeoRange] = useState(null);
+  const [loadingOdoo, setLoadingOdoo] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({
-    countries: '',
-    industries: '',
-    skills: [],
-    majors: [],
-    degrees: '',
-    jobTitleRoles: [],
-    minExperience: '',
-    maxExperience: '',
-    minLinkedinConnections: '',
-    maxLinkedinConnections: '',
-  });
+  // Remove global filters state, use per-tab filters
   const [filterOptions, setFilterOptions] = useState({
     countries: [],
     industries: [],
@@ -102,90 +213,154 @@ export default function CandidateListTable() {
     fetchFilterOptions();
   }, []);
 
-  useEffect(() => setPage(1), [search, filters, size, sortBy, sortOrder]);
+  useEffect(() => setPage(1), [search, size, sortBy, sortOrder, activeTab, searchTabs]);
+
+  const fetchCandidates = async () => {
+    try {
+      const normalize = (val) => (typeof val === 'string' ? val.trim().replace(/\s+/g, '-') : val);
+
+      // Calculate total pages and adjust size for the last page
+      const actualTotalPages = Math.max(1, Math.ceil(totalCount / size));
+      const isLastPage = page === actualTotalPages;
+      const remainingItems = totalCount - (page - 1) * size;
+      const adjustedSize = isLastPage && remainingItems > 0 ? Math.min(size, remainingItems) : size;
+
+      const tabFilters = searchTabs[activeTab]?.filters || {};
+      const tabSearch = searchTabs[activeTab]?.search?.trim() || '';
+      const params = {
+        ...(tabSearch ? { query: tabSearch } : {}),
+        ...(tabFilters.countries ? { countries: normalize(tabFilters.countries) } : {}),
+        ...(tabFilters.industries ? { industries: normalize(tabFilters.industries) } : {}),
+        ...(tabFilters.skills?.length
+          ? { skills: tabFilters.skills.map(normalize).join(',') }
+          : {}),
+        ...(tabFilters.majors ? { majors: normalize(tabFilters.majors) } : {}),
+        ...(tabFilters.degrees ? { degrees: normalize(tabFilters.degrees) } : {}),
+        ...(tabFilters.jobTitleRoles?.length
+          ? { jobTitleRoles: tabFilters.jobTitleRoles.map(normalize).join(',') }
+          : {}),
+        ...(tabFilters.minExperience ? { minExperience: tabFilters.minExperience } : {}),
+        ...(tabFilters.maxExperience ? { maxExperience: tabFilters.maxExperience } : {}),
+        ...(tabFilters.minLinkedinConnections
+          ? { minLinkedinConnections: tabFilters.minLinkedinConnections }
+          : {}),
+        ...(tabFilters.maxLinkedinConnections
+          ? { maxLinkedinConnections: tabFilters.maxLinkedinConnections }
+          : {}),
+        page,
+        size: adjustedSize,
+        ...(sortBy ? { sortBy } : {}),
+        ...(sortOrder ? { sortOrder } : {}),
+
+        lat: tabFilters.countries ? null : geoRange?.lat,
+        lon: tabFilters.countries ? null : geoRange?.lng,
+        distance: tabFilters.countries
+          ? null
+          : geoRange?.distance
+            ? geoRange?.distance + 'km'
+            : null,
+      };
+
+      console.log('API Request Params:', params);
+      setLoading(true);
+      const res = await axios.get(endpoints.candidates.search, { params });
+      const allItems = res.data?.data?.items || [];
+      const total = res.data?.data?.total?.value || allItems.length;
+      console.log(`Page ${page}:`, allItems, `Total: ${total}, Adjusted Size: ${adjustedSize}`);
+
+      // Recalculate total pages with updated total
+      const newTotalPages = Math.max(1, Math.ceil(total / size));
+
+      // If the requested page exceeds the total pages, adjust it
+      if (page > newTotalPages && newTotalPages !== 0) {
+        console.log(`Adjusting page from ${page} to ${newTotalPages}`);
+        setPage(newTotalPages);
+        setLoading(false);
+        return;
+      }
+
+      setCandidates(allItems);
+      setTotalPages(newTotalPages);
+      setTotalCount(total);
+
+      if (
+        search !== lastTrigger.search ||
+        JSON.stringify(searchTabs[activeTab]?.filters || {}) !== JSON.stringify(lastTrigger.filters)
+      ) {
+        setOpenToast(true);
+        setLastTrigger({ search, filters: searchTabs[activeTab]?.filters || {} });
+      }
+    } catch (err) {
+      console.error('Error fetching candidates:', err);
+      setCandidates([]);
+      setTotalPages(1);
+      setTotalCount(0);
+      setOpenToast(true);
+    } finally {
+      setLoading(false);
+      if (searchTabs[activeTab]?.filters?.countries) setGeoLocationStatuse(false);
+    }
+  };
+  const fetchData = async () => {
+    // Example: fetch saved tabs and candidates before fetching candidates normally
+    await fetchSavedTabsAndCandidates('YOUR_COMPANY_ID');
+    fetchCandidates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  };
+
+  useEffect(
+    () => {
+      fetchData();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   useEffect(() => {
-    const fetchCandidates = async () => {
-      setLoading(true);
-      try {
-        const normalize = (val) =>
-          typeof val === 'string' ? val.trim().replace(/\s+/g, '-') : val;
-
-        // Calculate total pages and adjust size for the last page
-        const actualTotalPages = Math.max(1, Math.ceil(totalCount / size));
-        const isLastPage = page === actualTotalPages;
-        const remainingItems = totalCount - (page - 1) * size;
-        const adjustedSize =
-          isLastPage && remainingItems > 0 ? Math.min(size, remainingItems) : size;
-
-        const params = {
-          ...(search ? { query: search } : {}),
-          ...(filters.countries ? { countries: normalize(filters.countries) } : {}),
-          ...(filters.industries ? { industries: normalize(filters.industries) } : {}),
-          ...(filters.skills.length ? { skills: filters.skills.map(normalize).join(',') } : {}),
-          ...(filters.majors ? { majors: normalize(filters.majors) } : {}),
-          ...(filters.degrees ? { degrees: normalize(filters.degrees) } : {}),
-          ...(filters.jobTitleRoles.length
-            ? { jobTitleRoles: filters.jobTitleRoles.map(normalize).join(',') }
-            : {}),
-          ...(filters.minExperience ? { minExperience: filters.minExperience } : {}),
-          ...(filters.maxExperience ? { maxExperience: filters.maxExperience } : {}),
-          ...(filters.minLinkedinConnections
-            ? { minLinkedinConnections: filters.minLinkedinConnections }
-            : {}),
-          ...(filters.maxLinkedinConnections
-            ? { maxLinkedinConnections: filters.maxLinkedinConnections }
-            : {}),
-          page,
-          size: adjustedSize,
-          ...(sortBy ? { sortBy } : {}),
-          ...(sortOrder ? { sortOrder } : {}),
-        };
-
-        console.log('API Request Params:', params);
-        const res = await axios.get(endpoints.candidates.search, { params });
-        const allItems = res.data?.data?.items || [];
-        const total = res.data?.data?.total?.value || allItems.length;
-        console.log(`Page ${page}:`, allItems, `Total: ${total}, Adjusted Size: ${adjustedSize}`);
-
-        // Recalculate total pages with updated total
-        const newTotalPages = Math.max(1, Math.ceil(total / size));
-
-        // If the requested page exceeds the total pages, adjust it
-        if (page > newTotalPages && newTotalPages !== 0) {
-          console.log(`Adjusting page from ${page} to ${newTotalPages}`);
-          setPage(newTotalPages);
-          setLoading(false);
-          return;
-        }
-
-        setCandidates(allItems);
-        setTotalPages(newTotalPages);
-        setTotalCount(total);
-
-        if (
-          search !== lastTrigger.search ||
-          JSON.stringify(filters) !== JSON.stringify(lastTrigger.filters)
-        ) {
-          setOpenToast(true);
-          setLastTrigger({ search, filters });
-        }
-      } catch (err) {
-        console.error('Error fetching candidates:', err);
-        setCandidates([]);
-        setTotalPages(1);
-        setTotalCount(0);
-        setOpenToast(true);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchCandidates();
-  }, [search, filters, page, size, sortBy, sortOrder, lastTrigger]);
+  }, [geoRange, activeTab]);
 
-  const handleSearchInputChange = (value) => setSearchInput(value);
-  const handleSearchSubmit = () => setSearch(searchInput.trim());
-  const handleFilterChange = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
+  // Tab logic
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
+  const handleNewTab = () => {
+    setSearchTabs((prev) => [
+      ...prev,
+      { name: `Search ${prev.length + 1}`, search: '', filters: {}, saved: false },
+    ]);
+    setActiveTab(searchTabs.length);
+  };
+  const handleSaveTab = () => {
+    // Log tab name, filters, and params
+    const tab = searchTabs[activeTab];
+    const params = { search: tab.search, filters: tab.filters, page, size, sortBy, sortOrder };
+    console.log('Saved Tab:', { name: saveName, params });
+    setSearchTabs((prev) =>
+      prev.map((tab, idx) => (idx === activeTab ? { ...tab, name: saveName, saved: true } : tab))
+    );
+    setSaveDialogOpen(false);
+    setSaveName('');
+  };
+  // Use tab's search/filters for searching
+  const handleSearchInputChange = (value) => {
+    // setSearchInput(value);
+    setSearchTabs((prev) =>
+      prev.map((tab, idx) => (idx === activeTab ? { ...tab, search: value } : tab))
+    );
+  };
+  const handleSearchSubmit = () => {
+    setSearch(searchTabs[activeTab].search.trim());
+    fetchCandidates();
+  };
+  // Removed unused global filter setter
+  const handleTabFilterChange = (key, value) => {
+    setSearchTabs((prevTabs) =>
+      prevTabs.map((tab, idx) =>
+        idx === activeTab ? { ...tab, filters: { ...tab.filters, [key]: value } } : tab
+      )
+    );
+  };
 
   const handleViewCV = async (candidate) => {
     setLoadingCV(true);
@@ -198,7 +373,24 @@ export default function CandidateListTable() {
       setLoadingCV(false);
     }
   };
-
+  const sendToOdoo = async () => {
+    setLoadingOdoo(true);
+    try {
+      // Log selected users' info
+      const selectedUsers = candidates.filter((c) => selectedRows.includes(c.id));
+      console.log('Selected users for Odoo:', selectedUsers);
+      // Placeholder for sending candidates to Odoo
+      // add the filters used
+      console.log('Sending candidates to Odoo with filters:', searchTabs[activeTab]?.filters || {});
+      // await axios.post('/your-odoo-endpoint', { filters, users: selectedUsers });
+    } catch (error) {
+      console.error('Error sending to Odoo:', error);
+    } finally {
+      setTimeout(() => {
+        setLoadingOdoo(false);
+      }, 1000);
+    }
+  };
   const handleGoToSecondLastPage = () => {
     if (totalPages > 1) {
       setPage(totalPages - 1);
@@ -534,76 +726,76 @@ export default function CandidateListTable() {
       label: 'Skills',
       type: 'autocomplete',
       options: filterOptions.skills,
-      value: filters.skills,
-      onChange: (val) => handleFilterChange('skills', val),
+      value: searchTabs[activeTab]?.filters?.skills || [],
+      onChange: (val) => handleTabFilterChange('skills', val),
     },
     {
       key: 'jobTitleRoles',
       label: 'Job Title',
       type: 'autocomplete',
       options: filterOptions.jobTitles,
-      value: filters.jobTitleRoles,
-      onChange: (val) => handleFilterChange('jobTitleRoles', val),
+      value: searchTabs[activeTab]?.filters?.jobTitleRoles || [],
+      onChange: (val) => handleTabFilterChange('jobTitleRoles', val),
     },
     {
       key: 'countries',
       label: 'Country',
       type: 'select',
       options: filterOptions.countries,
-      value: filters.countries,
-      onChange: (val) => handleFilterChange('countries', val),
+      value: searchTabs[activeTab]?.filters?.countries || '',
+      onChange: (val) => handleTabFilterChange('countries', val),
     },
     {
       key: 'industries',
       label: 'Industry',
       type: 'select',
       options: filterOptions.industries,
-      value: filters.industries,
-      onChange: (val) => handleFilterChange('industries', val),
+      value: searchTabs[activeTab]?.filters?.industries || '',
+      onChange: (val) => handleTabFilterChange('industries', val),
     },
     {
       key: 'majors',
       label: 'Education Major',
       type: 'select',
       options: filterOptions.majors,
-      value: filters.majors,
-      onChange: (val) => handleFilterChange('majors', val),
+      value: searchTabs[activeTab]?.filters?.majors || '',
+      onChange: (val) => handleTabFilterChange('majors', val),
     },
     {
       key: 'degrees',
       label: 'Education Degree',
       type: 'select',
       options: filterOptions.degrees,
-      value: filters.degrees,
-      onChange: (val) => handleFilterChange('degrees', val),
+      value: searchTabs[activeTab]?.filters?.degrees || '',
+      onChange: (val) => handleTabFilterChange('degrees', val),
     },
     {
       key: 'minExperience',
       label: 'Min Experience (years)',
       type: 'number',
-      value: filters.minExperience,
-      onChange: (val) => handleFilterChange('minExperience', val),
+      value: searchTabs[activeTab]?.filters?.minExperience || '',
+      onChange: (val) => handleTabFilterChange('minExperience', val),
     },
     {
       key: 'maxExperience',
       label: 'Max Experience (years)',
       type: 'number',
-      value: filters.maxExperience,
-      onChange: (val) => handleFilterChange('maxExperience', val),
+      value: searchTabs[activeTab]?.filters?.maxExperience || '',
+      onChange: (val) => handleTabFilterChange('maxExperience', val),
     },
     {
       key: 'minLinkedinConnections',
       label: 'Min LinkedIn Connections',
       type: 'number',
-      value: filters.minLinkedinConnections,
-      onChange: (val) => handleFilterChange('minLinkedinConnections', val),
+      value: searchTabs[activeTab]?.filters?.minLinkedinConnections || '',
+      onChange: (val) => handleTabFilterChange('minLinkedinConnections', val),
     },
     {
       key: 'maxLinkedinConnections',
       label: 'Max LinkedIn Connections',
       type: 'number',
-      value: filters.maxLinkedinConnections,
-      onChange: (val) => handleFilterChange('maxLinkedinConnections', val),
+      value: searchTabs[activeTab]?.filters?.maxLinkedinConnections || '',
+      onChange: (val) => handleTabFilterChange('maxLinkedinConnections', val),
     },
   ];
 
@@ -614,19 +806,143 @@ export default function CandidateListTable() {
       </Box>
     );
   }
+  console.log({ geoRange });
 
   const displayCount = totalCount >= 10000 ? '+10k' : totalCount;
-
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', px: 2 }}>
-      <Box sx={{ mb: 3 }}>
+    <Box sx={{ width: 1200, mx: 'auto', px: 2 }}>
+      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+        >
+          {searchTabs.map((tab, idx) => (
+            <Tab
+              key={idx}
+              label={tab.name + (tab.saved ? ' (saved)' : '')}
+              value={idx}
+              wrapped
+              sx={{ minWidth: 120, maxWidth: 200 }}
+              onClick={() => setActiveTab(idx)}
+              icon={
+                searchTabs.length > 1 ? (
+                  <IconButton
+                    size="small"
+                    sx={{ ml: 0.5 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTabToClose(idx);
+                      setCloseDialogOpen(true);
+                    }}
+                  >
+                    <Close fontSize="small" />
+                  </IconButton>
+                ) : null
+              }
+              iconPosition="end"
+            />
+          ))}
+          <Button
+            variant="outlined"
+            size="small"
+            sx={{ ml: 2, borderRadius: '50%', width: 32, height: 32, minWidth: 'unset' }}
+            onClick={handleNewTab}
+          >
+            <Add />
+          </Button>
+        </Tabs>
+        <Dialog open={closeDialogOpen} onClose={() => setCloseDialogOpen(false)}>
+          <DialogTitle>Confirm Close Tab</DialogTitle>
+          <DialogContent>
+            <Box sx={{ py: 2 }}>
+              Are you sure you want to close this tab? This will delete all saved data in it.
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+              <Button onClick={() => setCloseDialogOpen(false)}>Cancel</Button>
+              <Button
+                color="error"
+                variant="contained"
+                onClick={() => {
+                  setSearchTabs((prev) => prev.filter((_, i) => i !== tabToClose));
+                  setActiveTab((prev) => (prev > tabToClose ? prev - 1 : Math.max(0, prev)));
+                  setCloseDialogOpen(false);
+                }}
+              >
+                Delete
+              </Button>
+            </Box>
+          </DialogContent>
+        </Dialog>
+        <Button
+          variant="contained"
+          size="small"
+          color="success"
+          sx={{ my: 1, width: '100px', fontSize: '18px' }}
+          onClick={() => setSaveDialogOpen(true)}
+        >
+          Save Tab
+        </Button>
+      </Box>
+      <Dialog
+        sx={{
+          width: '100%',
+        }}
+        open={saveDialogOpen}
+        onClose={() => setSaveDialogOpen(false)}
+      >
+        <DialogTitle>Save Search Tab</DialogTitle>
+        <DialogContent
+          sx={{
+            width: '400px',
+          }}
+        >
+          <TextField
+            label="Tab Name"
+            value={saveName}
+            onChange={(e) => setSaveName(e.target.value)}
+            fullWidth
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            sx={{ mt: 2 }}
+            onClick={handleSaveTab}
+            disabled={!saveName.trim()}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {!loading && (
+          <Box
+            sx={{
+              fontSize: '30px',
+              fontWeight: 'bold',
+              color: 'primary.main',
+              mt: { xs: 1, sm: 0 },
+            }}
+          >
+            {displayCount} candidate{totalCount !== 1 ? 's' : ''} found
+          </Box>
+        )}
+      </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
         <FilterSearchBar
-          searchValue={searchInput}
+          searchValue={searchTabs[activeTab]?.search || ''}
           onSearchChange={handleSearchInputChange}
           onSearchSubmit={handleSearchSubmit}
           filtersConfig={filtersConfig}
           mainFiltersCount={3}
-        />
+        />{' '}
+        <Button variant="contained" size="medium" onClick={handleSearchSubmit}>
+          Search
+        </Button>{' '}
       </Box>
 
       <Box
@@ -658,12 +974,6 @@ export default function CandidateListTable() {
           </Select>
         </Box>
 
-        {!loading && (
-          <Box sx={{ fontWeight: 'bold', color: 'primary.main', mt: { xs: 1, sm: 0 } }}>
-            {displayCount} candidate{totalCount !== 1 ? 's' : ''} found
-          </Box>
-        )}
-
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: { xs: 1, sm: 0 } }}>
           <TextField
             type="number"
@@ -674,19 +984,33 @@ export default function CandidateListTable() {
             sx={{ width: 140 }}
             inputProps={{ min: 1, max: 50 }}
           />
-          <Button variant="contained" size="small" onClick={handleSearchSubmit}>
-            Search
+          <Badge color="error" variant="dot" invisible={searchTabs[activeTab]?.filters?.countries}>
+            <GeoCircleSelector
+              handleGeorange={(range) => {
+                setGeoRange(range);
+                setGeoLocationStatuse(true);
+                setSearchTabs((prevTabs) =>
+                  prevTabs.map((tab, idx) =>
+                    idx === activeTab ? { ...tab, filters: { ...tab.filters, countries: '' } } : tab
+                  )
+                );
+              }}
+            />
+          </Badge>{' '}
+          <Button
+            variant="contained"
+            color="info"
+            size="small"
+            onClick={sendToOdoo}
+            disabled={loadingOdoo || selectedRows.length === 0}
+          >
+            {loadingOdoo ? <CircularProgress size={20} /> : 'Send To Odoo'}
           </Button>
         </Box>
       </Box>
 
       <Paper>
         {loading ? (
-          <Box sx={{ width: '100%', textAlign: 'center', py: 6 }}>
-            <CircularProgress />
-            <Box sx={{ mt: 2, color: 'text.secondary' }}>Loading candidates...</Box>
-          </Box>
-        ) : (
           <Table>
             <TableHead>
               <TableRow>
@@ -701,9 +1025,82 @@ export default function CandidateListTable() {
               </TableRow>
             </TableHead>
             <TableBody>
+              {[...Array(size)].map((_, idx) => (
+                <TableRow key={idx}>
+                  <TableCell>
+                    <Skeleton variant="text" width={120} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="text" width={80} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="text" width={140} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="text" width={160} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="text" width={60} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="rectangular" width={100} height={32} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="text" width={80} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="rectangular" width={90} height={32} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    indeterminate={
+                      selectedRows.length > 0 && selectedRows.length < candidates.length
+                    }
+                    checked={candidates.length > 0 && selectedRows.length === candidates.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedRows(candidates.map((c) => c.id));
+                        console.log(
+                          'Selected users:',
+                          candidates.map((c) => c.id)
+                        );
+                      } else {
+                        setSelectedRows([]);
+                        console.log('Selected users:', []);
+                      }
+                    }}
+                    color="primary"
+                  />
+                </TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Phone</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Industry / Job Title</TableCell>
+                <TableCell>Experience (Years)</TableCell>
+                <TableCell>Social Media</TableCell>
+                <TableCell>Country</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {candidates.length > 0 ? (
                 candidates.map((c) => (
                   <TableRow key={c.id} hover>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectedRows.includes(c.id)}
+                        onChange={() => handleSelectRow(c.id)}
+                        color="primary"
+                      />
+                    </TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Avatar sx={{ mr: 1, bgcolor: theme.palette.primary.main }}>

@@ -6,7 +6,16 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import TextField from '@mui/material/TextField';
-import { MenuItem, Select, InputLabel } from '@mui/material';
+import {
+  MenuItem,
+  Select,
+  InputLabel,
+  Card,
+  Stack,
+  Skeleton,
+  CardContent,
+  Divider,
+} from '@mui/material';
 import Button from '@mui/material/Button';
 
 import CandidateCard from './candidate-card';
@@ -40,6 +49,7 @@ export default function CandidateCardList() {
   const [loading, setLoading] = useState(false);
   const [loadingCV, setLoadingCV] = useState(false);
   const [openToast, setOpenToast] = useState(false);
+  const [loadingOdoo, setLoadingOdoo] = useState(false);
 
   // Cache system
   const [cache, setCache] = useState(new Map());
@@ -365,7 +375,19 @@ export default function CandidateCardList() {
   const displayCount = totalCount >= 10000 ? '+10k' : totalCount;
 
   return (
-    <Box sx={{ maxWidth: 900, mx: 'auto', px: 2 }}>
+    <Box sx={{ width: 900, mx: 'auto', px: 2 }}>
+      {!loading && (
+        <Box
+          sx={{ fontSize: '30px', fontWeight: 'bold', color: 'primary.main', mt: { xs: 1, sm: 0 } }}
+        >
+          {displayCount} candidate{totalCount !== 1 ? 's' : ''} found
+          {cache.size > 0 && (
+            <Box component="span" sx={{ fontSize: '0.8em', color: 'text.secondary', ml: 1 }}>
+              ({cache.size} pages cached)
+            </Box>
+          )}
+        </Box>
+      )}
       <Box sx={{ mb: 3 }}>
         <FilterSearchBar
           searchValue={searchInput}
@@ -409,17 +431,6 @@ export default function CandidateCardList() {
           </Select>
         </Box>
 
-        {!loading && (
-          <Box sx={{ fontWeight: 'bold', color: 'primary.main', mt: { xs: 1, sm: 0 } }}>
-            {displayCount} candidate{totalCount !== 1 ? 's' : ''} found
-            {cache.size > 0 && (
-              <Box component="span" sx={{ fontSize: '0.8em', color: 'text.secondary', ml: 1 }}>
-                ({cache.size} pages cached)
-              </Box>
-            )}
-          </Box>
-        )}
-
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: { xs: 1, sm: 0 } }}>
           <TextField
             type="number"
@@ -429,7 +440,7 @@ export default function CandidateCardList() {
             size="small"
             sx={{ width: 140 }}
             inputProps={{ min: 1, max: 50 }}
-          />
+          />{' '}
           <Button variant="contained" size="small" onClick={handleSearchSubmit}>
             Search
           </Button>
@@ -438,8 +449,56 @@ export default function CandidateCardList() {
 
       {loading ? (
         <Box sx={{ width: '100%', textAlign: 'center', py: 6 }}>
-          <CircularProgress />
-          <Box sx={{ mt: 2, color: 'text.secondary' }}>Loading candidates...</Box>
+          {Array.from({ length: 5 }).map((_, idx) => (
+            <Card
+              sx={{
+                height: { xs: 'auto', sm: 320 },
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                p: 2,
+                my: 2,
+                width: 870,
+                gap: 2,
+              }}
+            >
+              <Stack
+                spacing={1}
+                sx={{
+                  width: { xs: '100%', sm: 220 },
+                  flexShrink: 0,
+                  pr: { sm: 2 },
+                  borderRight: { sm: '1px solid #eee' },
+                  height: { xs: 'auto', sm: '100%' },
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                }}
+              >
+                <Box
+                  sx={{
+                    flexGrow: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    gap: 1,
+                  }}
+                >
+                  <Skeleton variant="circular" width={64} height={64} sx={{ mx: 'auto' }} />
+                  <Skeleton variant="text" width={120} sx={{ mx: 'auto' }} />
+                  <Skeleton variant="text" width={80} sx={{ mx: 'auto' }} />
+                </Box>
+              </Stack>
+              <CardContent sx={{ flex: 1 }}>
+                <Skeleton variant="text" width={200} height={32} />
+                <Skeleton variant="text" width={300} height={24} />
+                <Skeleton variant="rectangular" width={600} height={80} sx={{ my: 2 }} />
+                <Skeleton variant="text" width={180} height={24} />
+                <Skeleton variant="rectangular" width={600} height={40} sx={{ my: 2 }} />
+              </CardContent>
+            </Card>
+          ))}
         </Box>
       ) : (
         <>
