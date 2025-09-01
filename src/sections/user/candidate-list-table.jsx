@@ -270,6 +270,7 @@ export default function CandidateListTable() {
 
       // Recalculate total pages with updated total
       const newTotalPages = Math.max(1, Math.ceil(total / size));
+      // Recalculate total pages with updated total
 
       // If the requested page exceeds the total pages, adjust it
       if (page > newTotalPages && newTotalPages !== 0) {
@@ -278,7 +279,17 @@ export default function CandidateListTable() {
         setLoading(false);
         return;
       }
+      // If the requested page exceeds the total pages, adjust it
+      if (page > newTotalPages && newTotalPages !== 0) {
+        console.log(`Adjusting page from ${page} to ${newTotalPages}`);
+        setPage(newTotalPages);
+        setLoading(false);
+        return;
+      }
 
+      setCandidates(allItems);
+      setTotalPages(newTotalPages);
+      setTotalCount(total);
       setCandidates(allItems);
       setTotalPages(newTotalPages);
       setTotalCount(total);
@@ -810,7 +821,7 @@ export default function CandidateListTable() {
 
   const displayCount = totalCount >= 10000 ? '+10k' : totalCount;
   return (
-    <Box sx={{ width: 1200, mx: 'auto', px: 2 }}>
+    <Box sx={{ width: '100%', mx: 'auto', px: 2 }}>
       <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Tabs
           value={activeTab}
@@ -1181,14 +1192,7 @@ export default function CandidateListTable() {
           <Box sx={{ color: 'text.secondary', fontSize: '0.9em' }}>
             Page {page} of {totalPages}
           </Box>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={handleGoToSecondLastPage}
-            disabled={totalPages <= 1 || page === totalPages - 1}
-          >
-            Go to Second-to-Last Page
-          </Button>
+
           <Pagination page={page} count={totalPages} onChange={(e, val) => setPage(val)} />
         </Box>
       )}

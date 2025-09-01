@@ -1,38 +1,56 @@
-import React from 'react';
-
-import { Box, useTheme, Typography } from '@mui/material';
-
+import React, { useEffect, useState } from 'react';
+import { Box, useTheme, Typography, CircularProgress } from '@mui/material';
 import { Card, CardTitle, CardHeader, CardContent } from 'src/components/ui/card';
+import axios, { endpoints } from 'src/lib/axios';
 
-const industries = ['Software', 'Data Science', 'Marketing', 'Design'];
-const skills = [
-  'JavaScript',
-  'Python',
-  'R',
-  'SQL',
-  'SEO',
-  'Content Writing',
-  'Analytics',
-  'Figma',
-  'Photoshop',
-];
-
-const matrix = [
-  [30, 45, 25, 0, 0, 0, 0, 0, 0], // Software
-  [0, 50, 20, 40, 0, 0, 0, 0, 0], // Data Science
-  [0, 0, 0, 0, 15, 25, 30, 0, 0], // Marketing
-  [0, 0, 0, 0, 0, 0, 0, 20, 35], // Design
-];
+const TOP_SKILLS_LIMIT = 5; // Optional: limit top skills
 
 export default function IndustrySkillsHeatmap() {
   const theme = useTheme();
+  const [data, setData] = useState(null);
+  const [skills, setSkills] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(endpoints.analytics.details);
+        const heatmap = response.data.data.industry_skills_heatmap;
+
+        // Aggregate skill counts across all industries
+        const skillCounts = {};
+        heatmap.forEach((industry) => {
+          industry.top_skills.forEach((s) => {
+            skillCounts[s.skill] = (skillCounts[s.skill] || 0) + s.count;
+          });
+        });
+
+        // Sort skills by total count and keep top N
+        const topSkills = Object.entries(skillCounts)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, TOP_SKILLS_LIMIT)
+          .map(([skill]) => skill);
+
+        setSkills(topSkills);
+        setData(heatmap);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const getColor = (value) => {
     if (value === 0) return theme.palette.grey[theme.palette.mode === 'dark' ? 900 : 200];
-    if (value <= 20) return theme.palette.warning.light;
-    if (value <= 40) return theme.palette.warning.main;
+    if (value <= 5000) return theme.palette.warning.light;
+    if (value <= 15000) return theme.palette.warning.main;
     return theme.palette.error.main;
   };
+
+  if (loading) return <CircularProgress />;
 
   return (
     <Card className="w-full">
@@ -47,45 +65,56 @@ export default function IndustrySkillsHeatmap() {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: `150px repeat(${skills.length}, 1fr)`,
+            gridTemplateColumns: `150px repeat(${data.length}, 1fr)`,
             gap: 1,
             overflowX: 'auto',
           }}
         >
+          {/* Top-left empty cell */}
           <Box />
-          {skills.map((skill) => (
-            <Box key={skill} sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '0.875rem' }}>
-              {skill}
+
+          {/* Industry headers */}
+          {data.map((industry) => (
+            <Box
+              key={industry.industry}
+              sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '0.875rem' }}
+            >
+              {industry.industry}
             </Box>
           ))}
 
-          {industries.map((industry, rowIdx) => (
-            <React.Fragment key={industry}>
-              <Box sx={{ fontWeight: 500, fontSize: '0.9rem' }}>{industry}</Box>
-              {matrix[rowIdx].map((value, colIdx) => (
-                <Box
-                  key={colIdx}
-                  sx={{
-                    backgroundColor: getColor(value),
-                    color:
-                      value === 0
-                        ? theme.palette.text.disabled
-                        : theme.palette.getContrastText(getColor(value)),
-                    height: 40,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 500,
-                    fontSize: '0.875rem',
-                    borderRadius: 1,
-                    border: '1px solid',
-                    borderColor: theme.palette.divider,
-                    transition: 'background-color 0.4s ease, color 0.4s ease',
-                  }}
-                >
-                  {value === 0 ? '—' : value}
-                </Box>
-              ))}
+          {/* Rows for each skill */}
+          {skills.map((skill) => (
+            <React.Fragment key={skill}>
+              <Box sx={{ fontWeight: 500, fontSize: '0.9rem' }}>{skill}</Box>
+              {data.map((industry) => {
+                const skillObj = industry.top_skills.find((s) => s.skill === skill);
+                const value = skillObj ? skillObj.count : 0;
+                return (
+                  <Box
+                    key={industry.industry}
+                    sx={{
+                      backgroundColor: getColor(value),
+                      color:
+                        value === 0
+                          ? theme.palette.text.disabled
+                          : theme.palette.getContrastText(getColor(value)),
+                      height: 40,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 500,
+                      fontSize: '0.875rem',
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: theme.palette.divider,
+                      transition: 'background-color 0.4s ease, color 0.4s ease',
+                    }}
+                  >
+                    {value === 0 ? '—' : value}
+                  </Box>
+                );
+              })}
             </React.Fragment>
           ))}
         </Box>
@@ -102,7 +131,6 @@ export default function IndustrySkillsHeatmap() {
                 width: 20,
                 height: 20,
                 borderRadius: 0.5,
-                transition: 'background-color 0.4s ease',
               }}
             />
             <span>0</span>
@@ -112,30 +140,27 @@ export default function IndustrySkillsHeatmap() {
                 width: 20,
                 height: 20,
                 borderRadius: 0.5,
-                transition: 'background-color 0.4s ease',
               }}
             />
-            <span>1–20</span>
+            <span>1–5k</span>
             <Box
               sx={{
                 backgroundColor: theme.palette.warning.main,
                 width: 20,
                 height: 20,
                 borderRadius: 0.5,
-                transition: 'background-color 0.4s ease',
               }}
             />
-            <span>21–40</span>
+            <span>5k–15k</span>
             <Box
               sx={{
                 backgroundColor: theme.palette.error.main,
                 width: 20,
                 height: 20,
                 borderRadius: 0.5,
-                transition: 'background-color 0.4s ease',
               }}
             />
-            <span>41+</span>
+            <span>15k+</span>
           </Box>
         </Box>
       </CardContent>

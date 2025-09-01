@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { Box, Grid, Button, Divider, Typography, CircularProgress, Chip } from '@mui/material';
+import {
+  Box,
+  Grid,
+  Button,
+  Divider,
+  Typography,
+  CircularProgress,
+  Chip,
+  Avatar,
+} from '@mui/material';
 import axios, { endpoints } from 'src/lib/axios';
 import { SocialMediaLinks } from 'src/components/social-media-links';
 
@@ -149,35 +158,33 @@ export default function CandidateCVDisplay({ data, onReset }) {
       </Box>
 
       {/* Left + Divider + Right */}
-      <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 2 }}>
         {/* LEFT: Picture + Contact + Social */}
         <Box
           sx={{
-            width: 250,
             display: 'flex',
-            flexDirection: 'column',
+            flexDirection: 'row',
+            width: '100%',
           }}
         >
           {/* Avatar */}
           <Box
             sx={{
-              width: 150,
-              height: 150,
               borderRadius: '50%',
-              backgroundColor: 'primary.main',
-
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: 48,
+              width: '50%',
             }}
           >
-            {candidate.full_name?.charAt(0)?.toUpperCase() || '?'}
+            <Avatar
+              src={data.photo_url || ''}
+              alt={candidate.full_name || 'Candidate Avatar'}
+              sx={{ width: 140, height: 140, fontSize: 40, bgcolor: 'primary.main' }}
+            >
+              {candidate.full_name?.charAt(0)?.toUpperCase() || '?'}
+            </Avatar>
           </Box>
 
           {/* Contact Info */}
-          <Box sx={{ mt: 2, width: '100%' }}>
+          <Box sx={{ mt: 2, width: '50%' }}>
             <Typography variant="body2">
               <strong>Email: </strong> {candidate.email || 'N/A'}
             </Typography>
