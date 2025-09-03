@@ -1,102 +1,207 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Pie,
   Cell,
-  Legend,
   Tooltip,
   PieChart,
-  // Removed ResponsiveContainer for this test
+  ResponsiveContainer,
 } from 'recharts';
 
-// Make absolutely sure this path is correct
-import { mockedCandidates } from 'src/_mock/mockedCandidates.js';
+import Card from '@mui/material/Card';
+import CardHeader from '@mui/material/CardHeader';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import { useTheme, alpha } from '@mui/material/styles';
+import axios, { endpoints } from 'src/lib/axios';
 
-import { Card, CardTitle, CardHeader, CardContent } from 'src/components/ui/card';
+export default function AnalyticsEducationLevelDistribution({ title, subheader, chart, ...other }) {
+  const theme = useTheme();
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#a4de6c'];
+  // Use Minimal theme colors
+  const MINIMAL_COLORS = [
+    theme.palette.primary.main,
+    theme.palette.secondary.main,
+    theme.palette.success.main,
+    theme.palette.warning.main,
+    theme.palette.error.main,
+    theme.palette.info.main,
+    alpha(theme.palette.primary.main, 0.8),
+    alpha(theme.palette.secondary.main, 0.8),
+  ];
 
-const countEducationLevels = (candidates) => {
-  console.log('📥 Input candidates (inside countEducationLevels):', candidates);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(endpoints.analytics.details);
+        const educationData = response.data?.data?.education_levels || [];
+        
+        console.log('Raw education data from details endpoint:', educationData);
 
-  if (!Array.isArray(candidates)) {
-    console.error("Error: 'candidates' is not an array:", candidates);
-    return [];
-  }
+        // Group similar education levels together
+        const grouped = {
+          'Bachelor': 0,
+          'Master': 0,
+          'Associate': 0,
+          'Doctorate': 0,
+          'PhD': 0,
+        };
 
-  const levelCount = {};
-  candidates.forEach((candidate) => {
-    candidate.education?.forEach((edu) => {
-      const level = edu.level || 'Unknown';
-      levelCount[level] = (levelCount[level] || 0) + 1;
-    });
-  });
+        educationData.forEach((item) => {
+          const key = item.key.toLowerCase();
+          
+          if (key.includes('bachelor')) {
+            grouped['Bachelor'] += item.doc_count;
+          } else if (key.includes('master')) {
+            grouped['Master'] += item.doc_count;
+          } else if (key.includes('associate')) {
+            grouped['Associate'] += item.doc_count;
+          } else if (key.includes('doctorate')) {
+            grouped['Doctorate'] += item.doc_count;
+          } else if (key.includes('doctor of philosophy') || key === 'phd') {
+            grouped['PhD'] += item.doc_count;
+          }
+        });
 
-  const data = Object.entries(levelCount).map(([level, count]) => ({
-    name: level,
-    value: count,
-  }));
+        // Transform to chart format, filter out zero values
+        const transformedData = Object.entries(grouped)
+          .filter(([key, value]) => value > 0)
+          .map(([key, value]) => ({
+            name: key,
+            value: value,
+          }));
 
-  console.log('📊 Education Level Data (inside countEducationLevels):', data);
-  return data;
-};
+        console.log('Grouped education data:', transformedData);
+        setData(transformedData);
+      } catch (error) {
+        console.error('Failed to fetch education data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-export default function AnalyticsEducationLevelDistribution() {
-  console.log('🔥 AnalyticsEducationLevelDistribution component started rendering!');
+    fetchData();
+  }, []);
 
-  let data = [];
+  // Calculate total for percentages
+  const total = data.reduce((sum, item) => sum + item.value, 0);
 
-  try {
-    data = countEducationLevels(mockedCandidates);
-    console.log('✅ countEducationLevels executed successfully. Data:', data);
-  } catch (error) {
-    console.error(
-      '❌ Error during data calculation in AnalyticsEducationLevelDistribution:',
-      error
+  if (loading) {
+    return (
+      <Card {...other} sx={{ height: '100%' }}>
+        <CardHeader title="Loading..." />
+      </Card>
     );
   }
 
-  console.log('📊 Final Data passed to PieChart:', data);
-
   return (
-    <Card className="w-full max-w-3xl mx-auto mt-6 shadow-md rounded-2xl">
-      <CardHeader>
-        <CardTitle>🎓 Education Level Distribution</CardTitle>
-      </CardHeader>
-      <CardContent className="h-[350px] relative ">
+    <Card {...other} sx={{ height: '100%' }}>
+      <CardHeader
+        title={title || 'Education Level Distribution'}
+        subheader={subheader}
+        sx={{
+          '& .MuiCardHeader-title': {
+            fontSize: '1.1rem',
+            fontWeight: 600,
+            color: theme.palette.text.primary,
+          },
+          '& .MuiCardHeader-subheader': {
+            fontSize: '0.875rem',
+            color: theme.palette.text.secondary,
+          },
+        }}
+      />
+
+      <Box sx={{ height: 280, position: 'relative', p: 2 }}>
         {data.length > 0 ? (
-          // --- TEMPORARY CHANGE FOR DEBUGGING ---
-          // Replaced ResponsiveContainer with a fixed-size div
-          <div style={{ width: '100%', height: '100%' }}>
-            {' '}
-            {/* Added margin: 'auto' for centering if desired */}
-            <PieChart width={400} height={300}>
-              {' '}
-              {/* Explicit width and height for PieChart */}
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
               <Pie
                 data={data}
-                dataKey="value"
-                nameKey="name"
                 cx="50%"
-                cy="55%"
-                outerRadius={95}
-                label={({ name, percent, value }) =>
-                  value > 0 ? `${name}: ${(percent * 100).toFixed(0)}%` : ''
-                }
-                labelLine={false}
+                cy="50%"
+                innerRadius={50}
+                outerRadius={100}
+                paddingAngle={2}
+                dataKey="value"
+                label={false} // Remove labels from chart
               >
                 {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell key={`cell-${index}`} fill={MINIMAL_COLORS[index % MINIMAL_COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
-              {data.length > 0 && <Legend verticalAlign="bottom" height={36} />}
+              <Tooltip 
+                formatter={(value, name) => {
+                  const percentage = ((value / total) * 100).toFixed(1);
+                  return [`${value.toLocaleString()} (${percentage}%)`, name];
+                }}
+                contentStyle={{
+                  backgroundColor: theme.palette.background.paper,
+                  border: `1px solid ${alpha(theme.palette.grey[500], 0.12)}`,
+                  borderRadius: theme.shape.borderRadius,
+                  color: theme.palette.text.primary,
+                  boxShadow: theme.shadows[16],
+                }}
+              />
             </PieChart>
-          </div>
+          </ResponsiveContainer>
         ) : (
-          // --- END TEMPORARY CHANGE ---
-          <div className="text-center mt-8 text-muted">No education data available</div>
+          <Box sx={{ textAlign: 'center', mt: 4, color: 'text.secondary' }}>
+            No education data available
+          </Box>
         )}
-      </CardContent>
+      </Box>
+
+      {/* Custom Legend Under Chart */}
+      {data.length > 0 && (
+        <Box sx={{ px: 2, pb: 2 }}>
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: 1,
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            {data.map((entry, index) => {
+              const percentage = ((entry.value / total) * 100).toFixed(1);
+              return (
+                <Box 
+                  key={entry.name}
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 0.5,
+                    minWidth: 'fit-content'
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: '50%',
+                      backgroundColor: MINIMAL_COLORS[index % MINIMAL_COLORS.length],
+                      flexShrink: 0
+                    }}
+                  />
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: theme.palette.text.secondary,
+                      fontSize: '0.75rem',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {entry.name} ({percentage}%)
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Box>
+        </Box>
+      )}
     </Card>
   );
 }

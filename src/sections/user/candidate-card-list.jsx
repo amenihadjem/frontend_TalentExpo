@@ -6,7 +6,16 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import TextField from '@mui/material/TextField';
-import { MenuItem, Select, InputLabel } from '@mui/material';
+import {
+  MenuItem,
+  Select,
+  InputLabel,
+  Card,
+  Stack,
+  Skeleton,
+  CardContent,
+  Divider,
+} from '@mui/material';
 import Button from '@mui/material/Button';
 
 import CandidateCard from './candidate-card';
@@ -40,6 +49,7 @@ export default function CandidateCardList() {
   const [loading, setLoading] = useState(false);
   const [loadingCV, setLoadingCV] = useState(false);
   const [openToast, setOpenToast] = useState(false);
+  const [loadingOdoo, setLoadingOdoo] = useState(false);
 
   // Cache system
   const [cache, setCache] = useState(new Map());
@@ -59,6 +69,12 @@ export default function CandidateCardList() {
   // Sorting
   const [sortBy, setSortBy] = useState('relevance');
   const [sortOrder, setSortOrder] = useState('desc');
+
+  // Track if filters have changed
+  const [filtersChanged, setFiltersChanged] = useState(false);
+
+  // Track initial load
+  const [initialLoad, setInitialLoad] = useState(true);
 
   // Helper function to generate cache key
   const generateCacheKey = (searchTerm, filtersObj, sortByVal, sortOrderVal, pageNum, sizeVal) => {
@@ -115,146 +131,167 @@ export default function CandidateCardList() {
 
   const normalize = (val) => (typeof val === 'string' ? val.trim().replace(/\s+/g, '-') : val);
 
-  useEffect(() => {
-    const fetchCandidates = async () => {
-      const cacheKey = generateCacheKey(search, filters, sortBy, sortOrder, page, size);
+  // Fetch candidates only when explicitly triggered
+  const fetchCandidates = async () => {
+    const cacheKey = generateCacheKey(search, filters, sortBy, sortOrder, page, size);
 
-      if (cache.has(cacheKey)) {
-        const cachedData = cache.get(cacheKey);
-        setCandidates(cachedData.candidates);
-        setTotalPages(cachedData.totalPages);
-        setTotalCount(cachedData.totalCount);
-        setCurrentCacheKey(cacheKey);
-        console.log('Using cached data for page:', page, 'Cache key:', cacheKey);
+    if (cache.has(cacheKey)) {
+      const cachedData = cache.get(cacheKey);
+      setCandidates(cachedData.candidates);
+      setTotalPages(cachedData.totalPages);
+      setTotalCount(cachedData.totalCount);
+      setCurrentCacheKey(cacheKey);
+      console.log('Using cached data for page:', page, 'Cache key:', cacheKey);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Calculate total pages and adjust size for the last page
+      const actualTotalPages = Math.max(1, Math.ceil(totalCount / size));
+      const isLastPage = page === actualTotalPages;
+      const remainingItems = totalCount - (page - 1) * size;
+      const adjustedSize = isLastPage && remainingItems > 0 ? Math.min(size, remainingItems) : size;
+
+      const params = {
+        ...(search ? { query: search } : {}),
+        ...(filters.countries ? { countries: normalize(filters.countries) } : {}),
+        ...(filters.industries ? { industries: normalize(filters.industries) } : {}),
+        ...(filters.skills.length ? { skills: filters.skills.map(normalize).join(',') } : {}),
+        ...(filters.majors ? { majors: normalize(filters.majors) } : {}),
+        ...(filters.degrees ? { degrees: normalize(filters.degrees) } : {}),
+        ...(filters.jobTitleRoles.length
+          ? { jobTitleRoles: filters.jobTitleRoles.map(normalize).join(',') }
+          : {}),
+        ...(filters.minExperience ? { minExperience: filters.minExperience } : {}),
+        ...(filters.maxExperience ? { maxExperience: filters.maxExperience } : {}),
+        ...(filters.minLinkedinConnections
+          ? { minLinkedinConnections: filters.minLinkedinConnections }
+          : {}),
+        ...(filters.maxLinkedinConnections
+          ? { maxLinkedinConnections: filters.maxLinkedinConnections }
+          : {}),
+        page,
+        size: adjustedSize,
+        ...(sortBy ? { sortBy } : {}),
+        ...(sortOrder ? { sortOrder } : {}),
+      };
+
+      console.log('API Request Params:', params);
+      const res = await axios.get(endpoints.candidates.search, { params });
+      const items = res.data?.data?.items || [];
+      const total = res.data?.data?.total?.value || 0;
+      console.log(`Page ${page}:`, items, `Total: ${total}, Adjusted Size: ${adjustedSize}`);
+
+      // Recalculate total pages with updated total
+      const newTotalPages = Math.max(1, Math.ceil(total / size));
+
+      // If the requested page exceeds the total pages, adjust it
+      if (page > newTotalPages && newTotalPages !== 0) {
+        console.log(`Adjusting page from ${page} to ${newTotalPages}`);
+        setPage(newTotalPages);
+        setLoading(false);
         return;
       }
 
-      setLoading(true);
-      try {
-        // Calculate total pages and adjust size for the last page
-        const actualTotalPages = Math.max(1, Math.ceil(totalCount / size));
-        const isLastPage = page === actualTotalPages;
-        const remainingItems = totalCount - (page - 1) * size;
-        const adjustedSize =
-          isLastPage && remainingItems > 0 ? Math.min(size, remainingItems) : size;
+      setCandidates(items);
+      setTotalPages(newTotalPages);
+      setTotalCount(total);
 
-        const params = {
-          ...(search ? { query: search } : {}),
-          ...(filters.countries ? { countries: normalize(filters.countries) } : {}),
-          ...(filters.industries ? { industries: normalize(filters.industries) } : {}),
-          ...(filters.skills.length ? { skills: filters.skills.map(normalize).join(',') } : {}),
-          ...(filters.majors ? { majors: normalize(filters.majors) } : {}),
-          ...(filters.degrees ? { degrees: normalize(filters.degrees) } : {}),
-          ...(filters.jobTitleRoles.length
-            ? { jobTitleRoles: filters.jobTitleRoles.map(normalize).join(',') }
-            : {}),
-          ...(filters.minExperience ? { minExperience: filters.minExperience } : {}),
-          ...(filters.maxExperience ? { maxExperience: filters.maxExperience } : {}),
-          ...(filters.minLinkedinConnections
-            ? { minLinkedinConnections: filters.minLinkedinConnections }
-            : {}),
-          ...(filters.maxLinkedinConnections
-            ? { maxLinkedinConnections: filters.maxLinkedinConnections }
-            : {}),
-          page,
-          size: adjustedSize,
-          ...(sortBy ? { sortBy } : {}),
-          ...(sortOrder ? { sortOrder } : {}),
-        };
+      const cacheData = {
+        candidates: items,
+        totalPages: newTotalPages,
+        totalCount: total,
+        timestamp: Date.now(),
+      };
 
-        console.log('API Request Params:', params);
-        const res = await axios.get(endpoints.candidates.search, { params });
-        const items = res.data?.data?.items || [];
-        const total = res.data?.data?.total?.value || 0;
-        console.log(`Page ${page}:`, items, `Total: ${total}, Adjusted Size: ${adjustedSize}`);
-
-        // Recalculate total pages with updated total
-        const newTotalPages = Math.max(1, Math.ceil(total / size));
-
-        // If the requested page exceeds the total pages, adjust it
-        if (page > newTotalPages && newTotalPages !== 0) {
-          console.log(`Adjusting page from ${page} to ${newTotalPages}`);
-          setPage(newTotalPages);
-          setLoading(false);
-          return;
+      setCache((prevCache) => {
+        const newCache = new Map(prevCache);
+        newCache.set(cacheKey, cacheData);
+        if (newCache.size > 50) {
+          const entries = Array.from(newCache.entries());
+          entries.sort((a, b) => b[1].timestamp - a[1].timestamp);
+          return new Map(entries.slice(0, 50));
         }
+        return newCache;
+      });
 
-        setCandidates(items);
-        setTotalPages(newTotalPages);
-        setTotalCount(total);
+      setCurrentCacheKey(cacheKey);
 
-        const cacheData = {
-          candidates: items,
-          totalPages: newTotalPages,
-          totalCount: total,
-          timestamp: Date.now(),
-        };
-
-        setCache((prevCache) => {
-          const newCache = new Map(prevCache);
-          newCache.set(cacheKey, cacheData);
-          if (newCache.size > 50) {
-            const entries = Array.from(newCache.entries());
-            entries.sort((a, b) => b[1].timestamp - a[1].timestamp);
-            return new Map(entries.slice(0, 50));
-          }
-          return newCache;
-        });
-
-        setCurrentCacheKey(cacheKey);
-
-        if (
-          search !== lastTrigger.search ||
-          JSON.stringify(filters) !== JSON.stringify(lastTrigger.filters)
-        ) {
-          setOpenToast(true);
-          setLastTrigger({ search, filters });
-        }
-      } catch (err) {
-        console.error('Error fetching candidates:', err);
-        setCandidates([]);
-        setTotalPages(1);
-        setTotalCount(0);
+      if (
+        search !== lastTrigger.search ||
+        JSON.stringify(filters) !== JSON.stringify(lastTrigger.filters)
+      ) {
         setOpenToast(true);
-      } finally {
-        setLoading(false);
+        setLastTrigger({ search, filters });
       }
-    };
+    } catch (err) {
+      console.error('Error fetching candidates:', err);
+      setCandidates([]);
+      setTotalPages(1);
+      setTotalCount(0);
+      setOpenToast(true);
+    } finally {
+      setLoading(false);
+      setFiltersChanged(false);
+      setInitialLoad(false);
+    }
+  };
 
+  // Fetch candidates when page changes (pagination)
+  useEffect(() => {
+    if (
+      !initialLoad &&
+      (search ||
+        Object.values(filters).some(
+          (value) =>
+            (Array.isArray(value) && value.length > 0) ||
+            (typeof value === 'string' && value !== '')
+        ))
+    ) {
+      fetchCandidates();
+    }
+  }, [page]);
+
+  // Load initial candidates on component mount
+  useEffect(() => {
     fetchCandidates();
-  }, [search, filters, page, size, sortBy, sortOrder]);
+  }, []);
 
-  const handleSearchInputChange = (value) => setSearchInput(value);
+  const handleSearchInputChange = (value) => {
+    setSearchInput(value);
+    setFiltersChanged(true);
+  };
 
   const handleSearchSubmit = () => {
     const newSearch = searchInput.trim();
-    if (newSearch !== search) {
+    if (newSearch !== search || filtersChanged) {
       setCache(new Map());
       setPage(1);
     }
     setSearch(newSearch);
+    fetchCandidates();
   };
 
   const handleFilterChange = (key, value) => {
-    setCache(new Map());
     setFilters((prev) => ({ ...prev, [key]: value }));
-    setPage(1);
+    setFiltersChanged(true);
   };
 
   const handleSortChange = (newSortBy) => {
-    setCache(new Map());
     setSortBy(newSortBy);
+    setFiltersChanged(true);
   };
 
   const handleSortOrderChange = (newSortOrder) => {
-    setCache(new Map());
     setSortOrder(newSortOrder);
+    setFiltersChanged(true);
   };
 
   const handlePageSizeChange = (newSize) => {
-    setCache(new Map());
     setSize(newSize);
     setPage(1);
+    setFiltersChanged(true);
   };
 
   const handleViewCV = async (candidate) => {
@@ -284,14 +321,14 @@ export default function CandidateCardList() {
       value: filters.skills,
       onChange: (val) => handleFilterChange('skills', val),
     },
-    {
-      key: 'jobTitleRoles',
-      label: 'Job Title',
-      type: 'autocomplete',
-      options: filterOptions.jobTitles,
-      value: filters.jobTitleRoles,
-      onChange: (val) => handleFilterChange('jobTitleRoles', val),
-    },
+    // {
+    //   key: 'jobTitleRoles',
+    //   label: 'Job Title',
+    //   type: 'autocomplete',
+    //   options: filterOptions.jobTitles,
+    //   value: filters.jobTitleRoles,
+    //   onChange: (val) => handleFilterChange('jobTitleRoles', val),
+    // },
     {
       key: 'countries',
       label: 'Country',
@@ -365,7 +402,19 @@ export default function CandidateCardList() {
   const displayCount = totalCount >= 10000 ? '+10k' : totalCount;
 
   return (
-    <Box sx={{ maxWidth: 900, mx: 'auto', px: 2 }}>
+    <Box sx={{ width: 900, mx: 'auto', px: 2 }}>
+      {!loading && (
+        <Box
+          sx={{ fontSize: '30px', fontWeight: 'bold', color: 'primary.main', mt: { xs: 1, sm: 0 } }}
+        >
+          {displayCount} candidate{totalCount !== 1 ? 's' : ''} found
+          {cache.size > 0 && (
+            <Box component="span" sx={{ fontSize: '0.8em', color: 'text.secondary', ml: 1 }}>
+              ({cache.size} pages cached)
+            </Box>
+          )}
+        </Box>
+      )}
       <Box sx={{ mb: 3 }}>
         <FilterSearchBar
           searchValue={searchInput}
@@ -412,11 +461,6 @@ export default function CandidateCardList() {
         {!loading && (
           <Box sx={{ fontWeight: 'bold', color: 'primary.main', mt: { xs: 1, sm: 0 } }}>
             {displayCount} candidate{totalCount !== 1 ? 's' : ''} found
-            {cache.size > 0 && (
-              <Box component="span" sx={{ fontSize: '0.8em', color: 'text.secondary', ml: 1 }}>
-                ({cache.size} pages cached)
-              </Box>
-            )}
           </Box>
         )}
 
@@ -429,7 +473,7 @@ export default function CandidateCardList() {
             size="small"
             sx={{ width: 140 }}
             inputProps={{ min: 1, max: 50 }}
-          />
+          />{' '}
           <Button variant="contained" size="small" onClick={handleSearchSubmit}>
             Search
           </Button>
@@ -438,8 +482,56 @@ export default function CandidateCardList() {
 
       {loading ? (
         <Box sx={{ width: '100%', textAlign: 'center', py: 6 }}>
-          <CircularProgress />
-          <Box sx={{ mt: 2, color: 'text.secondary' }}>Loading candidates...</Box>
+          {Array.from({ length: 5 }).map((_, idx) => (
+            <Card
+              sx={{
+                height: { xs: 'auto', sm: 320 },
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                p: 2,
+                my: 2,
+                width: 870,
+                gap: 2,
+              }}
+            >
+              <Stack
+                spacing={1}
+                sx={{
+                  width: { xs: '100%', sm: 220 },
+                  flexShrink: 0,
+                  pr: { sm: 2 },
+                  borderRight: { sm: '1px solid #eee' },
+                  height: { xs: 'auto', sm: '100%' },
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                }}
+              >
+                <Box
+                  sx={{
+                    flexGrow: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    gap: 1,
+                  }}
+                >
+                  <Skeleton variant="circular" width={64} height={64} sx={{ mx: 'auto' }} />
+                  <Skeleton variant="text" width={120} sx={{ mx: 'auto' }} />
+                  <Skeleton variant="text" width={80} sx={{ mx: 'auto' }} />
+                </Box>
+              </Stack>
+              <CardContent sx={{ flex: 1 }}>
+                <Skeleton variant="text" width={200} height={32} />
+                <Skeleton variant="text" width={300} height={24} />
+                <Skeleton variant="rectangular" width={600} height={80} sx={{ my: 2 }} />
+                <Skeleton variant="text" width={180} height={24} />
+                <Skeleton variant="rectangular" width={600} height={40} sx={{ my: 2 }} />
+              </CardContent>
+            </Card>
+          ))}
         </Box>
       ) : (
         <>
@@ -477,14 +569,7 @@ export default function CandidateCardList() {
               <Box sx={{ color: 'text.secondary', fontSize: '0.9em' }}>
                 Page {page} of {totalPages}
               </Box>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={handleGoToSecondLastPage}
-                disabled={totalPages <= 1 || page === totalPages - 1}
-              >
-                Go to Second-to-Last Page
-              </Button>
+
               <Pagination
                 page={page}
                 count={totalPages}
