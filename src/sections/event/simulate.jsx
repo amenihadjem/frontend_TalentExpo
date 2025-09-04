@@ -21,6 +21,15 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Alert from '@mui/material/Alert';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TablePagination from '@mui/material/TablePagination';
+import Checkbox from '@mui/material/Checkbox';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
@@ -109,6 +118,15 @@ export default function SimulatePage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [tabToDelete, setTabToDelete] = useState(null);
   const [saveTabName, setSaveTabName] = useState('');
+  
+  // Load from Database modal states
+  const [loadModalOpen, setLoadModalOpen] = useState(false);
+  const [loadModalLoading, setLoadModalLoading] = useState(false);
+  const [savedTabs, setSavedTabs] = useState([]);
+  const [selectedTabsToLoad, setSelectedTabsToLoad] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
   
   // Day modal states
   const [dayModalOpen, setDayModalOpen] = useState(false);
@@ -252,7 +270,8 @@ export default function SimulatePage() {
     formState: { isSubmitting },
   } = methods;
 
-  // Load saved tabs from API
+  // Load saved tabs from API - REPLACED WITH MODAL-BASED LOADING
+  /*
   const loadTabsFromAPI = async () => {
     // Check if user is authenticated
     if (!user || !user._id) {
@@ -374,13 +393,14 @@ export default function SimulatePage() {
       }
     }
   };
+  */
 
-  // Load tabs when component mounts and user is available
-  React.useEffect(() => {
-    if (user?._id) {
-      loadTabsFromAPI();
-    }
-  }, [user?._id]);
+  // Removed automatic loading - tabs are now loaded manually through the Load from Database modal
+  // React.useEffect(() => {
+  //   if (user?._id) {
+  //     loadTabsFromAPI();
+  //   }
+  // }, [user?._id]);
 
   // Watch number of days to dynamically update days array
   const numberOfDays = watch('number_of_days');
@@ -981,6 +1001,136 @@ export default function SimulatePage() {
     toast.success(`Location selected: ${locationData.city}`);
   };
 
+  // Load from Database handlers
+  const handleLoadFromDatabase = async () => {
+    if (!user || !user._id) {
+      toast.error('Please log in to load saved tabs');
+      return;
+    }
+
+    setLoadModalOpen(true);
+    await fetchSavedTabs();
+  };
+
+  const fetchSavedTabs = async () => {
+    setLoadModalLoading(true);
+    try {
+      const response = await axios.get(endpoints.tabs.search, {
+        userId: user._id,
+        page: page + 1, // API expects 1-based page numbers
+        length: rowsPerPage
+      });
+
+      const { data, total } = response.data;
+      setSavedTabs(data || []);
+      setTotalCount(total || 0);
+    } catch (error) {
+      console.error('Error fetching saved tabs:', error);
+      toast.error('Failed to load saved tabs');
+      setSavedTabs([]);
+      setTotalCount(0);
+    } finally {
+      setLoadModalLoading(false);
+    }
+  };
+
+  const handleSelectTab = (tabId) => {
+    setSelectedTabsToLoad(prev => {
+      if (prev.includes(tabId)) {
+        return prev.filter(id => id !== tabId);
+      } else {
+        return [...prev, tabId];
+      }
+    });
+  };
+
+  const handleSelectAllTabs = (event) => {
+    if (event.target.checked) {
+      setSelectedTabsToLoad(savedTabs.items.map(tab => tab._id || tab.id));
+    } else {
+      setSelectedTabsToLoad([]);
+    }
+  };
+
+  const handleLoadSelectedTabs = async () => {
+    if (selectedTabsToLoad.length === 0) {
+      toast.warning('Please select at least one tab to load');
+      return;
+    }
+
+    try {
+      setLoadModalLoading(true);
+      
+      // Filter selected tabs from savedTabs
+      const tabsToLoad = savedTabs.items.filter(tab => 
+        selectedTabsToLoad.includes(tab._id || tab.id)
+      );
+
+      // Add loaded tabs to existing tabs
+      const newTabs = tabsToLoad.map((savedTab, index) => {
+        const content = savedTab.content || {};
+        const inputData = content.input_data || {};
+        
+        return {
+          id: tabCounter + index,
+          name: savedTab.title || `Loaded Tab ${tabCounter + index}`,
+          saved: true,
+          apiId: savedTab._id || savedTab.id,
+          result: content.output_data || null,
+          loading: false,
+          locationData: inputData.location_data || null,
+          inputData: inputData
+        };
+      });
+
+      // Add new tabs to existing tabs
+      setTabs(prev => [...prev, ...newTabs]);
+      setTabCounter(prev => prev + newTabs.length);
+
+      // Switch to the first loaded tab
+      if (newTabs.length > 0) {
+        const newActiveTab = tabs.length; // Index of first new tab
+        setActiveTab(newActiveTab);
+        
+        // Populate form with the first loaded tab's data
+        const firstLoadedTab = newTabs[0];
+        if (firstLoadedTab.inputData) {
+          const { setValue } = methods;
+          Object.keys(firstLoadedTab.inputData).forEach(key => {
+            if (key !== 'location_data') {
+              setValue(key, firstLoadedTab.inputData[key]);
+            }
+          });
+        }
+      }
+
+      setLoadModalOpen(false);
+      setSelectedTabsToLoad([]);
+      toast.success(`Successfully loaded ${newTabs.length} tab${newTabs.length > 1 ? 's' : ''}`);
+    } catch (error) {
+      console.error('Error loading tabs:', error);
+      toast.error('Failed to load selected tabs');
+    } finally {
+      setLoadModalLoading(false);
+    }
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Effect to refetch tabs when page or rowsPerPage changes
+  React.useEffect(() => {
+    if (loadModalOpen && user?._id) {
+      fetchSavedTabs();
+    }
+  }, [page, rowsPerPage, loadModalOpen, user?._id]);
+
   const handleLoadTestData = () => {
     // Mock test data
     const testData = {
@@ -1427,12 +1577,10 @@ const onSubmit = async (formData) => {
     console.log('Sending POST payload:', payload);
 
     // POST request to n8n webhook using axios
-    const response = await fetch(endpoints.simulation.event, {
-      method: 'POST',
+    const response = await axios.post(endpoints.simulation.event, payload, {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
     });
 
     console.log('API Response:', response.data);
@@ -2086,7 +2234,7 @@ const onSubmit = async (formData) => {
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                   <Button
                     variant="outlined"
-                    onClick={loadTabsFromAPI}
+                    onClick={handleLoadFromDatabase}
                     startIcon={<Iconify icon="eva:cloud-download-outline" />}
                     color="info"
                     disabled={!user?._id}
@@ -3939,6 +4087,130 @@ const onSubmit = async (formData) => {
           <Button onClick={confirmDeleteTab} color="error" variant="contained">
             Delete
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Load from Database Dialog */}
+      <Dialog 
+        open={loadModalOpen} 
+        onClose={() => setLoadModalOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Typography variant="h6">Load Saved Tabs</Typography>
+            <IconButton onClick={() => setLoadModalOpen(false)}>
+              <Iconify icon="eva:close-fill" />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          {loadModalLoading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+              <CircularProgress />
+            </Box>
+          ) : savedTabs.items.length === 0 ? (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+              <Typography variant="body1" color="text.secondary">
+                No saved tabs found
+              </Typography>
+            </Box>
+          ) : (
+            <>
+              <TableContainer component={Paper} variant="outlined">
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={selectedTabsToLoad.length === savedTabs.items.length}
+                          indeterminate={
+                            selectedTabsToLoad.length > 0 && 
+                            selectedTabsToLoad.length < savedTabs.items.length
+                          }
+                          onChange={handleSelectAllTabs}
+                        />
+                      </TableCell>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Number of Days</TableCell>
+                      <TableCell>Created Date</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {console.log('Saved Tabs:', savedTabs) /* Debugging line */}
+                    {savedTabs.items.map((tab) => {
+                      const tabId = tab._id || tab.id;
+                      const content = tab.content || {};
+                      const inputData = content.input_data || {};
+                      const numberOfDays = inputData.number_of_days || 'N/A';
+                      const createdDate = content.created_at 
+                        ? new Date(content.created_at).toLocaleDateString()
+                        : 'N/A';
+                      
+                      return (
+                        <TableRow 
+                          key={tabId}
+                          hover
+                          selected={selectedTabsToLoad.includes(tabId)}
+                        >
+                          <TableCell padding="checkbox">
+                            <Checkbox
+                              checked={selectedTabsToLoad.includes(tabId)}
+                              onChange={() => handleSelectTab(tabId)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="subtitle2">
+                              {tab.title || 'Untitled Tab'}
+                            </Typography>
+                            {inputData.event_name && (
+                              <Typography variant="body2" color="text.secondary">
+                                {inputData.event_name}
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {numberOfDays}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {createdDate}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              
+              <TablePagination
+                component="div"
+                count={totalCount}
+                page={page}
+                onPageChange={handleChangePage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                rowsPerPageOptions={[5, 10, 25, 50]}
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLoadModalOpen(false)}>
+            Cancel
+          </Button>
+          <LoadingButton
+            onClick={handleLoadSelectedTabs}
+            variant="contained"
+            disabled={selectedTabsToLoad.length === 0}
+            loading={loadModalLoading}
+          >
+            Load Selected ({selectedTabsToLoad.length})
+          </LoadingButton>
         </DialogActions>
       </Dialog>
     </DashboardContent>

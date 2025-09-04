@@ -84,6 +84,7 @@ export const endpoints = {
   },
   tabs: {
     list: (userId) => `/tabs?userId=${userId}`,
+    search: '/tabs/search',
     create: '/tabs',
     update: (id) => `/tabs/${id}`,
     delete: (id) => `/tabs/${id}`,
