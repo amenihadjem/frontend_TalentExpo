@@ -58,6 +58,11 @@ export const navData = [
           // { title: 'CVs', path: paths.dashboard.user.root },
         ],
       },
+      {
+        title: 'Simulate Events',
+        path: paths.dashboard.event.list,
+        icon: ICONS.analytics,
+      }
       // {
       //   title: 'Users',
       //   path: paths.dashboard.users.root,

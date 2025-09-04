@@ -69,7 +69,9 @@ export const paths = {
         edit: `${ROOTS.DASHBOARD}/user/${MOCK_ID}/edit`,
       },
     },
-
+    event: {
+      list: `${ROOTS.DASHBOARD}/event/list`,
+    },
     users: {
       root: `${ROOTS.DASHBOARD}/users`,
       new: `${ROOTS.DASHBOARD}/users/new`,

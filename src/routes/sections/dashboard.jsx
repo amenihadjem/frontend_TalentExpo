@@ -40,6 +40,8 @@ const AccountNotificationsPage = lazy(
 const AccountChangePasswordPage = lazy(
   () => import('src/pages/dashboard/user/account/change-password')
 );
+// event
+const EventListPage = lazy(() => import('src/pages/dashboard/event/list'));
 
 // ----------------------------------------------------------------------
 
@@ -112,6 +114,7 @@ export const dashboardRoutes = [
           },
         ],
       },
+      { path: 'event/list', element: <EventListPage /> },
       { element: <OverviewAnalyticsPage />, index: true },
     ],
   },
