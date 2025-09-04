@@ -106,7 +106,7 @@ export function AnalyticsTopSkillsFromCVs({
       ) : (
         <Chart
           type="bar"
-          series={chartData.series}
+          series={chartData?.series}
           options={chartOptions}
           slotProps={{ loading: { p: 2.5 } }}
           sx={{ pl: 1, py: 2.5, pr: 2.5, height: 550 }}
