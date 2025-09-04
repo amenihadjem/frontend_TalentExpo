@@ -82,6 +82,15 @@ export const endpoints = {
     cvUploadsWeekly: '/analytics/cv/uploaded-cvs/weekly',
     cvProgress: '/cv-progress',
   },
+  tabs: {
+    list: (userId) => `/tabs?userId=${userId}`,
+    create: '/tabs',
+    update: (id) => `/tabs/${id}`,
+    delete: (id) => `/tabs/${id}`,
+  },
+  simulation: {
+    event: 'https://n8n.talentexpo.eu/webhook/simulate-event',
+  },
   // mail: {
   //   list: '/api/mail/list',
   //   details: '/api/mail/details',

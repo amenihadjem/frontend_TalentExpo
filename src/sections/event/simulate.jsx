@@ -29,7 +29,8 @@ import { DashboardContent } from 'src/layouts/dashboard';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 import { paths } from 'src/routes/paths';
 import EventLocationPicker from 'src/components/map/EventLocationPicker';
-import axios from 'axios';
+import { useAuthContext } from 'src/auth/hooks';
+import axios, { endpoints } from 'src/lib/axios';
 
 // ----------------------------------------------------------------------
 
@@ -116,6 +117,10 @@ export default function SimulatePage() {
   // Marketing modal states
   const [marketingModalOpen, setMarketingModalOpen] = useState(false);
   const [selectedMarketingChannel, setSelectedMarketingChannel] = useState(null);
+
+  // Auth context for user information
+  const user = useAuthContext()?.user?.data;
+  console.log('Authenticated user:', user);
 
   // Form methods for current tab
   const methods = useForm({
@@ -246,6 +251,136 @@ export default function SimulatePage() {
     getValues,
     formState: { isSubmitting },
   } = methods;
+
+  // Load saved tabs from API
+  const loadTabsFromAPI = async () => {
+    // Check if user is authenticated
+    if (!user || !user._id) {
+      toast.warning('Please log in to load saved tabs');
+      return;
+    }
+
+    try {
+      // Make request with user ID as query parameter to filter tabs by user
+      const response = await axios.get(endpoints.tabs.list(user._id), {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('Loaded tabs from API for user:', user._id, response.data);
+
+      if (response.data && response.data.length > 0) {
+        // Filter tabs that belong to the current user and are of type "event"
+        const userTabs = response.data.filter(tab => 
+          tab.type === "event" && 
+          (tab.content?.userId === user._id || tab.content?.user_id === user._id)
+        );
+        
+        if (userTabs.length === 0) {
+          toast.info('No saved event tabs found for your account');
+          return;
+        }
+
+        // Check for existing tabs with same API IDs to prevent duplicates
+        const existingApiIds = tabs.map(tab => tab.apiId).filter(Boolean);
+        const newTabs = userTabs.filter(apiTab => !existingApiIds.includes(apiTab.id || apiTab._id));
+        
+        if (newTabs.length === 0) {
+          toast.info('All your saved tabs are already loaded');
+          return;
+        }
+
+        const loadedTabs = newTabs.map((apiTab, index) => ({
+          id: tabCounter + index, // Use current counter to avoid ID conflicts
+          name: apiTab.title || `Loaded Tab ${index + 1}`,
+          saved: true,
+          result: apiTab.content?.output_data,
+          loading: false,
+          locationData: apiTab.content?.input_data?.location_data,
+          apiId: apiTab.id || apiTab._id,
+          inputData: apiTab.content?.input_data, // Store the loaded input data
+        }));
+
+        // Add loaded tabs to existing tabs instead of replacing them
+        setTabs(prevTabs => [...prevTabs, ...loadedTabs]);
+        setTabCounter(prev => prev + loadedTabs.length);
+        
+        // Switch to the first loaded tab and load its data
+        const newActiveTabIndex = tabs.length; // Index of first loaded tab
+        setActiveTab(newActiveTabIndex);
+        
+        if (loadedTabs[0]?.inputData) {
+          const firstTabData = loadedTabs[0].inputData;
+          
+          // Reset form with loaded data
+          reset({
+            event_name: firstTabData.event_name || '',
+            event_description: firstTabData.event_description || '',
+            city: firstTabData.city || '',
+            number_of_days: firstTabData.number_of_days || 1,
+            days: firstTabData.days || [
+              {
+                event_date: '',
+                start_time: '',
+                end_time: '',
+                venue_name: '',
+                venue_capacity: '',
+                primary_sector: '',
+                speakers: '',
+                activities: '',
+                additional_info: '',
+              }
+            ],
+            marketing_strategy: firstTabData.marketing_strategy || {
+              facebook: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              instagram: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              linkedin: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              x_twitter: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              youtube: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              google_ads: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              email_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              whatsapp_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              offline_publicity: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+            },
+          });
+        }
+
+        toast.success(`Loaded ${loadedTabs.length} saved tab${loadedTabs.length > 1 ? 's' : ''} from database`);
+      } else {
+        toast.info('No saved tabs found for your account');
+      }
+    } catch (error) {
+      console.error('Error loading tabs from API:', error);
+      
+      // Don't show error if it's just that no tabs exist yet
+      if (error.response?.status !== 404) {
+        let errorMessage = 'Failed to load saved tabs';
+        
+        if (error.code === 'ERR_NETWORK') {
+          errorMessage = 'Network connection failed. Working in offline mode.';
+        } else if (error.response) {
+          const status = error.response.status;
+          if (status === 401) {
+            errorMessage = 'Authentication failed. Please login again.';
+          } else if (status === 403) {
+            errorMessage = 'Access denied. You do not have permission to load tabs.';
+          } else if (status >= 500) {
+            errorMessage = 'Server error. Working in offline mode.';
+          }
+        }
+        
+        toast.warning(errorMessage);
+      }
+    }
+  };
+
+  // Load tabs when component mounts and user is available
+  React.useEffect(() => {
+    if (user?._id) {
+      loadTabsFromAPI();
+    }
+  }, [user?._id]);
 
   // Watch number of days to dynamically update days array
   const numberOfDays = watch('number_of_days');
@@ -592,7 +727,47 @@ export default function SimulatePage() {
   // Handlers
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-    reset(); // Reset form when changing tabs
+    
+    // Load data for the selected tab if it has saved input data
+    const selectedTab = tabs[newValue];
+    if (selectedTab?.inputData) {
+      const tabData = selectedTab.inputData;
+      
+      // Reset form with saved data
+      reset({
+        event_name: tabData.event_name || '',
+        event_description: tabData.event_description || '',
+        city: tabData.city || '',
+        number_of_days: tabData.number_of_days || 1,
+        days: tabData.days || [
+          {
+            event_date: '',
+            start_time: '',
+            end_time: '',
+            venue_name: '',
+            venue_capacity: '',
+            primary_sector: '',
+            speakers: '',
+            activities: '',
+            additional_info: '',
+          }
+        ],
+        marketing_strategy: tabData.marketing_strategy || {
+          facebook: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          instagram: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          linkedin: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          x_twitter: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          youtube: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          google_ads: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          email_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          whatsapp_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          offline_publicity: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+        },
+      });
+    } else {
+      // Reset form with empty data for new tabs
+      reset();
+    }
   };
 
   const handleAddTab = () => {
@@ -641,6 +816,12 @@ export default function SimulatePage() {
   };
 
   const handleSaveTab = () => {
+    // Check if user is authenticated
+    if (!user || !user._id) {
+      toast.error('Please log in to save tabs');
+      return;
+    }
+
     // Basic validation before saving
     const currentData = getValues();
     const errors = [];
@@ -660,21 +841,122 @@ export default function SimulatePage() {
     setSaveDialogOpen(true);
   };
 
-  const confirmSaveTab = () => {
+  const confirmSaveTab = async () => {
     if (!saveTabName.trim()) {
       toast.error('Tab name cannot be empty');
       return;
     }
-    
-    const updatedTabs = tabs.map((tab, index) =>
-      index === activeTab
-        ? { ...tab, name: saveTabName, saved: true }
-        : tab
-    );
-    setTabs(updatedTabs);
-    setSaveDialogOpen(false);
-    setSaveTabName('');
-    toast.success(`Tab "${saveTabName}" saved successfully!`);
+
+    // Check if user is authenticated
+    if (!user || !user._id) {
+      toast.error('Please log in to save tabs');
+      return;
+    }
+
+    try {
+      // Get current form data
+      const currentData = getValues();
+      const currentTab = tabs[activeTab];
+      
+      // Prepare the data to save to API
+      const tabDataToSave = {
+        title: saveTabName,
+        content: {
+          userId: user._id, // Include user ID for association
+          user_id: user._id, // Include both formats for compatibility
+          input_data: {
+            event_name: currentData.event_name,
+            event_description: currentData.event_description,
+            city: currentData.city,
+            number_of_days: currentData.number_of_days,
+            days: currentData.days,
+            marketing_strategy: currentData.marketing_strategy,
+            location_data: currentTab.locationData
+          },
+          output_data: currentTab.result,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        type: "event"
+      };
+
+      // Show loading state
+      toast.info('Saving tab to database...');
+
+      // Determine if this is an update or create operation
+      const isUpdate = currentTab.apiId;
+      const apiUrl = isUpdate 
+        ? endpoints.tabs.update(currentTab.apiId)
+        : endpoints.tabs.create;
+      
+      const method = isUpdate ? 'put' : 'post';
+
+      // Save to API
+      const response = await axios[method](apiUrl, tabDataToSave, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log(`Tab ${isUpdate ? 'updated' : 'saved'} to API:`, response.data);
+
+      // Update local state with saved status and API response
+      const updatedTabs = tabs.map((tab, index) =>
+        index === activeTab
+          ? { 
+              ...tab, 
+              name: saveTabName, 
+              saved: true,
+              apiId: response.data.id || response.data._id, // Store the API ID for future updates
+              inputData: tabDataToSave.content.input_data // Store input data locally for tab switching
+            }
+          : tab
+      );
+      setTabs(updatedTabs);
+      setSaveDialogOpen(false);
+      setSaveTabName('');
+      toast.success(`Tab "${saveTabName}" ${isUpdate ? 'updated' : 'saved'} successfully to database!`);
+
+    } catch (error) {
+      console.error('Error saving tab to API:', error);
+      
+      let errorMessage = 'Failed to save tab to database';
+      
+      if (error.code === 'ERR_NETWORK') {
+        errorMessage = 'Network connection failed. Tab saved locally only.';
+      } else if (error.response) {
+        const status = error.response.status;
+        if (status === 400) {
+          errorMessage = 'Invalid data format. Please check your inputs.';
+        } else if (status === 401) {
+          errorMessage = 'Authentication failed. Please check your credentials.';
+        } else if (status === 403) {
+          errorMessage = 'Access denied. You do not have permission to save.';
+        } else if (status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else {
+          errorMessage = `Server error (${status}): ${error.response.data?.message || error.response.statusText}`;
+        }
+      }
+      
+      // Still save locally even if API fails
+      const updatedTabs = tabs.map((tab, index) =>
+        index === activeTab
+          ? { 
+              ...tab, 
+              name: saveTabName, 
+              saved: true,
+              inputData: tabDataToSave.content.input_data // Store input data locally even when API fails
+            }
+          : tab
+      );
+      setTabs(updatedTabs);
+      setSaveDialogOpen(false);
+      setSaveTabName('');
+      
+      toast.error(errorMessage);
+      toast.warning('Tab saved locally only. Please try saving again when connection is restored.');
+    }
   };
 
   const handleLocationSelect = (locationData) => {
@@ -1145,10 +1427,12 @@ const onSubmit = async (formData) => {
     console.log('Sending POST payload:', payload);
 
     // POST request to n8n webhook using axios
-    const response = await axios.post('https://n8n.talentexpo.eu/webhook/simulate-event', payload, {
+    const response = await fetch(endpoints.simulation.event, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify(payload),
     });
 
     console.log('API Response:', response.data);
@@ -1431,6 +1715,24 @@ const onSubmit = async (formData) => {
         ]}
         sx={{ mb: 3 }}
       />
+
+      {/* User Status Indicator */}
+      {user?._id && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <Typography variant="body2">
+            Logged in as: <strong>{user.full_name || user.email || user.name || `User ${user._id}`}</strong>
+            {' '}- Your tabs will be saved to your account
+          </Typography>
+        </Alert>
+      )}
+      
+      {!user?._id && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          <Typography variant="body2">
+            Please log in to save and load your tabs from the database
+          </Typography>
+        </Alert>
+      )}
 
       <Card sx={{ p: 3 }}>
         {/* Tabs Header */}
@@ -1784,9 +2086,21 @@ const onSubmit = async (formData) => {
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                   <Button
                     variant="outlined"
+                    onClick={loadTabsFromAPI}
+                    startIcon={<Iconify icon="eva:cloud-download-outline" />}
+                    color="info"
+                    disabled={!user?._id}
+                    title={!user?._id ? 'Please log in to load saved tabs' : 'Load your saved tabs from database'}
+                  >
+                    Load from Database
+                  </Button>
+                  
+                  <Button
+                    variant="outlined"
                     onClick={handleSaveTab}
                     startIcon={<Iconify icon="eva:save-outline" />}
-                    disabled={currentTab.saved}
+                    disabled={currentTab.saved || !user?._id}
+                    title={!user?._id ? 'Please log in to save tabs' : currentTab.saved ? 'Tab is already saved' : 'Save current tab to database'}
                   >
                     {currentTab.saved ? 'Saved' : 'Save Tab'}
                   </Button>
