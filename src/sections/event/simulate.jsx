@@ -2071,9 +2071,11 @@ const onSubmit = async (formData) => {
                                           <Typography variant="body2" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
                                             {currentTab.result.data.data_visualizations.registration_trend.data.series[0].data[index]}
                                           </Typography>
-                                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                            / {currentTab.result.data.data_visualizations.registration_trend.data.series[1].data[index]} (conservative)
-                                          </Typography>
+                                          {currentTab.result.data.data_visualizations.registration_trend.data?.series[1]?.data[index] && (
+                                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                              / {currentTab.result.data.data_visualizations.registration_trend.data.series[1].data[index]} (conservative)
+                                            </Typography>
+                                          )}
                                         </Box>
                                       </Box>
                                     ))}
@@ -2137,19 +2139,23 @@ const onSubmit = async (formData) => {
                                           <Typography variant="body2" sx={{ color: '#1976d2', fontWeight: 'bold', minWidth: 60 }}>
                                             {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[0].data[index]} attendees
                                           </Typography>
-                                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                            (Capacity: {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1].data[index]})
-                                          </Typography>
-                                          <Typography variant="caption" sx={{ 
-                                            color: 'success.main', 
-                                            fontWeight: 'bold',
-                                            bgcolor: 'success.lighter',
-                                            px: 1,
-                                            borderRadius: 1
-                                          }}>
-                                            {Math.round((currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[0].data[index] / 
-                                            currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1].data[index]) * 100)}% utilized
-                                          </Typography>
+                                          {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1]?.data[index] && (
+                                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                              (Capacity: {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1].data[index] })
+                                            </Typography>
+                                          )}
+                                          {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1]?.data[index] && (
+                                            <Typography variant="caption" sx={{ 
+                                              color: 'success.main', 
+                                              fontWeight: 'bold',
+                                              bgcolor: 'success.lighter',
+                                              px: 1,
+                                              borderRadius: 1
+                                            }}>
+                                              {Math.round((currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[0].data[index] / 
+                                              currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1].data[index]) * 100)}% utilized
+                                            </Typography>
+                                          )}
                                         </Box>
                                       </Box>
                                     ))}
