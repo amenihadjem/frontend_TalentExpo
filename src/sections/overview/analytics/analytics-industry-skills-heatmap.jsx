@@ -29,7 +29,7 @@ export default function IndustrySkillsHeatmap() {
         const topSkills = Object.entries(skillCounts)
           .sort(([, a], [, b]) => b - a)
           .slice(0, TOP_SKILLS_LIMIT)
-          .map(([skill]) => skill);
+          ?.map(([skill]) => skill);
 
         setSkills(topSkills);
         setData(heatmap);
@@ -65,7 +65,7 @@ export default function IndustrySkillsHeatmap() {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: `150px repeat(${data.length}, 1fr)`,
+            gridTemplateColumns: `150px repeat(${data?.length}, 1fr)`,
             gap: 1,
             overflowX: 'auto',
           }}
@@ -74,7 +74,7 @@ export default function IndustrySkillsHeatmap() {
           <Box />
 
           {/* Industry headers */}
-          {data.map((industry) => (
+          {data?.map((industry) => (
             <Box
               key={industry.industry}
               sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '0.875rem' }}
@@ -84,10 +84,10 @@ export default function IndustrySkillsHeatmap() {
           ))}
 
           {/* Rows for each skill */}
-          {skills.map((skill) => (
+          {skills?.map((skill) => (
             <React.Fragment key={skill}>
               <Box sx={{ fontWeight: 500, fontSize: '0.9rem' }}>{skill}</Box>
-              {data.map((industry) => {
+              {data?.map((industry) => {
                 const skillObj = industry.top_skills.find((s) => s.skill === skill);
                 const value = skillObj ? skillObj.count : 0;
                 return (
