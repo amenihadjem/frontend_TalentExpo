@@ -12,19 +12,21 @@ import { createShadowColor } from '../core/custom-shadows';
  */
 
 export function updateCoreWithSettings(theme, settingsState) {
-  const {
-    direction,
-    fontFamily,
-    contrast = 'default',
-    primaryColor = 'default',
-  } = settingsState ?? {};
+  // Handle case when settingsState is undefined or null
+  if (!settingsState || typeof settingsState !== 'object') {
+    return theme;
+  }
+
+  const { direction, fontFamily, contrast = 'default', primaryColor = 'default' } = settingsState;
 
   const isDefaultContrast = contrast === 'default';
   const isDefaultPrimaryColor = primaryColor === 'default';
 
   const lightPalette = theme.colorSchemes?.light.palette;
 
-  const updatedPrimaryColor = createPaletteChannel(primaryColorPresets[primaryColor]);
+  // Ensure we have a valid primary color preset
+  const primaryColorData = primaryColorPresets[primaryColor] || primaryColorPresets.default;
+  const updatedPrimaryColor = primaryColorData ? createPaletteChannel(primaryColorData) : null;
   // const updatedSecondaryColor = createPaletteChannel(SECONDARY_COLORS[primaryColor!]);
 
   const updateColorScheme = (scheme) => {
@@ -32,10 +34,11 @@ export function updateCoreWithSettings(theme, settingsState) {
 
     const updatedPalette = {
       ...colorSchemes?.palette,
-      ...(!isDefaultPrimaryColor && {
-        primary: updatedPrimaryColor,
-        // secondary: updatedSecondaryColor,
-      }),
+      ...(!isDefaultPrimaryColor &&
+        updatedPrimaryColor && {
+          primary: updatedPrimaryColor,
+          // secondary: updatedSecondaryColor,
+        }),
       ...(scheme === 'light' && {
         background: {
           ...lightPalette?.background,

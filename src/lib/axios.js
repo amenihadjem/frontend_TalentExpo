@@ -61,6 +61,11 @@ export const endpoints = {
     // details: '/api/candidate/details',
     // search: '/api/candidate/search',
   },
+  tabs: {
+    save: '/tabs',
+    search: '/tabs/search',
+    delete: (id) => `/tabs/${id}`,
+  },
   analytics: {
     map: '/v2/opensearch/agg-by-country',
     stats: '/v2/opensearch/stats',
