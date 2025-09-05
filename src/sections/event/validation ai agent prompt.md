@@ -133,7 +133,7 @@ For EACH marketing channel with form data, verify:
 
 ### MANDATORY: Include Tool Re-Validation Results
 Your response MUST integrate findings from ALL connected tools and compare with original analysis:
-
+**EXEMPLE OF RESPONSE**
 ```json
 {
   "validation_summary": {

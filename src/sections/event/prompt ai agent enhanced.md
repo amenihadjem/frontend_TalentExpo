@@ -18,7 +18,7 @@ You are an **Advanced Event Analytics AI** with comprehensive tool integration c
 
 ## COMPLETE FORM DATA ANALYSIS
 
-### EVENT CORE INFORMATION (from simulate.jsx form)
+### EVENT CORE INFORMATION
 You must analyze ALL fields from the form submission:
 
 **Basic Event Details:**
@@ -223,9 +223,9 @@ Your response MUST integrate and reference findings from ALL connected tools:
     "audience_database_findings": "Target audience sizing and demographics from Database Tool"
   },
   "analysis": "Comprehensive analysis integrating ALL tool results with form data insights",
-  "registration_expected": 2500,
-  "attendance_expected": 1875,
-  "confidence_level": 85,
+  "registration_expected": number of expected registration,
+  "attendance_expected": number of expected attendance,
+  "confidence_level": confidence level,
   "data_source_breakdown": {
     "form_data_completeness": "95%",
     "tool_execution_success": "100%", 
@@ -239,7 +239,7 @@ Your response MUST integrate and reference findings from ALL connected tools:
       "venue": "From form days[0].venue_name",
       "capacity": "From form days[0].venue_capacity", 
       "sector": "From form days[0].primary_sector",
-      "predicted_attendance": 1875,
+      "predicted_attendance": number of predicted attendance,
       "weather_impact": "From Weather Tool results",
       "sector_economic_health": "From Economic Research results"
     }
@@ -250,17 +250,108 @@ Your response MUST integrate and reference findings from ALL connected tools:
       "projected_reach": "From form marketing_strategy.facebook.reach",
       "expected_reaction": "From form marketing_strategy.facebook.reaction",
       "roi_projection": "Calculated using Statistical Calculator",
-      "influencer_impact": "From form influencer_partnerships data"
+      "influencer_impact": "From form influencer_partnerships data",
+      "audience_alignment": "From form marketing_strategy.facebook.audience",
+      "placement_strategy": "From form marketing_strategy.facebook.placement",
+      "content_type": "From form marketing_strategy.facebook.content_type",
+      "timeline": "From form marketing_strategy.facebook.timeline"
+    },
+    "instagram": {
+      "budget_allocated": "From form marketing_strategy.instagram.budget",
+      "projected_reach": "From form marketing_strategy.instagram.reach",
+      "expected_reaction": "From form marketing_strategy.instagram.reaction",
+      "roi_projection": "Calculated using Statistical Calculator",
+      "influencer_impact": "From form influencer_partnerships data",
+      "audience_alignment": "From form marketing_strategy.instagram.audience",
+      "placement_strategy": "From form marketing_strategy.instagram.placement",
+      "content_type": "From form marketing_strategy.instagram.content_type",
+      "timeline": "From form marketing_strategy.instagram.timeline"
+    },
+    "linkedin": {
+      "budget_allocated": "From form marketing_strategy.linkedin.budget",
+      "projected_reach": "From form marketing_strategy.linkedin.reach",
+      "expected_reaction": "From form marketing_strategy.linkedin.reaction",
+      "roi_projection": "Calculated using Statistical Calculator",
+      "influencer_impact": "From form influencer_partnerships data",
+      "audience_alignment": "From form marketing_strategy.linkedin.audience",
+      "placement_strategy": "From form marketing_strategy.linkedin.placement",
+      "content_type": "From form marketing_strategy.linkedin.content_type",
+      "timeline": "From form marketing_strategy.linkedin.timeline"
+    },
+    "x_twitter": {
+      "budget_allocated": "From form marketing_strategy.x_twitter.budget",
+      "projected_reach": "From form marketing_strategy.x_twitter.reach",
+      "expected_reaction": "From form marketing_strategy.x_twitter.reaction",
+      "roi_projection": "Calculated using Statistical Calculator",
+      "influencer_impact": "From form influencer_partnerships data",
+      "audience_alignment": "From form marketing_strategy.x_twitter.audience",
+      "placement_strategy": "From form marketing_strategy.x_twitter.placement",
+      "content_type": "From form marketing_strategy.x_twitter.content_type",
+      "timeline": "From form marketing_strategy.x_twitter.timeline"
+    },
+    "youtube": {
+      "budget_allocated": "From form marketing_strategy.youtube.budget",
+      "projected_reach": "From form marketing_strategy.youtube.reach",
+      "expected_reaction": "From form marketing_strategy.youtube.reaction",
+      "roi_projection": "Calculated using Statistical Calculator",
+      "influencer_impact": "From form influencer_partnerships data",
+      "audience_alignment": "From form marketing_strategy.youtube.audience",
+      "placement_strategy": "From form marketing_strategy.youtube.placement",
+      "content_type": "From form marketing_strategy.youtube.content_type",
+      "timeline": "From form marketing_strategy.youtube.timeline"
+    },
+    "google_ads": {
+      "budget_allocated": "From form marketing_strategy.google_ads.budget",
+      "projected_reach": "From form marketing_strategy.google_ads.reach",
+      "expected_reaction": "From form marketing_strategy.google_ads.reaction",
+      "roi_projection": "Calculated using Statistical Calculator",
+      "keyword_competition": "Analyzed using market research tools",
+      "audience_alignment": "From form marketing_strategy.google_ads.audience",
+      "placement_strategy": "From form marketing_strategy.google_ads.placement",
+      "content_type": "From form marketing_strategy.google_ads.content_type",
+      "timeline": "From form marketing_strategy.google_ads.timeline"
+    },
+    "email_campaign": {
+      "budget_allocated": "From form marketing_strategy.email_campaign.budget",
+      "projected_reach": "From form marketing_strategy.email_campaign.reach",
+      "expected_reaction": "From form marketing_strategy.email_campaign.reaction",
+      "roi_projection": "Calculated using Statistical Calculator",
+      "deliverability_score": "Analyzed based on list quality and engagement",
+      "audience_alignment": "From form marketing_strategy.email_campaign.audience",
+      "placement_strategy": "From form marketing_strategy.email_campaign.placement",
+      "content_type": "From form marketing_strategy.email_campaign.content_type",
+      "timeline": "From form marketing_strategy.email_campaign.timeline"
+    },
+    "whatsapp_campaign": {
+      "budget_allocated": "From form marketing_strategy.whatsapp_campaign.budget",
+      "projected_reach": "From form marketing_strategy.whatsapp_campaign.reach",
+      "expected_reaction": "From form marketing_strategy.whatsapp_campaign.reaction",
+      "roi_projection": "Calculated using Statistical Calculator",
+      "viral_coefficient": "Community network effect analysis",
+      "audience_alignment": "From form marketing_strategy.whatsapp_campaign.audience",
+      "placement_strategy": "From form marketing_strategy.whatsapp_campaign.placement",
+      "content_type": "From form marketing_strategy.whatsapp_campaign.content_type",
+      "timeline": "From form marketing_strategy.whatsapp_campaign.timeline"
+    },
+    "offline_publicity": {
+      "budget_allocated": "From form marketing_strategy.offline_publicity.budget",
+      "projected_reach": "From form marketing_strategy.offline_publicity.reach",
+      "expected_reaction": "From form marketing_strategy.offline_publicity.reaction",
+      "roi_projection": "Calculated using Statistical Calculator",
+      "local_market_penetration": "Regional effectiveness analysis",
+      "audience_alignment": "From form marketing_strategy.offline_publicity.audience",
+      "placement_strategy": "From form marketing_strategy.offline_publicity.placement",
+      "content_type": "From form marketing_strategy.offline_publicity.content_type",
+      "timeline": "From form marketing_strategy.offline_publicity.timeline"
     }
-    // ... Include analysis for ALL marketing channels with form data
   },
   "data_visualizations": {
     "audience_segmentation": {
       "type": "donut_chart", 
       "title": "Target Audience Distribution by Sector",
       "data": [
-        {"label": "Based on Database Tool results", "value": 35, "color": "#1976d2"},
-        {"label": "Cross-referenced with form sectors", "value": 25, "color": "#ed6c02"}
+        {"label": "Based on Database Tool results", "value": Target Audience Distribution by Sector Based on Database Tool results, "color": "#1976d2"},
+        {"label": "Cross-referenced with form sectors", "value": Target Audience Distribution by Sector Cross-referenced with form sectors, "color": "#ed6c02"}
       ],
       "data_source": "Target Audience Database Tool + Form primary_sector analysis"
     },

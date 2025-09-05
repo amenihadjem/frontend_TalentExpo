@@ -21,6 +21,15 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Alert from '@mui/material/Alert';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TablePagination from '@mui/material/TablePagination';
+import Checkbox from '@mui/material/Checkbox';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
@@ -29,7 +38,8 @@ import { DashboardContent } from 'src/layouts/dashboard';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 import { paths } from 'src/routes/paths';
 import EventLocationPicker from 'src/components/map/EventLocationPicker';
-import axios from 'axios';
+import { useAuthContext } from 'src/auth/hooks';
+import axios, { endpoints } from 'src/lib/axios';
 
 // ----------------------------------------------------------------------
 
@@ -108,6 +118,17 @@ export default function SimulatePage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [tabToDelete, setTabToDelete] = useState(null);
   const [saveTabName, setSaveTabName] = useState('');
+  const [isSavingTab, setIsSavingTab] = useState(false);
+  
+  // Load from Database modal states
+  const [loadModalOpen, setLoadModalOpen] = useState(false);
+  const [loadModalLoading, setLoadModalLoading] = useState(false);
+  const [savedTabs, setSavedTabs] = useState([]);
+  const [selectedTabsToLoad, setSelectedTabsToLoad] = useState([]);
+  const [selectedTabsToDelete, setSelectedTabsToDelete] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
   
   // Day modal states
   const [dayModalOpen, setDayModalOpen] = useState(false);
@@ -116,6 +137,10 @@ export default function SimulatePage() {
   // Marketing modal states
   const [marketingModalOpen, setMarketingModalOpen] = useState(false);
   const [selectedMarketingChannel, setSelectedMarketingChannel] = useState(null);
+
+  // Auth context for user information
+  const user = useAuthContext()?.user?.data;
+  console.log('Authenticated user:', user);
 
   // Form methods for current tab
   const methods = useForm({
@@ -246,6 +271,138 @@ export default function SimulatePage() {
     getValues,
     formState: { isSubmitting },
   } = methods;
+
+  // Load saved tabs from API - REPLACED WITH MODAL-BASED LOADING
+  /*
+  const loadTabsFromAPI = async () => {
+    // Check if user is authenticated
+    if (!user || !user._id) {
+      toast.warning('Please log in to load saved tabs');
+      return;
+    }
+
+    try {
+      // Make request with user ID as query parameter to filter tabs by user
+      const response = await axios.get(endpoints.tabs.list(user._id), {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('Loaded tabs from API for user:', user._id, response.data);
+
+      if (response.data && response.data.length > 0) {
+        // Filter tabs that belong to the current user and are of type "event"
+        const userTabs = response.data.filter(tab => 
+          tab.type === "event" && 
+          (tab.content?.userId === user._id || tab.content?.user_id === user._id)
+        );
+        
+        if (userTabs.length === 0) {
+          toast.info('No saved event tabs found for your account');
+          return;
+        }
+
+        // Check for existing tabs with same API IDs to prevent duplicates
+        const existingApiIds = tabs.map(tab => tab.apiId).filter(Boolean);
+        const newTabs = userTabs.filter(apiTab => !existingApiIds.includes(apiTab.id || apiTab._id));
+        
+        if (newTabs.length === 0) {
+          toast.info('All your saved tabs are already loaded');
+          return;
+        }
+
+        const loadedTabs = newTabs.map((apiTab, index) => ({
+          id: tabCounter + index, // Use current counter to avoid ID conflicts
+          name: apiTab.title || `Loaded Tab ${index + 1}`,
+          saved: true,
+          result: apiTab.content?.output_data,
+          loading: false,
+          locationData: apiTab.content?.input_data?.location_data,
+          apiId: apiTab.id || apiTab._id,
+          inputData: apiTab.content?.input_data, // Store the loaded input data
+        }));
+
+        // Add loaded tabs to existing tabs instead of replacing them
+        setTabs(prevTabs => [...prevTabs, ...loadedTabs]);
+        setTabCounter(prev => prev + loadedTabs.length);
+        
+        // Switch to the first loaded tab and load its data
+        const newActiveTabIndex = tabs.length; // Index of first loaded tab
+        setActiveTab(newActiveTabIndex);
+        
+        if (loadedTabs[0]?.inputData) {
+          const firstTabData = loadedTabs[0].inputData;
+          
+          // Reset form with loaded data
+          reset({
+            event_name: firstTabData.event_name || '',
+            event_description: firstTabData.event_description || '',
+            city: firstTabData.city || '',
+            number_of_days: firstTabData.number_of_days || 1,
+            days: firstTabData.days || [
+              {
+                event_date: '',
+                start_time: '',
+                end_time: '',
+                venue_name: '',
+                venue_capacity: '',
+                primary_sector: '',
+                speakers: '',
+                activities: '',
+                additional_info: '',
+              }
+            ],
+            marketing_strategy: firstTabData.marketing_strategy || {
+              facebook: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              instagram: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              linkedin: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              x_twitter: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              youtube: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              google_ads: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              email_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              whatsapp_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              offline_publicity: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+            },
+          });
+        }
+
+        toast.success(`Loaded ${loadedTabs.length} saved tab${loadedTabs.length > 1 ? 's' : ''} from database`);
+      } else {
+        toast.info('No saved tabs found for your account');
+      }
+    } catch (error) {
+      console.error('Error loading tabs from API:', error);
+      
+      // Don't show error if it's just that no tabs exist yet
+      if (error.response?.status !== 404) {
+        let errorMessage = 'Failed to load saved tabs';
+        
+        if (error.code === 'ERR_NETWORK') {
+          errorMessage = 'Network connection failed. Working in offline mode.';
+        } else if (error.response) {
+          const status = error.response.status;
+          if (status === 401) {
+            errorMessage = 'Authentication failed. Please login again.';
+          } else if (status === 403) {
+            errorMessage = 'Access denied. You do not have permission to load tabs.';
+          } else if (status >= 500) {
+            errorMessage = 'Server error. Working in offline mode.';
+          }
+        }
+        
+        toast.warning(errorMessage);
+      }
+    }
+  };
+  */
+
+  // Removed automatic loading - tabs are now loaded manually through the Load from Database modal
+  // React.useEffect(() => {
+  //   if (user?._id) {
+  //     loadTabsFromAPI();
+  //   }
+  // }, [user?._id]);
 
   // Watch number of days to dynamically update days array
   const numberOfDays = watch('number_of_days');
@@ -592,7 +749,47 @@ export default function SimulatePage() {
   // Handlers
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-    reset(); // Reset form when changing tabs
+    
+    // Load data for the selected tab if it has saved input data
+    const selectedTab = tabs[newValue];
+    if (selectedTab?.inputData) {
+      const tabData = selectedTab.inputData;
+      
+      // Reset form with saved data
+      reset({
+        event_name: tabData.event_name || '',
+        event_description: tabData.event_description || '',
+        city: tabData.city || '',
+        number_of_days: tabData.number_of_days || 1,
+        days: tabData.days || [
+          {
+            event_date: '',
+            start_time: '',
+            end_time: '',
+            venue_name: '',
+            venue_capacity: '',
+            primary_sector: '',
+            speakers: '',
+            activities: '',
+            additional_info: '',
+          }
+        ],
+        marketing_strategy: tabData.marketing_strategy || {
+          facebook: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          instagram: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          linkedin: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          x_twitter: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          youtube: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          google_ads: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          email_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          whatsapp_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          offline_publicity: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+        },
+      });
+    } else {
+      // Reset form with empty data for new tabs
+      reset();
+    }
   };
 
   const handleAddTab = () => {
@@ -641,6 +838,12 @@ export default function SimulatePage() {
   };
 
   const handleSaveTab = () => {
+    // Check if user is authenticated
+    if (!user || !user._id) {
+      toast.error('Please log in to save tabs');
+      return;
+    }
+
     // Basic validation before saving
     const currentData = getValues();
     const errors = [];
@@ -660,21 +863,126 @@ export default function SimulatePage() {
     setSaveDialogOpen(true);
   };
 
-  const confirmSaveTab = () => {
+  const confirmSaveTab = async () => {
     if (!saveTabName.trim()) {
       toast.error('Tab name cannot be empty');
       return;
     }
-    
-    const updatedTabs = tabs.map((tab, index) =>
-      index === activeTab
-        ? { ...tab, name: saveTabName, saved: true }
-        : tab
-    );
-    setTabs(updatedTabs);
-    setSaveDialogOpen(false);
-    setSaveTabName('');
-    toast.success(`Tab "${saveTabName}" saved successfully!`);
+
+    // Check if user is authenticated
+    if (!user || !user._id) {
+      toast.error('Please log in to save tabs');
+      return;
+    }
+
+    setIsSavingTab(true); // Start loading state
+
+    try {
+      // Get current form data
+      const currentData = getValues();
+      const currentTab = tabs[activeTab];
+      
+      // Prepare the data to save to API
+      const tabDataToSave = {
+        title: saveTabName,
+        content: {
+          userId: user._id, // Include user ID for association
+          user_id: user._id, // Include both formats for compatibility
+          input_data: {
+            event_name: currentData.event_name,
+            event_description: currentData.event_description,
+            city: currentData.city,
+            number_of_days: currentData.number_of_days,
+            days: currentData.days,
+            marketing_strategy: currentData.marketing_strategy,
+            location_data: currentTab.locationData
+          },
+          output_data: currentTab.result,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        type: "event"
+      };
+
+      // Show loading state
+      toast.info('Saving tab to database...');
+
+      // Determine if this is an update or create operation
+      const isUpdate = currentTab.apiId;
+      const apiUrl = isUpdate 
+        ? endpoints.tabs.update(currentTab.apiId)
+        : endpoints.tabs.create;
+      
+      const method = isUpdate ? 'put' : 'post';
+
+      // Save to API
+      const response = await axios[method](apiUrl, tabDataToSave, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log(`Tab ${isUpdate ? 'updated' : 'saved'} to API:`, response.data);
+
+      // Update local state with saved status and API response
+      const updatedTabs = tabs.map((tab, index) =>
+        index === activeTab
+          ? { 
+              ...tab, 
+              name: saveTabName, 
+              saved: true,
+              apiId: response.data.id || response.data._id, // Store the API ID for future updates
+              inputData: tabDataToSave.content.input_data // Store input data locally for tab switching
+            }
+          : tab
+      );
+      setTabs(updatedTabs);
+      setSaveDialogOpen(false);
+      setSaveTabName('');
+      setIsSavingTab(false); // Reset loading state
+      toast.success(`Tab "${saveTabName}" ${isUpdate ? 'updated' : 'saved'} successfully to database!`);
+
+    } catch (error) {
+      console.error('Error saving tab to API:', error);
+      
+      let errorMessage = 'Failed to save tab to database';
+      
+      if (error.code === 'ERR_NETWORK') {
+        errorMessage = 'Network connection failed. Tab saved locally only.';
+      } else if (error.response) {
+        const status = error.response.status;
+        if (status === 400) {
+          errorMessage = 'Invalid data format. Please check your inputs.';
+        } else if (status === 401) {
+          errorMessage = 'Authentication failed. Please check your credentials.';
+        } else if (status === 403) {
+          errorMessage = 'Access denied. You do not have permission to save.';
+        } else if (status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else {
+          errorMessage = `Server error (${status}): ${error.response.data?.message || error.response.statusText}`;
+        }
+      }
+      
+      // Still save locally even if API fails
+      const updatedTabs = tabs.map((tab, index) =>
+        index === activeTab
+          ? { 
+              ...tab, 
+              name: saveTabName, 
+              saved: true,
+              inputData: tabDataToSave.content.input_data // Store input data locally even when API fails
+            }
+          : tab
+      );
+      setTabs(updatedTabs);
+      setSaveDialogOpen(false);
+      setSaveTabName('');
+      setIsSavingTab(false); // Reset loading state
+      
+      toast.error(errorMessage);
+      toast.warning('Tab saved locally only. Please try saving again when connection is restored.');
+    }
   };
 
   const handleLocationSelect = (locationData) => {
@@ -697,6 +1005,210 @@ export default function SimulatePage() {
     }
     
     toast.success(`Location selected: ${locationData.city}`);
+  };
+
+  // Load from Database handlers
+  const handleLoadFromDatabase = async () => {
+    if (!user || !user._id) {
+      toast.error('Please log in to load saved tabs');
+      return;
+    }
+
+    setLoadModalOpen(true);
+    await fetchSavedTabs();
+  };
+
+  const fetchSavedTabs = async () => {
+    setLoadModalLoading(true);
+    try {
+      const response = await axios.get(endpoints.tabs.search, {
+        userId: user._id,
+        page: page + 1, // API expects 1-based page numbers
+        length: rowsPerPage,
+        filter: 'type:eq:event'
+      });
+
+      const { data, total } = response.data;
+      setSavedTabs(data || []);
+      setTotalCount(total || 0);
+    } catch (error) {
+      console.error('Error fetching saved tabs:', error);
+      toast.error('Failed to load saved tabs');
+      setSavedTabs([]);
+      setTotalCount(0);
+    } finally {
+      setLoadModalLoading(false);
+    }
+  };
+
+  const handleSelectTab = (tabId) => {
+    setSelectedTabsToLoad(prev => {
+      if (prev.includes(tabId)) {
+        return prev.filter(id => id !== tabId);
+      } else {
+        return [...prev, tabId];
+      }
+    });
+  };
+
+  const handleSelectAllTabs = (event) => {
+    if (event.target.checked) {
+      setSelectedTabsToLoad(savedTabs.items.map(tab => tab._id || tab.id));
+    } else {
+      setSelectedTabsToLoad([]);
+    }
+  };
+
+  const handleLoadSelectedTabs = async () => {
+    if (selectedTabsToLoad.length === 0) {
+      toast.warning('Please select at least one tab to load');
+      return;
+    }
+
+    try {
+      setLoadModalLoading(true);
+      
+      // Filter selected tabs from savedTabs
+      const tabsToLoad = savedTabs.items.filter(tab => 
+        selectedTabsToLoad.includes(tab._id || tab.id)
+      );
+
+      // Add loaded tabs to existing tabs
+      const newTabs = tabsToLoad.map((savedTab, index) => {
+        const content = savedTab.content || {};
+        const inputData = content.input_data || {};
+        
+        return {
+          id: tabCounter + index,
+          name: savedTab.title || `Loaded Tab ${tabCounter + index}`,
+          saved: true,
+          apiId: savedTab._id || savedTab.id,
+          result: content.output_data || null,
+          loading: false,
+          locationData: inputData.location_data || null,
+          inputData: inputData
+        };
+      });
+
+      // Add new tabs to existing tabs
+      setTabs(prev => [...prev, ...newTabs]);
+      setTabCounter(prev => prev + newTabs.length);
+
+      // Switch to the first loaded tab
+      if (newTabs.length > 0) {
+        const newActiveTab = tabs.length; // Index of first new tab
+        setActiveTab(newActiveTab);
+        
+        // Populate form with the first loaded tab's data
+        const firstLoadedTab = newTabs[0];
+        if (firstLoadedTab.inputData) {
+          const { setValue } = methods;
+          Object.keys(firstLoadedTab.inputData).forEach(key => {
+            if (key !== 'location_data') {
+              setValue(key, firstLoadedTab.inputData[key]);
+            }
+          });
+        }
+      }
+
+      setLoadModalOpen(false);
+      setSelectedTabsToLoad([]);
+      toast.success(`Successfully loaded ${newTabs.length} tab${newTabs.length > 1 ? 's' : ''}`);
+    } catch (error) {
+      console.error('Error loading tabs:', error);
+      toast.error('Failed to load selected tabs');
+    } finally {
+      setLoadModalLoading(false);
+    }
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Effect to refetch tabs when page or rowsPerPage changes
+  React.useEffect(() => {
+    if (loadModalOpen && user?._id) {
+      fetchSavedTabs();
+    }
+  }, [page, rowsPerPage, loadModalOpen, user?._id]);
+
+  // Delete handlers for load modal
+  const handleSelectTabToDelete = (tabId) => {
+    setSelectedTabsToDelete(prev => {
+      if (prev.includes(tabId)) {
+        return prev.filter(id => id !== tabId);
+      } else {
+        return [...prev, tabId];
+      }
+    });
+  };
+
+  const handleSelectAllTabsToDelete = (event) => {
+    if (event.target.checked) {
+      setSelectedTabsToDelete(savedTabs.items?.map(tab => tab._id || tab.id) || []);
+    } else {
+      setSelectedTabsToDelete([]);
+    }
+  };
+
+  const handleDeleteSelectedTabs = async () => {
+    if (selectedTabsToDelete.length === 0) {
+      toast.warning('Please select at least one tab to delete');
+      return;
+    }
+
+    try {
+      setLoadModalLoading(true);
+      
+      // Delete each selected tab
+      const deletePromises = selectedTabsToDelete.map(tabId => 
+        axios.delete(endpoints.tabs.delete(tabId))
+      );
+      
+      await Promise.all(deletePromises);
+      
+      // Refresh the tabs list
+      await fetchSavedTabs();
+      
+      // Clear selections
+      setSelectedTabsToDelete([]);
+      setSelectedTabsToLoad([]);
+      
+      toast.success(`Successfully deleted ${selectedTabsToDelete.length} tab${selectedTabsToDelete.length > 1 ? 's' : ''}`);
+    } catch (error) {
+      console.error('Error deleting tabs:', error);
+      toast.error('Failed to delete selected tabs');
+    } finally {
+      setLoadModalLoading(false);
+    }
+  };
+
+  const handleDeleteSingleTab = async (tabId) => {
+    try {
+      setLoadModalLoading(true);
+      
+      await axios.delete(endpoints.tabs.delete(tabId));
+      
+      // Refresh the tabs list
+      await fetchSavedTabs();
+      
+      // Remove from selections if it was selected
+      setSelectedTabsToDelete(prev => prev.filter(id => id !== tabId));
+      setSelectedTabsToLoad(prev => prev.filter(id => id !== tabId));
+      
+      toast.success('Tab deleted successfully');
+    } catch (error) {
+      console.error('Error deleting tab:', error);
+      toast.error('Failed to delete tab');
+    } finally {
+      setLoadModalLoading(false);
+    }
   };
 
   const handleLoadTestData = () => {
@@ -1116,6 +1628,15 @@ const onSubmit = async (formData) => {
       autoHideDuration: 2000,
     });
     
+    // Add a timeout warning message after 15 seconds
+    const timeoutWarning = setTimeout(() => {
+      if (tabs[activeTab]?.loading) {
+        toast.info('Processing is taking longer than usual, please wait...', {
+          autoHideDuration: 5000,
+        });
+      }
+    }, 15000);
+    
     // Update tab loading state
     const updatedTabs = tabs.map((tab, index) =>
       index === activeTab ? { ...tab, loading: true } : tab
@@ -1144,18 +1665,45 @@ const onSubmit = async (formData) => {
 
     console.log('Sending POST payload:', payload);
 
-    // POST request to n8n webhook using axios
-    const response = await axios.post('https://n8n.talentexpo.eu/webhook/simulate-event', payload, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    // Function to make API request with retry logic
+    const makeSimulationRequest = async (isRetry = false) => {
+      if (isRetry) {
+        toast.info('Processing timeout detected, retrying request...', {
+          autoHideDuration: 3000,
+        });
+      }
+      
+      const apiResponse = await axios.post(endpoints.simulation.event, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        withCredentials: false,
+      });
+      
+      console.log(`API Response${isRetry ? ' (Retry)' : ''}:`, apiResponse.data);
+      
+      // Extract data from the response
+      const responseData = apiResponse.data[0]?.output || apiResponse.data;
+      
+      // Check if the response indicates agent stopped due to max iterations
+      const isMaxIterationsError = 
+        (typeof responseData === 'string' && responseData.includes('Agent stopped due to max iterations')) ||
+        (responseData?.error && responseData.error.includes('Agent stopped due to max iterations')) ||
+        (responseData?.message && responseData.message.includes('Agent stopped due to max iterations'));
+      
+      if (isMaxIterationsError && !isRetry) {
+        console.log('Max iterations detected, retrying request...');
+        return await makeSimulationRequest(true); // Retry once
+      }
+      
+      return {
+        data: responseData,
+        isRetry
+      };
+    };
 
-    console.log('API Response:', response.data);
-
-    // Extract data from the response
-    const responseData = response.data[0]?.output || response.data;
-    console.log('API Response:', responseData);
+    // Make the API request with retry logic
+    const { data: responseData, isRetry } = await makeSimulationRequest();
     
     // Update tab with result from API
     const finalTabs = tabs.map((tab, index) =>
@@ -1165,7 +1713,7 @@ const onSubmit = async (formData) => {
             result: {
               status: 'success',
               data: responseData,
-              message: `Event simulation generated successfully for ${payload.event_name}!`,
+              message: `Event simulation generated successfully for ${payload.event_name}!${isRetry ? ' (Retried due to timeout)' : ''}`,
             }, 
             loading: false 
           }
@@ -1173,7 +1721,10 @@ const onSubmit = async (formData) => {
     );
     setTabs(finalTabs);
 
-    toast.success('Event data generated successfully!');
+    // Clear the timeout warning
+    clearTimeout(timeoutWarning);
+    
+    toast.success(`Event data generated successfully${isRetry ? ' after retry' : ''}!`);
   } catch (error) {
     console.error('Error calling webhook:', error);
     
@@ -1228,6 +1779,9 @@ const onSubmit = async (formData) => {
         : tab
     );
     setTabs(updatedTabs);
+    
+    // Clear the timeout warning
+    clearTimeout(timeoutWarning);
     
     // Show error notification
     if (errorType === 'warning') {
@@ -1431,6 +1985,24 @@ const onSubmit = async (formData) => {
         ]}
         sx={{ mb: 3 }}
       />
+
+      {/* User Status Indicator */}
+      {user?._id && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <Typography variant="body2">
+            Logged in as: <strong>{user.full_name || user.email || user.name || `User ${user._id}`}</strong>
+            {' '}- Your tabs will be saved to your account
+          </Typography>
+        </Alert>
+      )}
+      
+      {!user?._id && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          <Typography variant="body2">
+            Please log in to save and load your tabs from the database
+          </Typography>
+        </Alert>
+      )}
 
       <Card sx={{ p: 3 }}>
         {/* Tabs Header */}
@@ -1784,11 +2356,23 @@ const onSubmit = async (formData) => {
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                   <Button
                     variant="outlined"
+                    onClick={handleLoadFromDatabase}
+                    startIcon={<Iconify icon="eva:cloud-download-outline" />}
+                    color="info"
+                    disabled={!user?._id}
+                    title={!user?._id ? 'Please log in to load saved tabs' : 'Load your saved tabs from database'}
+                  >
+                    Load from Database
+                  </Button>
+                  
+                  <Button
+                    variant="outlined"
                     onClick={handleSaveTab}
                     startIcon={<Iconify icon="eva:save-outline" />}
-                    disabled={currentTab.saved}
+                    disabled={!user?._id}
+                    title={!user?._id ? 'Please log in to save tabs' : currentTab.saved ? 'Update saved tab in database' : 'Save current tab to database'}
                   >
-                    {currentTab.saved ? 'Saved' : 'Save Tab'}
+                    {currentTab.saved ? 'Update Tab' : 'Save Tab'}
                   </Button>
                   
                   <LoadingButton
@@ -1812,10 +2396,33 @@ const onSubmit = async (formData) => {
           </Typography>
           
           {currentTab.loading && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
-              <Typography sx={{ mb: 2 }}>Generating comprehensive event data...</Typography>
-              <Typography variant="body2" color="text.secondary">
-                This may take a moment
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 6 }}>
+              <Box sx={{ position: 'relative', display: 'inline-flex', mb: 3 }}>
+                <CircularProgress size={60} thickness={4} />
+                <Box
+                  sx={{
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    right: 0,
+                    position: 'absolute',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Iconify icon="eva:calendar-outline" width={24} />
+                </Box>
+              </Box>
+              <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
+                Generating Comprehensive Event Data
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', maxWidth: 400 }}>
+                Our AI is analyzing your event requirements and creating detailed planning data including venue suggestions, 
+                marketing strategies, budget estimates, and logistical recommendations.
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: 'center' }}>
+                This process may take 30-60 seconds...
               </Typography>
             </Box>
           )}
@@ -2071,9 +2678,11 @@ const onSubmit = async (formData) => {
                                           <Typography variant="body2" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
                                             {currentTab.result.data.data_visualizations.registration_trend.data.series[0].data[index]}
                                           </Typography>
-                                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                            / {currentTab.result.data.data_visualizations.registration_trend.data.series[1].data[index]} (conservative)
-                                          </Typography>
+                                          {currentTab.result.data.data_visualizations.registration_trend.data?.series[1]?.data[index] && (
+                                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                              / {currentTab.result.data.data_visualizations.registration_trend.data.series[1].data[index]} (conservative)
+                                            </Typography>
+                                          )}
                                         </Box>
                                       </Box>
                                     ))}
@@ -2137,19 +2746,23 @@ const onSubmit = async (formData) => {
                                           <Typography variant="body2" sx={{ color: '#1976d2', fontWeight: 'bold', minWidth: 60 }}>
                                             {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[0].data[index]} attendees
                                           </Typography>
-                                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                            (Capacity: {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1].data[index]})
-                                          </Typography>
-                                          <Typography variant="caption" sx={{ 
-                                            color: 'success.main', 
-                                            fontWeight: 'bold',
-                                            bgcolor: 'success.lighter',
-                                            px: 1,
-                                            borderRadius: 1
-                                          }}>
-                                            {Math.round((currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[0].data[index] / 
-                                            currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1].data[index]) * 100)}% utilized
-                                          </Typography>
+                                          {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1]?.data[index] && (
+                                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                              (Capacity: {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1].data[index] })
+                                            </Typography>
+                                          )}
+                                          {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1]?.data[index] && (
+                                            <Typography variant="caption" sx={{ 
+                                              color: 'success.main', 
+                                              fontWeight: 'bold',
+                                              bgcolor: 'success.lighter',
+                                              px: 1,
+                                              borderRadius: 1
+                                            }}>
+                                              {Math.round((currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[0].data[index] / 
+                                              currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1].data[index]) * 100)}% utilized
+                                            </Typography>
+                                          )}
                                         </Box>
                                       </Box>
                                     ))}
@@ -3599,26 +4212,203 @@ const onSubmit = async (formData) => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSaveDialogOpen(false)}>Cancel</Button>
-          <Button onClick={confirmSaveTab} variant="contained">
-            Save
+          <Button 
+            onClick={() => setSaveDialogOpen(false)}
+            disabled={isSavingTab}
+          >
+            Cancel
           </Button>
+          <LoadingButton 
+            onClick={confirmSaveTab} 
+            variant="contained"
+            loading={isSavingTab}
+            disabled={isSavingTab}
+          >
+            Save
+          </LoadingButton>
         </DialogActions>
       </Dialog>
 
       {/* Delete Tab Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Delete Tab</DialogTitle>
+        <DialogTitle>Close Tab</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete this tab? This action cannot be undone.
+            Are you sure you want to close this tab?
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
           <Button onClick={confirmDeleteTab} color="error" variant="contained">
-            Delete
+            Close
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Load from Database Dialog */}
+      <Dialog 
+        open={loadModalOpen} 
+        onClose={() => setLoadModalOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Typography variant="h6">Load Saved Tabs</Typography>
+            <IconButton onClick={() => setLoadModalOpen(false)}>
+              <Iconify icon="eva:close-fill" />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          {loadModalLoading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+              <CircularProgress />
+            </Box>
+          ) : savedTabs?.items?.length === 0 ? (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+              <Typography variant="body1" color="text.secondary">
+                No saved tabs found
+              </Typography>
+            </Box>
+          ) : (
+            <>
+              <TableContainer component={Paper} variant="outlined">
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={selectedTabsToLoad.length === savedTabs?.items?.length}
+                          indeterminate={
+                            selectedTabsToLoad.length > 0 && 
+                            selectedTabsToLoad.length < savedTabs?.items?.length
+                          }
+                          onChange={handleSelectAllTabs}
+                          title="Select/Deselect all for loading"
+                        />
+                      </TableCell>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={selectedTabsToDelete.length === savedTabs?.items?.length}
+                          indeterminate={
+                            selectedTabsToDelete.length > 0 && 
+                            selectedTabsToDelete.length < savedTabs?.items?.length
+                          }
+                          onChange={handleSelectAllTabsToDelete}
+                          color="error"
+                          title="Select/Deselect all for deletion"
+                        />
+                      </TableCell>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Number of Days</TableCell>
+                      <TableCell>Created Date</TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {console.log('Saved Tabs:', savedTabs) /* Debugging line */}
+                    {savedTabs?.items?.map((tab) => {
+                      const tabId = tab._id || tab.id;
+                      const content = tab.content || {};
+                      const inputData = content.input_data || {};
+                      const numberOfDays = inputData.number_of_days || 'N/A';
+                      const createdDate = content.created_at 
+                        ? new Date(content.created_at).toLocaleDateString()
+                        : 'N/A';
+                      
+                      return (
+                        <TableRow 
+                          key={tabId}
+                          hover
+                          selected={selectedTabsToLoad.includes(tabId)}
+                        >
+                          <TableCell padding="checkbox">
+                            <Checkbox
+                              checked={selectedTabsToLoad.includes(tabId)}
+                              onChange={() => handleSelectTab(tabId)}
+                              title="Select for loading"
+                            />
+                          </TableCell>
+                          <TableCell padding="checkbox">
+                            <Checkbox
+                              checked={selectedTabsToDelete.includes(tabId)}
+                              onChange={() => handleSelectTabToDelete(tabId)}
+                              color="error"
+                              title="Select for deletion"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="subtitle2">
+                              {tab.title || 'Untitled Tab'}
+                            </Typography>
+                            {inputData.event_name && (
+                              <Typography variant="body2" color="text.secondary">
+                                {inputData.event_name}
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {numberOfDays}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {createdDate}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteSingleTab(tabId)}
+                              disabled={loadModalLoading}
+                              title="Delete this tab"
+                            >
+                              <Iconify icon="eva:trash-2-outline" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              
+              <TablePagination
+                component="div"
+                count={totalCount}
+                page={page}
+                onPageChange={handleChangePage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                rowsPerPageOptions={[5, 10, 25, 50]}
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLoadModalOpen(false)}>
+            Cancel
+          </Button>
+          <LoadingButton
+            onClick={handleDeleteSelectedTabs}
+            color="error"
+            disabled={selectedTabsToDelete.length === 0}
+            loading={loadModalLoading}
+            startIcon={<Iconify icon="eva:trash-2-outline" />}
+          >
+            Delete Selected ({selectedTabsToDelete.length})
+          </LoadingButton>
+          <LoadingButton
+            onClick={handleLoadSelectedTabs}
+            variant="contained"
+            disabled={selectedTabsToLoad.length === 0}
+            loading={loadModalLoading}
+          >
+            Load Selected ({selectedTabsToLoad.length})
+          </LoadingButton>
         </DialogActions>
       </Dialog>
     </DashboardContent>
