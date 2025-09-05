@@ -38,7 +38,6 @@ export function SettingsDrawer({ sx, defaultSettings }) {
 
   // Visible options by default settings
   const isFontFamilyVisible = hasKeys(defaultSettings, ['fontFamily']);
-  const isCompactLayoutVisible = hasKeys(defaultSettings, ['compactLayout']);
   const isDirectionVisible = hasKeys(defaultSettings, ['direction']);
   const isColorSchemeVisible = hasKeys(defaultSettings, ['colorScheme']);
   const isContrastVisible = hasKeys(defaultSettings, ['contrast']);
@@ -119,16 +118,6 @@ export function SettingsDrawer({ sx, defaultSettings }) {
           direction: settings.state.direction === 'ltr' ? 'rtl' : 'ltr',
         })
       }
-    />
-  );
-
-  const renderCompact = () => (
-    <BaseOption
-      tooltip="Dashboard only and available at large resolutions > 1600px (xl)"
-      label="Compact"
-      icon="autofit-width"
-      selected={!!settings.state.compactLayout}
-      onChangeOption={() => settings.setState({ compactLayout: !settings.state.compactLayout })}
     />
   );
 
@@ -257,7 +246,6 @@ export function SettingsDrawer({ sx, defaultSettings }) {
             {isColorSchemeVisible && renderMode()}
             {isContrastVisible && renderContrast()}
             {isDirectionVisible && renderRtl()}
-            {isCompactLayoutVisible && renderCompact()}
           </Box>
 
           {(isNavColorVisible || isNavLayoutVisible) && renderNav()}
