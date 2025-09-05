@@ -43,64 +43,76 @@ export default function CandidateListTable() {
   // Fetch saved tabs from API and fetch candidates for each tab
   const fetchSavedTabsAndCandidates = async (companyId) => {
     try {
-      // Replace with your actual endpoint for fetching saved tabs
-      const tabsRes = await axios.get('/api/saved-tabs', { params: { companyId } });
-      const savedTabs = tabsRes.data;
-      if (Array.isArray(savedTabs)) {
-        if (savedTabs.length === 0) {
-          // Example: set three sample tabs if no saved tabs
-          setSearchTabs([
-            {
-              name: 'Engineering Candidates',
-              search: 'engineer',
-              filters: { skills: ['JavaScript', 'React'], countries: 'USA' },
-              saved: true,
-            },
-            {
-              name: 'Marketing Pros',
-              search: 'marketing',
-              filters: { skills: ['SEO', 'Content'], countries: 'UK' },
-              saved: true,
-            },
-            {
-              name: 'Default Search',
-              search: '',
-              filters: {},
-              saved: false,
-            },
-          ]);
-        } else {
-          // For each tab, fetch candidates using its params
-          for (const tab of savedTabs) {
-            const { params } = tab;
+      // Fetch tabs from the API with filter parameter
+      const tabsRes = await axios.get(endpoints.tabs.search, {
+        params: {
+          filter: 'type:eq:filter',
+        },
+      });
+      const response = tabsRes.data.data;
+      // Handle the new API response format
+      const savedTabs = response.items || [];
+
+      if (Array.isArray(savedTabs) && savedTabs.length > 0) {
+        // No need to filter since API already returns only filter type tabs
+
+        // Convert API response to tab format
+        const formattedTabs = savedTabs.map((savedTab) => ({
+          id: savedTab._id,
+          name: savedTab.content?.name || 'Saved Tab',
+          search: savedTab.content?.search || '',
+          filters: savedTab.content?.filters || {},
+          params: savedTab.content?.params || {},
+          saved: true,
+        }));
+
+        // Add a default search tab if no unsaved tabs exist
+        const hasUnsavedTab = formattedTabs.some((tab) => !tab.saved);
+        if (!hasUnsavedTab) {
+          formattedTabs.push({
+            name: 'New Search',
+            search: '',
+            filters: {},
+            saved: false,
+          });
+        }
+
+        setSearchTabs(formattedTabs);
+
+        // For each saved tab, you can fetch candidates using its params if needed
+        for (const tab of formattedTabs) {
+          if (tab.saved && tab.search) {
             try {
+              const params = {
+                ...(tab.search ? { query: tab.search } : {}),
+                ...tab.filters,
+                page: tab.params?.page || 1,
+                size: tab.params?.size || 10,
+                ...(tab.params?.sortBy ? { sortBy: tab.params.sortBy } : {}),
+                ...(tab.params?.sortOrder ? { sortOrder: tab.params.sortOrder } : {}),
+              };
               const candidatesRes = await axios.get(endpoints.candidates.search, { params });
               const candidates = candidatesRes.data?.data?.items || [];
-              console.log(`Candidates for tab '${tab.tabName}':`, candidates);
             } catch (err) {
-              console.error(`Error fetching candidates for tab '${tab.tabName}':`, err);
+              console.error(`Error fetching candidates for tab '${tab.name}':`, err);
             }
           }
         }
+      } else {
+        // Set default tabs if no saved tabs found
+        setSearchTabs([
+          {
+            name: 'Default Search',
+            search: '',
+            filters: {},
+            saved: false,
+          },
+        ]);
       }
     } catch (err) {
       setSearchTabs([
         {
           id: 1,
-          name: 'Engineering Candidates',
-          search: 'engineer',
-          filters: { skills: ['JavaScript', 'React'], countries: '' },
-          saved: true,
-        },
-        {
-          id: 2,
-          name: 'Marketing Pros',
-          search: 'marketing',
-          filters: { skills: ['SEO', 'Content'], countries: '' },
-          saved: true,
-        },
-        {
-          id: 3,
           name: 'Default Search',
           search: '',
           filters: {},
@@ -342,16 +354,97 @@ export default function CandidateListTable() {
     ]);
     setActiveTab(searchTabs.length);
   };
-  const handleSaveTab = () => {
-    // Log tab name, filters, and params
-    const tab = searchTabs[activeTab];
-    const params = { search: tab.search, filters: tab.filters, page, size, sortBy, sortOrder };
-    console.log('Saved Tab:', { name: saveName, params });
-    setSearchTabs((prev) =>
-      prev.map((tab, idx) => (idx === activeTab ? { ...tab, name: saveName, saved: true } : tab))
-    );
-    setSaveDialogOpen(false);
-    setSaveName('');
+  const handleSaveTab = async () => {
+    try {
+      // Get current tab data
+      const tab = searchTabs[activeTab];
+      const params = { search: tab.search, filters: tab.filters, page, size, sortBy, sortOrder };
+
+      // Prepare API payload
+      const payload = {
+        type: 'filter',
+        title: tab.name, // Add current tab name as title
+        content: {
+          name: saveName,
+          search: tab.search,
+          filters: tab.filters,
+          params: {
+            page,
+            size,
+            sortBy,
+            sortOrder,
+          },
+        },
+      };
+
+      console.log('Saving tab with payload:', payload);
+
+      // Save to API
+      const response = await axios.post(endpoints.tabs.save, payload);
+
+      if (response.data) {
+        console.log('Tab saved successfully:', response.data);
+
+        // Update local state
+        setSearchTabs((prev) =>
+          prev.map((tab, idx) =>
+            idx === activeTab ? { ...tab, name: saveName, saved: true } : tab
+          )
+        );
+
+        setSaveDialogOpen(false);
+        setSaveName('');
+
+        // Show success message
+        setOpenToast(true);
+      }
+    } catch (error) {
+      console.error('Error saving tab:', error);
+      // You could show an error message to the user here
+    }
+  };
+
+  const handleDeleteTab = async (tabIndex) => {
+    try {
+      const tabToDelete = searchTabs[tabIndex];
+
+      // If the tab is saved (has an ID), call the delete API
+      if (tabToDelete.saved && tabToDelete.id) {
+        console.log('Deleting saved tab with ID:', tabToDelete.id);
+        await axios.delete(endpoints.tabs.delete(tabToDelete.id));
+        console.log('Tab deleted successfully from server');
+      }
+
+      // Remove tab from local state
+      setSearchTabs((prev) => prev.filter((_, i) => i !== tabIndex));
+
+      // Adjust active tab if necessary
+      setActiveTab((prev) => {
+        if (prev > tabIndex) {
+          return prev - 1;
+        } else if (prev === tabIndex && searchTabs.length > 1) {
+          return Math.max(0, prev - 1);
+        }
+        return Math.max(0, prev);
+      });
+
+      // Only close dialog and reset state if it was a saved tab
+      if (tabToDelete.saved) {
+        setCloseDialogOpen(false);
+        setTabToClose(null);
+      }
+
+      // Show success message only for saved tabs
+      if (tabToDelete.saved) {
+        setOpenToast(true);
+      }
+    } catch (error) {
+      console.error('Error deleting tab:', error);
+      // Only show error alert for saved tabs (API errors)
+      if (searchTabs[tabIndex]?.saved) {
+        alert('Error deleting tab: ' + (error.response?.data?.message || error.message));
+      }
+    }
   };
   // Use tab's search/filters for searching
   const handleSearchInputChange = (value) => {
@@ -823,78 +916,102 @@ export default function CandidateListTable() {
   return (
     <Box sx={{ width: '100%', mx: 'auto', px: 2 }}>
       <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant="scrollable"
-          scrollButtons="auto"
+        <Box
+          sx={{
+            display: 'flex',
+            width: '85%',
+            alignItems: 'center',
+            flexGrow: 1,
+            overflowX: 'auto',
+          }}
         >
-          {searchTabs.map((tab, idx) => (
-            <Tab
-              key={idx}
-              label={tab.name + (tab.saved ? ' (saved)' : '')}
-              value={idx}
-              wrapped
-              sx={{ minWidth: 120, maxWidth: 200 }}
-              onClick={() => setActiveTab(idx)}
-              icon={
-                searchTabs.length > 1 ? (
-                  <IconButton
-                    size="small"
-                    sx={{ ml: 0.5 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setTabToClose(idx);
-                      setCloseDialogOpen(true);
-                    }}
-                  >
-                    <Close fontSize="small" />
-                  </IconButton>
-                ) : null
-              }
-              iconPosition="end"
-            />
-          ))}
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+          >
+            {searchTabs.map((tab, idx) => (
+              <Tab
+                key={idx}
+                label={tab.name + (tab.saved ? ' (saved)' : '')}
+                value={idx}
+                wrapped
+                sx={{ minWidth: 120, maxWidth: 200 }}
+                onClick={() => setActiveTab(idx)}
+                icon={
+                  searchTabs.length > 1 ? (
+                    <IconButton
+                      size="small"
+                      sx={{ ml: 0.5 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // If tab is not saved, delete immediately without confirmation
+                        if (!searchTabs[idx].saved) {
+                          handleDeleteTab(idx);
+                        } else {
+                          setTabToClose(idx);
+                          setCloseDialogOpen(true);
+                        }
+                      }}
+                    >
+                      <Close fontSize="small" />
+                    </IconButton>
+                  ) : null
+                }
+                iconPosition="end"
+              />
+            ))}
+          </Tabs>
+          <Dialog open={closeDialogOpen} onClose={() => setCloseDialogOpen(false)}>
+            <DialogTitle>Confirm Delete Saved Tab</DialogTitle>
+            <DialogContent>
+              <Box sx={{ py: 2 }}>
+                Are you sure you want to delete this saved tab? This will permanently remove it from
+                the server.
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                <Button onClick={() => setCloseDialogOpen(false)}>Cancel</Button>
+                <Button
+                  color="error"
+                  variant="contained"
+                  onClick={() => handleDeleteTab(tabToClose)}
+                >
+                  Delete
+                </Button>
+              </Box>
+            </DialogActions>
+          </Dialog>
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '15%',
+          }}
+        >
+          {' '}
+          <Button
+            variant="contained"
+            size="small"
+            color="success"
+            sx={{ width: '100px', fontSize: '18px' }}
+            onClick={() => setSaveDialogOpen(true)}
+          >
+            Save Tab
+          </Button>
           <Button
             variant="outlined"
             size="small"
-            sx={{ ml: 2, borderRadius: '50%', width: 32, height: 32, minWidth: 'unset' }}
+            sx={{ width: '100px', fontSize: '18px' }}
             onClick={handleNewTab}
           >
-            <Add />
+            Add Tab
           </Button>
-        </Tabs>
-        <Dialog open={closeDialogOpen} onClose={() => setCloseDialogOpen(false)}>
-          <DialogTitle>Confirm Close Tab</DialogTitle>
-          <DialogContent>
-            <Box sx={{ py: 2 }}>
-              Are you sure you want to close this tab? This will delete all saved data in it.
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-              <Button onClick={() => setCloseDialogOpen(false)}>Cancel</Button>
-              <Button
-                color="error"
-                variant="contained"
-                onClick={() => {
-                  setSearchTabs((prev) => prev.filter((_, i) => i !== tabToClose));
-                  setActiveTab((prev) => (prev > tabToClose ? prev - 1 : Math.max(0, prev)));
-                  setCloseDialogOpen(false);
-                }}
-              >
-                Delete
-              </Button>
-            </Box>
-          </DialogContent>
-        </Dialog>
-        <Button
-          variant="contained"
-          size="small"
-          color="success"
-          sx={{ my: 1, width: '100px', fontSize: '18px' }}
-          onClick={() => setSaveDialogOpen(true)}
-        >
-          Save Tab
-        </Button>
+        </Box>
       </Box>
       <Dialog
         sx={{
