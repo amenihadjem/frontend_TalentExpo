@@ -916,78 +916,102 @@ export default function CandidateListTable() {
   return (
     <Box sx={{ width: '100%', mx: 'auto', px: 2 }}>
       <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant="scrollable"
-          scrollButtons="auto"
+        <Box
+          sx={{
+            display: 'flex',
+            width: '85%',
+            alignItems: 'center',
+            flexGrow: 1,
+            overflowX: 'auto',
+          }}
         >
-          {searchTabs.map((tab, idx) => (
-            <Tab
-              key={idx}
-              label={tab.name + (tab.saved ? ' (saved)' : '')}
-              value={idx}
-              wrapped
-              sx={{ minWidth: 120, maxWidth: 200 }}
-              onClick={() => setActiveTab(idx)}
-              icon={
-                searchTabs.length > 1 ? (
-                  <IconButton
-                    size="small"
-                    sx={{ ml: 0.5 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // If tab is not saved, delete immediately without confirmation
-                      if (!searchTabs[idx].saved) {
-                        handleDeleteTab(idx);
-                      } else {
-                        setTabToClose(idx);
-                        setCloseDialogOpen(true);
-                      }
-                    }}
-                  >
-                    <Close fontSize="small" />
-                  </IconButton>
-                ) : null
-              }
-              iconPosition="end"
-            />
-          ))}
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+          >
+            {searchTabs.map((tab, idx) => (
+              <Tab
+                key={idx}
+                label={tab.name + (tab.saved ? ' (saved)' : '')}
+                value={idx}
+                wrapped
+                sx={{ minWidth: 120, maxWidth: 200 }}
+                onClick={() => setActiveTab(idx)}
+                icon={
+                  searchTabs.length > 1 ? (
+                    <IconButton
+                      size="small"
+                      sx={{ ml: 0.5 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // If tab is not saved, delete immediately without confirmation
+                        if (!searchTabs[idx].saved) {
+                          handleDeleteTab(idx);
+                        } else {
+                          setTabToClose(idx);
+                          setCloseDialogOpen(true);
+                        }
+                      }}
+                    >
+                      <Close fontSize="small" />
+                    </IconButton>
+                  ) : null
+                }
+                iconPosition="end"
+              />
+            ))}
+          </Tabs>
+          <Dialog open={closeDialogOpen} onClose={() => setCloseDialogOpen(false)}>
+            <DialogTitle>Confirm Delete Saved Tab</DialogTitle>
+            <DialogContent>
+              <Box sx={{ py: 2 }}>
+                Are you sure you want to delete this saved tab? This will permanently remove it from
+                the server.
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                <Button onClick={() => setCloseDialogOpen(false)}>Cancel</Button>
+                <Button
+                  color="error"
+                  variant="contained"
+                  onClick={() => handleDeleteTab(tabToClose)}
+                >
+                  Delete
+                </Button>
+              </Box>
+            </DialogActions>
+          </Dialog>
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '15%',
+          }}
+        >
+          {' '}
+          <Button
+            variant="contained"
+            size="small"
+            color="success"
+            sx={{ width: '100px', fontSize: '18px' }}
+            onClick={() => setSaveDialogOpen(true)}
+          >
+            Save Tab
+          </Button>
           <Button
             variant="outlined"
             size="small"
-            sx={{ ml: 2, borderRadius: '50%', width: 32, height: 32, minWidth: 'unset' }}
+            sx={{ width: '100px', fontSize: '18px' }}
             onClick={handleNewTab}
           >
-            <Add />
+            Add Tab
           </Button>
-        </Tabs>
-        <Dialog open={closeDialogOpen} onClose={() => setCloseDialogOpen(false)}>
-          <DialogTitle>Confirm Delete Saved Tab</DialogTitle>
-          <DialogContent>
-            <Box sx={{ py: 2 }}>
-              Are you sure you want to delete this saved tab? This will permanently remove it from
-              the server.
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-              <Button onClick={() => setCloseDialogOpen(false)}>Cancel</Button>
-              <Button color="error" variant="contained" onClick={() => handleDeleteTab(tabToClose)}>
-                Delete
-              </Button>
-            </Box>
-          </DialogActions>
-        </Dialog>
-        <Button
-          variant="contained"
-          size="small"
-          color="success"
-          sx={{ my: 1, width: '100px', fontSize: '18px' }}
-          onClick={() => setSaveDialogOpen(true)}
-        >
-          Save Tab
-        </Button>
+        </Box>
       </Box>
       <Dialog
         sx={{
