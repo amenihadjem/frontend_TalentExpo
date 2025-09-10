@@ -222,7 +222,6 @@ export default function SimulatePage() {
 
   // Auth context for user information
   const user = useAuthContext()?.user?.data;
-  console.log('Authenticated user:', user);
 
   // Form methods for current tab
   const methods = useForm({
@@ -405,142 +404,6 @@ export default function SimulatePage() {
     getValues,
     formState: { isSubmitting },
   } = methods;
-
-  // Load saved tabs from API - REPLACED WITH MODAL-BASED LOADING
-  /*
-  const loadTabsFromAPI = async () => {
-    // Check if user is authenticated
-    if (!user || !user._id) {
-      toast.warning('Please log in to load saved tabs');
-      return;
-    }
-
-    try {
-      // Make request with user ID as query parameter to filter tabs by user
-      const response = await axios.get(endpoints.tabs.list(user._id), {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log('Loaded tabs from API for user:', user._id, response.data);
-
-      if (response.data && response.data.length > 0) {
-        // Filter tabs that belong to the current user and are of type "event"
-        const userTabs = response.data.filter(tab => 
-          tab.type === "event" && 
-          (tab.content?.userId === user._id || tab.content?.user_id === user._id)
-        );
-        
-        if (userTabs.length === 0) {
-          toast.info('No saved event tabs found for your account');
-          return;
-        }
-
-        // Check for existing tabs with same API IDs to prevent duplicates
-        const existingApiIds = tabs.map(tab => tab.apiId).filter(Boolean);
-        const newTabs = userTabs.filter(apiTab => !existingApiIds.includes(apiTab.id || apiTab._id));
-        
-        if (newTabs.length === 0) {
-          toast.info('All your saved tabs are already loaded');
-          return;
-        }
-
-        const loadedTabs = newTabs.map((apiTab, index) => ({
-          id: tabCounter + index, // Use current counter to avoid ID conflicts
-          name: apiTab.title || `Loaded Tab ${index + 1}`,
-          saved: true,
-          result: apiTab.content?.output_data,
-          loading: false,
-          locationData: apiTab.content?.input_data?.location_data,
-          apiId: apiTab.id || apiTab._id,
-          inputData: apiTab.content?.input_data, // Store the loaded input data
-        }));
-
-        // Add loaded tabs to existing tabs instead of replacing them
-        setTabs(prevTabs => [...prevTabs, ...loadedTabs]);
-        setTabCounter(prev => prev + loadedTabs.length);
-        
-        // Switch to the first loaded tab and load its data
-        const newActiveTabIndex = tabs.length; // Index of first loaded tab
-        setActiveTab(newActiveTabIndex);
-        
-        if (loadedTabs[0]?.inputData) {
-          const firstTabData = loadedTabs[0].inputData;
-          
-          // Reset form with loaded data
-          reset({
-            event_name: firstTabData.event_name || '',
-            event_description: firstTabData.event_description || '',
-            city: firstTabData.city || '',
-            number_of_days: firstTabData.number_of_days || 1,
-            days: firstTabData.days || [
-              {
-                event_date: '',
-                start_time: '',
-                end_time: '',
-                venue_name: '',
-                venue_capacity: '',
-                primary_sector: '',
-                speakers: '',
-                activities: '',
-                additional_info: '',
-              }
-            ],
-            marketing_strategy: firstTabData.marketing_strategy || {
-              facebook: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              instagram: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              linkedin: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              x_twitter: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              youtube: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              google_ads: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              email_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              whatsapp_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              offline_publicity: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              reddit: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              meetup: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
-              eventbrite: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
-              indeed_events: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
-            },
-          });
-        }
-
-        toast.success(`Loaded ${loadedTabs.length} saved tab${loadedTabs.length > 1 ? 's' : ''} from database`);
-      } else {
-        toast.info('No saved tabs found for your account');
-      }
-    } catch (error) {
-      console.error('Error loading tabs from API:', error);
-      
-      // Don't show error if it's just that no tabs exist yet
-      if (error.response?.status !== 404) {
-        let errorMessage = 'Failed to load saved tabs';
-        
-        if (error.code === 'ERR_NETWORK') {
-          errorMessage = 'Network connection failed. Working in offline mode.';
-        } else if (error.response) {
-          const status = error.response.status;
-          if (status === 401) {
-            errorMessage = 'Authentication failed. Please login again.';
-          } else if (status === 403) {
-            errorMessage = 'Access denied. You do not have permission to load tabs.';
-          } else if (status >= 500) {
-            errorMessage = 'Server error. Working in offline mode.';
-          }
-        }
-        
-        toast.warning(errorMessage);
-      }
-    }
-  };
-  */
-
-  // Removed automatic loading - tabs are now loaded manually through the Load from Database modal
-  // React.useEffect(() => {
-  //   if (user?._id) {
-  //     loadTabsFromAPI();
-  //   }
-  // }, [user?._id]);
 
   // Watch number of days to dynamically update days array
   const numberOfDays = watch('number_of_days');
@@ -1375,6 +1238,397 @@ export default function SimulatePage() {
     }
   };
 
+  // Test Data Loading Function with Enhanced Virtual Data
+  const handleLoadTestData = (eventType) => {
+    console.log(`🔧 Loading test data for event type: ${eventType}`);
+    
+    try {
+      const TEST_DATA_IN_PERSON = {
+        event_name: "Tech Innovation Summit 2024",
+        event_description: "A comprehensive technology conference bringing together industry leaders, startups, and innovators to showcase cutting-edge solutions and discuss future trends in artificial intelligence, blockchain, and sustainable technology.",
+        event_type: "in-person",
+        city: "San Francisco",
+        target_countries: [],
+        number_of_days: 2,
+        days: [
+          {
+            event_date: "2024-04-15",
+            start_time: "09:00",
+            end_time: "17:00",
+            venue_name: "Moscone Convention Center",
+            venue_capacity: "2500",
+            primary_sector: "Technology"
+          },
+          {
+            event_date: "2024-04-16", 
+            start_time: "09:00",
+            end_time: "17:00",
+            venue_name: "Moscone Convention Center",
+            venue_capacity: "2500",
+            primary_sector: "Technology"
+          }
+        ],
+        marketing_strategy: {
+          facebook: {
+            audience: "Tech professionals, entrepreneurs, developers aged 25-45",
+            placement: "News feed, tech group posts, event discovery",
+            reach: "50,000 impressions",
+            reaction: "2,500 clicks, 500 registrations",
+            budget: "$5,000",
+            timeline: "6 weeks pre-event",
+            content_type: "Video demos, speaker spotlights, countdown posts",
+            additional_info: "Focus on AI and blockchain themes"
+          }
+        }
+      };
+
+      const TEST_DATA_VIRTUAL = {
+        event_name: "Global Virtual Marketing Mastery Conference 2024",
+        event_description: "An immersive virtual conference designed for marketing professionals, digital strategists, and business leaders looking to master the latest marketing trends, tools, and techniques. Features interactive workshops, networking sessions, and expert-led presentations covering everything from social media strategy to conversion optimization.",
+        event_type: "virtual",
+        city: "",
+        target_countries: ["US"],
+        number_of_days: 1,
+        days: [
+          {
+            event_date: "2024-05-20",
+            start_time: "10:00",
+            end_time: "16:00",
+            venue_name: "",
+            venue_capacity: "",
+            primary_sector: "Marketing",
+            virtual_platform: {
+              platform_name: "Zoom Webinar",
+              max_participants: "5000",
+              features: ["HD video", "Interactive polls", "Breakout rooms", "Recording"],
+              cost_per_hour: "200"
+            }
+          }
+        ],
+        virtual_platform: {
+          platform_name: "Zoom Webinar",
+          max_participants: "5000",
+          features: ["HD video", "Interactive polls", "Breakout rooms", "Recording"],
+          cost_per_hour: "200"
+        },
+        marketing_strategy: {
+          facebook: {
+            audience: "Marketing professionals, business owners, digital marketers aged 25-50 in the United States",
+            placement: "Facebook Business Manager campaigns, targeted ads in marketing and business groups, sponsored posts in relevant communities",
+            reach: "75,000 impressions, 15,000 unique users",
+            reaction: "3,500 clicks, 850 registrations, 120 shares",
+            budget: "$8,500 total campaign budget",
+            timeline: "8 weeks pre-event with intensive 2-week push",
+            content_type: "Video teasers, speaker interview clips, behind-the-scenes content, countdown graphics",
+            additional_info: "A/B testing different creative formats, retargeting website visitors, lookalike audiences based on past attendees",
+            influencer_partnerships: [
+              {
+                name: "Neil Patel",
+                followers_count: "1,200,000",
+                engagement_rate: "4.2%",
+                content_type: "Educational posts about marketing trends"
+              }
+            ]
+          },
+          instagram: {
+            audience: "Visual marketers, creative professionals, brand managers aged 22-45",
+            placement: "Instagram feed posts, Stories ads, Reels promotion, IGTV previews",
+            reach: "45,000 impressions, 12,000 story views",
+            reaction: "2,200 profile visits, 650 link clicks, 400 saves",
+            budget: "$4,200 for Instagram-specific content",
+            timeline: "6 weeks with daily story updates final week",
+            content_type: "Behind-the-scenes Stories, speaker quote cards, animated Reels, carousel posts with tips",
+            additional_info: "Instagram Shopping tags for conference materials, user-generated content campaigns",
+            influencer_partnerships: [
+              {
+                name: "Gary Vaynerchuk",
+                followers_count: "9,800,000",
+                engagement_rate: "3.8%",
+                content_type: "Video content about entrepreneurship and marketing"
+              }
+            ]
+          },
+          linkedin: {
+            audience: "B2B marketers, executives, sales professionals, consultants",
+            placement: "Sponsored content, LinkedIn Events, Company page posts, professional group shares",
+            reach: "35,000 impressions among US professionals",
+            reaction: "1,800 clicks, 450 event saves, 280 LinkedIn connections",
+            budget: "$6,000 for LinkedIn premium targeting",
+            timeline: "10 weeks with professional networking focus",
+            content_type: "Thought leadership articles, industry insights, professional speaker profiles",
+            additional_info: "LinkedIn Live sessions with speakers, employee advocacy program, industry-specific targeting",
+            influencer_partnerships: [
+              {
+                name: "Ann Handley",
+                followers_count: "785,000",
+                engagement_rate: "5.1%",
+                content_type: "Marketing insights and content marketing tips"
+              }
+            ]
+          },
+          x_twitter: {
+            audience: "Tech-savvy marketers, digital innovators, startup community",
+            placement: "Promoted tweets, Twitter Spaces, hashtag campaigns, thread promotions",
+            reach: "28,000 impressions, 8,500 thread views",
+            reaction: "1,200 retweets, 850 likes, 320 replies",
+            budget: "$2,800 for Twitter promotion",
+            timeline: "8 weeks with real-time engagement strategy",
+            content_type: "Marketing tip threads, live-tweeting prep, countdown tweets, QR codes for quick registration",
+            additional_info: "Twitter Spaces preview sessions, hashtag #MarketingMastery2024, Twitter polls for audience engagement",
+            influencer_partnerships: [
+              {
+                name: "Rand Fishkin",
+                followers_count: "445,000",
+                engagement_rate: "6.2%",
+                content_type: "SEO and marketing strategy insights"
+              }
+            ]
+          },
+          youtube: {
+            audience: "Marketing enthusiasts, business students, entrepreneurs seeking educational content",
+            placement: "Pre-roll ads on marketing channels, YouTube Shorts, embedded conference trailers",
+            reach: "95,000 video views, 12,000 YouTube Shorts views",
+            reaction: "4,200 video likes, 1,100 subscribes to conference channel, 650 comments",
+            budget: "$7,500 for video production and ads",
+            timeline: "12 weeks with weekly educational content",
+            content_type: "Speaker introduction videos, marketing masterclass previews, conference highlight reels from previous years",
+            additional_info: "YouTube premiere events for major announcements, live Q&A sessions with speakers, playlist creation for different marketing topics",
+            influencer_partnerships: [
+              {
+                name: "Vanessa Lau",
+                followers_count: "678,000",
+                engagement_rate: "4.7%",
+                content_type: "Business and marketing strategy videos"
+              }
+            ]
+          },
+          tiktok: {
+            audience: "Gen Z marketers, creative professionals, social media managers aged 18-35",
+            placement: "In-feed ads, branded hashtag challenges, creator collaborations",
+            reach: "120,000 video views, 25,000 hashtag challenge participations",
+            reaction: "8,500 likes, 2,100 shares, 1,200 comments",
+            budget: "$3,500 for TikTok creative campaigns",
+            timeline: "6 weeks with viral content strategy",
+            content_type: "Quick marketing tips, behind-the-scenes speaker prep, trending audio with marketing themes",
+            additional_info: "TikTok challenges around marketing creativity, duets with marketing professionals, trend-jacking with marketing spins"
+          },
+          reddit: {
+            audience: "Marketing subreddit communities, entrepreneurs, digital marketing discussions",
+            placement: "Sponsored posts in r/marketing, r/entrepreneur, r/digitalmarketing, r/socialmedia",
+            reach: "18,000 post views across marketing subreddits",
+            reaction: "850 upvotes, 320 comments, 150 cross-posts",
+            budget: "$1,200 for Reddit advertising",
+            timeline: "8 weeks with community-focused approach",
+            content_type: "AMA announcements, valuable marketing resources, community polls about industry challenges",
+            additional_info: "Reddit AMA sessions with keynote speakers, sharing free marketing tools, community-driven content strategy"
+          },
+          google_ads: {
+            audience: "People searching for marketing conferences, digital marketing training, virtual events",
+            placement: "Search ads for marketing keywords, display ads on marketing websites, YouTube pre-roll",
+            reach: "65,000 search impressions, 35,000 display network impressions",
+            reaction: "3,200 ad clicks, 720 conversions, average 4.2% CTR",
+            budget: "$9,200 for Google Ads campaign",
+            timeline: "10 weeks with keyword optimization",
+            content_type: "Search ad copy focused on learning outcomes, display banners with speaker highlights",
+            additional_info: "Google Analytics tracking for attribution, remarketing campaigns for website visitors, competitor keyword targeting"
+          },
+          email_marketing: {
+            audience: "Existing subscribers, past event attendees, marketing newsletter lists",
+            placement: "Weekly newsletters, dedicated event emails, automated drip campaigns",
+            reach: "45,000 email sends, 18,500 opens",
+            reaction: "3,200 clicks, 650 registrations from email, 22% open rate",
+            budget: "$2,100 for email platform and design",
+            timeline: "12 weeks with segmented campaigns",
+            content_type: "Speaker spotlights, early bird promotions, exclusive content previews, post-event follow-ups",
+            additional_info: "A/B testing subject lines, personalized content based on marketing interests, automated sequences for different subscriber segments"
+          },
+          podcast_advertising: {
+            audience: "Business podcast listeners, marketing show audiences, entrepreneurship content consumers",
+            placement: "Sponsored segments on marketing podcasts, host-read ads, pre-roll sponsorships",
+            reach: "95,000 podcast listener impressions across 12 shows",
+            reaction: "1,800 promo code uses, 420 direct registrations, increased brand awareness",
+            budget: "$8,800 for podcast sponsorships",
+            timeline: "8 weeks across targeted marketing podcasts",
+            content_type: "Host-read sponsorships, 30-second produced ads, interview opportunities for speakers",
+            additional_info: "Tracking promo codes for attribution, building relationships with podcast hosts, cross-promotion opportunities"
+          },
+          influencer_marketing: {
+            audience: "Followers of marketing influencers, business thought leaders, industry experts",
+            placement: "Sponsored posts, Stories mentions, collaborative content creation",
+            reach: "180,000 combined follower reach across all influencers",
+            reaction: "12,500 engagement actions, 2,100 profile visits, 850 registrations",
+            budget: "$15,000 for influencer partnerships",
+            timeline: "6 weeks with coordinated campaign",
+            content_type: "Promotional posts, live discussions, exclusive discount codes, behind-the-scenes content",
+            additional_info: "Long-term partnerships with marketing thought leaders, authentic content creation, performance-based compensation"
+          },
+          eventbrite: {
+            audience: "Event discovery platform users searching for business and marketing events",
+            placement: "Featured event listings, category promotions, email newsletter inclusions",
+            reach: "25,000 event page views, 8,500 profile clicks",
+            reaction: "1,200 saves, 650 shares, 420 direct bookings",
+            budget: "$1,800 for Eventbrite promotion",
+            timeline: "10 weeks with optimized event listing",
+            content_type: "Compelling event descriptions, professional speaker photos, detailed agenda highlights",
+            additional_info: "Eventbrite's promotional tools, social media integration, early bird pricing strategy"
+          },
+          indeed_events: {
+            audience: "Professionals looking for career development and skill enhancement opportunities",
+            placement: "Indeed events section, job seeker recommendations, career development feeds",
+            reach: "15,000 event impressions on Indeed platform",
+            reaction: "780 event interests, 320 calendar adds, 180 registrations",
+            budget: "$1,200 for Indeed event promotion",
+            timeline: "8 weeks focusing on professional development angle",
+            content_type: "Career-focused event descriptions, skill development benefits, networking opportunities",
+            additional_info: "Integration with Indeed's job search ecosystem, targeting by career level and industry"
+          }
+        },
+        country_marketing: [
+          {
+            country_code: "US",
+            country_name: "United States",
+            marketing_strategy: {
+              facebook: {
+                audience: "US-based marketing professionals, small business owners, digital strategists aged 25-50",
+                placement: "Targeted Facebook campaigns in major metropolitan areas, business groups, professional communities",
+                reach: "75,000 impressions across US markets",
+                reaction: "3,500 clicks, 850 registrations, strong engagement in tech hubs",
+                budget: "$8,500 US-specific Facebook campaign",
+                timeline: "8 weeks with geo-targeted approach",
+                content_type: "Localized content for US time zones, American business case studies, US-specific marketing challenges",
+                additional_info: "Focus on EST/PST scheduling, American marketing trends, local business success stories"
+              },
+              linkedin: {
+                audience: "US B2B professionals, marketing executives, American entrepreneurs",
+                placement: "LinkedIn campaigns targeting US professionals, company page promotions, American business groups",
+                reach: "35,000 impressions among US LinkedIn users",
+                reaction: "1,800 clicks, 450 event saves, high engagement from Fortune 500 companies",
+                budget: "$6,000 for US LinkedIn targeting",
+                timeline: "10 weeks with American business focus",
+                content_type: "US market insights, American business leadership content, domestic marketing success stories",
+                additional_info: "Targeting American executives, US company employee advocacy, American business network expansion"
+              }
+            }
+          }
+        ]
+      };
+
+      const TEST_DATA_HYBRID = {
+        event_name: "Hybrid Business Expo 2024",
+        event_description: "A groundbreaking hybrid conference combining in-person networking with global virtual participation. Explore business innovations, sustainable practices, and digital transformation strategies.",
+        event_type: "hybrid",
+        city: "New York",
+        target_countries: ["US", "CA", "UK"],
+        number_of_days: 3,
+        days: [
+          {
+            event_date: "2024-06-10",
+            start_time: "09:00",
+            end_time: "17:00",
+            venue_name: "Jacob Javits Convention Center",
+            venue_capacity: "3000",
+            primary_sector: "Business",
+            virtual_platform: {
+              platform_name: "Microsoft Teams Live",
+              max_participants: "10000",
+              features: ["4K streaming", "Real-time translation", "Virtual networking"],
+              cost_per_hour: "300"
+            }
+          },
+          {
+            event_date: "2024-06-11",
+            start_time: "09:00", 
+            end_time: "17:00",
+            venue_name: "Jacob Javits Convention Center",
+            venue_capacity: "3000",
+            primary_sector: "Business",
+            virtual_platform: {
+              platform_name: "Microsoft Teams Live",
+              max_participants: "10000",
+              features: ["4K streaming", "Real-time translation", "Virtual networking"],
+              cost_per_hour: "300"
+            }
+          },
+          {
+            event_date: "2024-06-12",
+            start_time: "09:00",
+            end_time: "17:00", 
+            venue_name: "Jacob Javits Convention Center",
+            venue_capacity: "3000",
+            primary_sector: "Business",
+            virtual_platform: {
+              platform_name: "Microsoft Teams Live",
+              max_participants: "10000",
+              features: ["4K streaming", "Real-time translation", "Virtual networking"],
+              cost_per_hour: "300"
+            }
+          }
+        ],
+        virtual_platform: {
+          platform_name: "Microsoft Teams Live",
+          max_participants: "10000",
+          features: ["4K streaming", "Real-time translation", "Virtual networking"],
+          cost_per_hour: "300"
+        }
+      };
+
+      let testData;
+      switch (eventType) {
+        case 'in-person':
+          testData = TEST_DATA_IN_PERSON;
+          break;
+        case 'virtual':
+          testData = TEST_DATA_VIRTUAL;
+          break;
+        case 'hybrid':
+          testData = TEST_DATA_HYBRID;
+          break;
+        default:
+          console.error('❌ Unknown event type:', eventType);
+          toast.error('Unknown event type');
+          return;
+      }
+
+      console.log('📊 Test data to load:', testData);
+      console.log('📊 Current form methods:', { setValue, getValues });
+
+      // Validate test data
+      if (!testData) {
+        console.error('❌ Test data is null or undefined');
+        toast.error('Test data not found');
+        return;
+      }
+
+      // Load the test data into the form using setValue
+      try {
+        console.log('🔄 Setting form values...');
+        
+        Object.keys(testData).forEach(key => {
+          console.log(`Setting ${key}:`, testData[key]);
+          setValue(key, testData[key]);
+        });
+
+        // For virtual/hybrid events, also update the country marketing data state
+        if ((eventType === 'virtual' || eventType === 'hybrid') && testData.country_marketing) {
+          console.log('🌍 Updating country marketing data state');
+          setCountryMarketingData(testData.country_marketing);
+          setSelectedCountries(testData.target_countries || []);
+        }
+
+        console.log('✅ Test data loaded successfully');
+        toast.success(`${eventType.charAt(0).toUpperCase() + eventType.slice(1)} test data loaded successfully!`);
+        
+      } catch (setValueError) {
+        console.error('❌ Error setting form values:', setValueError);
+        toast.error('Failed to load test data into form');
+      }
+
+    } catch (error) {
+      console.error('❌ Error in handleLoadTestData:', error);
+      toast.error('Failed to load test data');
+    }
+  };
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -1464,686 +1718,54 @@ export default function SimulatePage() {
     }
   };
 
-  // Handle loading test data for different event types
-  const handleLoadTestData = (eventType) => {
-    let testData;
-    
-    switch(eventType) {
-      case 'in-person':
-        testData = TEST_DATA_IN_PERSON;
-        break;
-      case 'virtual':
-        testData = TEST_DATA_VIRTUAL;
-        break;
-      case 'hybrid':
-        testData = TEST_DATA_HYBRID;
-        break;
-      default:
-        testData = TEST_DATA_IN_PERSON;
-    }
-
-    // Load basic event information
-    setValue('event_name', testData.event_name);
-    setValue('event_type', testData.event_type);
-    setValue('event_language', testData.event_language);
-    setValue('event_description', testData.event_description);
-    setValue('city', testData.city);
-    setValue('target_countries', testData.target_countries);
-    setValue('number_of_days', testData.number_of_days);
-    setValue('days', testData.days);
-    setValue('country_marketing', testData.country_marketing || []);
-    setValue('marketing_strategy', testData.marketing_strategy);
-
-    // Mock location data for the city
-    const mockLocationData = {
-      city: testData.city || testData.event_name.includes('Virtual') ? 'Global' : 'San Francisco',
-      state: testData.city ? 'Various' : 'California',
-      population: testData.city ? 'Global Audience' : '884,363',
-      coordinates: testData.city ? [0, 0] : [37.7749, -122.4194],
-      suggestedVenues: testData.city ? [] : ['Moscone Center West Hall', 'Moscone Center South Hall', 'San Francisco Convention Center']
-    };
-
-    // Update tab with mock location data
-    const updatedTabs = tabs.map((tab, index) =>
-      index === activeTab ? { ...tab, locationData: mockLocationData } : tab
-    );
-    setTabs(updatedTabs);
-
-    // Show success message
-    toast.success(`${eventType.charAt(0).toUpperCase() + eventType.slice(1)} event test data loaded successfully!`);
-  };
-
-  // Test data for different event types
-  const TEST_DATA_IN_PERSON = {
-    event_name: 'Global AI & Innovation Summit 2025',
-    event_type: 'in-person',
-    event_language: 'en',
-    event_description: 'A comprehensive 3-day conference bringing together AI researchers, tech entrepreneurs, and industry leaders to explore cutting-edge developments in artificial intelligence, machine learning, and digital transformation. Features hands-on workshops, networking sessions, and startup showcases.',
-    city: 'San Francisco',
-    target_countries: [],
-    country_marketing: [],
-    number_of_days: 3,
-    days: [
-      {
-        event_date: '2025-10-15',
-        start_time: '09:00',
-        end_time: '18:00',
-        venue_name: 'Moscone Center West Hall',
-        venue_capacity: '5000',
-        primary_sector: 'Artificial Intelligence & Machine Learning',
-        speakers: `Dr. Sarah Chen - Director of AI Research, Stanford University
-Marcus Rodriguez - Chief AI Officer, Google DeepMind  
-Prof. Elena Volkov - Machine Learning Pioneer, MIT
-James Park - Founder & CEO, OpenAI
-Dr. Raj Patel - VP of AI Ethics, Microsoft`,
-        activities: `9:00 AM - Registration & Welcome Coffee
-9:30 AM - Opening Keynote: "The Future of AGI"
-10:30 AM - AI Ethics Panel Discussion
-12:00 PM - Networking Lunch & Tech Expo
-2:00 PM - Machine Learning Workshop
-4:00 PM - Startup Pitch Competition
-5:30 PM - Welcome Reception & Networking`,
-        additional_info: `• Business professional dress code recommended
-• All meals and refreshments provided
-• Live streaming available for virtual attendees
-• Simultaneous translation in Spanish and Mandarin
-• Parking available at Moscone Garage ($25/day)`
-      },
-      {
-        event_date: '2025-10-16',
-        start_time: '08:30',
-        end_time: '19:00',
-        venue_name: 'Moscone Center South Hall',
-        venue_capacity: '3500',
-        primary_sector: 'Digital Transformation & Enterprise AI',
-        speakers: `Lisa Wang - CTO, Salesforce
-David Kumar - Head of AI Strategy, IBM
-Dr. Michelle Foster - Digital Innovation Leader, Accenture
-Alex Thompson - VP Engineering, NVIDIA
-Maria Santos - AI Product Manager, Meta`,
-        activities: `8:30 AM - Continental Breakfast & Networking
-9:00 AM - Enterprise AI Implementation Keynote
-10:00 AM - Industry Use Cases Panel
-11:30 AM - Hands-on AI Development Workshop
-1:00 PM - Networking Lunch & Solution Showcase
-3:00 PM - Technical Deep-dive Sessions
-5:00 PM - Innovation Awards Ceremony
-6:30 PM - Evening Gala Dinner`,
-        additional_info: `• Laptops required for hands-on workshops
-• Technical skill level: Intermediate to Advanced
-• GitHub account needed for coding sessions
-• Awards ceremony features industry recognition
-• Formal attire for evening gala`
-      },
-      {
-        event_date: '2025-10-17',
-        start_time: '09:00',
-        end_time: '16:30',
-        venue_name: 'San Francisco Convention Center',
-        venue_capacity: '2000',
-        primary_sector: 'AI Startups & Future Technologies',
-        speakers: `Robert Chang - Managing Partner, Andreessen Horowitz
-Dr. Amanda Liu - Quantum Computing Researcher, IBM Research
-Carlos Mendez - AI Startup Accelerator Director, Y Combinator
-Jennifer Kim - Venture Capitalist, Sequoia Capital
-Prof. Michael Zhang - Robotics & AI, UC Berkeley`,
-        activities: `9:00 AM - Startup Breakfast & Demo Setup
-9:30 AM - Future Tech Trends Keynote
-10:30 AM - Investor-Entrepreneur Panel
-12:00 PM - Startup Demo Showcase (20 companies)
-2:00 PM - Funding & Investment Workshop
-3:30 PM - Closing Keynote: "AI in 2030"
-4:15 PM - Final Networking & Wrap-up`,
-        additional_info: `• Startup Demo Day featuring 20 selected companies
-• Investor meetings available by appointment
-• Business cards strongly recommended
-• Final networking focused on partnerships
-• Event app available for continued connections`
-      }
-    ],
-    marketing_strategy: {
-      facebook: {
-        audience: "Tech professionals aged 25-45, AI researchers, startup founders, and decision-makers in technology companies",
-        placement: "Facebook ads targeting tech professionals, Event page promotion in AI/ML groups, Sponsored posts in technology communities, Partner company shares",
-        reach: "150,000 impressions, 8,000 engagements, 500 event page visits",
-        reaction: "3% CTR, 200 registrations, 1,200 shares and comments",
-        budget: "$3,500",
-        timeline: "6 weeks before event launch, intensive 2 weeks prior",
-        content_type: "Event announcement videos, Speaker spotlight posts, Countdown graphics, Live Q&A sessions with speakers",
-        additional_info: "Partner with tech companies for employee sharing, utilize AI/ML Facebook groups with 50K+ members",
-        influencer_partnerships: [
-          {
-            name: "TechGuru Mike",
-            followers_count: "250,000",
-            expected_reach: "75,000 impressions",
-            expected_reaction: "3,000 engagements, 150 registrations"
-          },
-          {
-            name: "AI Insights Sarah",
-            followers_count: "180,000",
-            expected_reach: "54,000 impressions", 
-            expected_reaction: "2,200 engagements, 110 registrations"
-          }
-        ]
-      },
-      instagram: {
-        audience: "Young tech professionals, AI enthusiasts, startup community, visual learners aged 22-40",
-        placement: "Instagram Stories ads, Influencer partnerships with tech personalities, AI/tech hashtag campaigns, Visual event teasers",
-        reach: "100,000 impressions, 5,000 story views, 2,000 profile visits",
-        reaction: "4% engagement rate, 300 story interactions, 150 DMs",
-        budget: "$2,500",
-        timeline: "4 weeks campaign with daily posts 2 weeks before",
-        content_type: "Visual speaker cards, Behind-the-scenes venue prep, IGTV speaker interviews, Stories polls and Q&As",
-        additional_info: "Collaborate with tech influencers, create branded hashtag #AIInnovationSF2025",
-        influencer_partnerships: [
-          {
-            name: "CodeWithEmily",
-            followers_count: "320,000",
-            expected_reach: "80,000 story views",
-            expected_reaction: "5,000 engagements, 200 registrations"
-          },
-          {
-            name: "StartupLifeAlex",
-            followers_count: "150,000",
-            expected_reach: "45,000 post reach",
-            expected_reaction: "3,500 engagements, 140 registrations"
-          }
-        ]
-      },
-      linkedin: {
-        audience: "Senior tech professionals, C-level executives, industry leaders, enterprise decision-makers, career-focused individuals",
-        placement: "LinkedIn sponsored content, Professional network posts, Industry leader endorsements, LinkedIn Events promotion, Company page updates",
-        reach: "200,000 impressions, 10,000 clicks, 3,000 professional connections",
-        reaction: "2.5% CTR, 400 professional registrations, 50 company team registrations",
-        budget: "$4,000",
-        timeline: "8 weeks professional campaign, executive outreach 3 weeks prior",
-        content_type: "Professional articles about AI trends, Thought leadership posts, Speaker professional achievements, Industry insights",
-        additional_info: "Target Fortune 500 tech companies, leverage speaker professional networks, create LinkedIn Event page",
-        influencer_partnerships: [
-          {
-            name: "Dr. Robert Chen (CTO)",
-            followers_count: "95,000",
-            expected_reach: "28,500 professional impressions",
-            expected_reaction: "1,400 engagements, 85 registrations"
-          }
-        ]
-      },
-      x_twitter: {
-        audience: "Tech community, AI researchers, startup ecosystem, tech journalists, early adopters aged 25-50",
-        placement: "Twitter promoted tweets, Tech hashtag campaigns (#AIConf2025 #TechSummitSF), Live tweeting strategy, Speaker quote cards",
-        reach: "80,000 impressions, 3,000 retweets, 1,500 replies",
-        reaction: "5% engagement rate, 250 registrations via Twitter, 500 hashtag uses",
-        budget: "$1,500",
-        timeline: "Continuous 6-week campaign, live-tweeting during event",
-        content_type: "Tweet threads about AI trends, Speaker quote graphics, Real-time event updates, Polls and tech discussions",
-        additional_info: "Engage with tech Twitter community, partner with tech journalists for coverage, create event Twitter moment",
-        influencer_partnerships: [
-          {
-            name: "@TechThreadGuru",
-            followers_count: "180,000",
-            expected_reach: "54,000 impressions",
-            expected_reaction: "2,700 engagements, 135 registrations"
-          }
-        ]
-      },
-      youtube: {
-        audience: "Tech tutorial viewers, AI/ML learners, startup enthusiasts, professional development seekers",
-        placement: "Pre-roll ads on tech channels, Speaker interview teasers, Event highlight videos, Educational content tie-ins",
-        reach: "50,000 video views, 2,000 subscribers, 500 comments",
-        reaction: "6% view-through rate, 100 registrations from YouTube, 300 channel subscriptions",
-        budget: "$2,000",
-        timeline: "4 weeks of video content, speaker interviews 3 weeks before",
-        content_type: "Speaker introduction videos, Event preview trailers, AI tutorial tie-ins, Behind-the-scenes venue setup",
-        additional_info: "Create dedicated event playlist, collaborate with tech YouTubers, post-event content strategy",
-        influencer_partnerships: [
-          {
-            name: "TechExplainedTV",
-            followers_count: "450,000",
-            expected_reach: "135,000 video views",
-            expected_reaction: "8,100 engagements, 270 registrations"
-          }
-        ]
-      },
-      reddit: {
-        audience: "Tech enthusiasts, developers, AI/ML practitioners, startup founders, early technology adopters",
-        placement: "r/MachineLearning, r/artificial, r/tech, r/startups promoted posts, AMA sessions with speakers",
-        reach: "75,000 impressions, 2,500 upvotes, 800 comments",
-        reaction: "6.5% engagement rate, 180 registrations, 15 AMA participants",
-        budget: "$1,200",
-        timeline: "6 weeks community engagement, 2 AMA sessions, daily discussions",
-        content_type: "Technical discussions, Speaker AMAs, AI trend analysis, Event announcements in relevant subreddits",
-        additional_info: "Host 2 AMA sessions with keynote speakers, engage authentically in tech communities, avoid over-promotion",
-        influencer_partnerships: [
-          {
-            name: "u/AIResearcher_Pro",
-            followers_count: "85,000",
-            expected_reach: "25,500 community impressions",
-            expected_reaction: "1,500 engagements, 75 registrations"
-          }
-        ]
-      },
-      meetup: {
-        audience: "Local tech professionals, developers, entrepreneurs, networking enthusiasts in SF Bay Area",
-        placement: "SF AI Meetup groups, Tech networking events, Professional development meetups, Startup founder groups",
-        reach: "15,000 meetup members, 25 related groups, 8 partnerships",
-        reaction: "12% RSVP rate, 220 registrations, 45 group partnerships",
-        budget: "$800",
-        timeline: "8 weeks networking, attend 12 related meetups, host 2 pre-events",
-        content_type: "Meetup event pages, Pre-event networking sessions, Speaker meet-and-greets, Professional networking",
-        additional_info: "Partner with existing SF tech meetups, host pre-conference networking events, leverage local tech community leaders",
-        influencer_partnerships: [
-          {
-            name: "SF Tech Meetup Leader",
-            followers_count: "12,000",
-            expected_reach: "8,500 local professionals",
-            expected_reaction: "850 meetup views, 95 registrations"
-          }
-        ]
-      },
-      eventbrite: {
-        audience: "Event attendees, professional development seekers, conference enthusiasts, local professionals",
-        placement: "Eventbrite featured listings, Professional development category, Tech event recommendations, Related event suggestions",
-        reach: "50,000 event page views, 3,200 saves, 1,800 shares",
-        reaction: "8% conversion rate, 320 direct registrations, 15% early bird uptake",
-        budget: "$1,500",
-        timeline: "6 weeks featured listing, early bird promotion first 3 weeks, regular promotion following weeks",
-        content_type: "Professional event page with agenda, Speaker bios and photos, Detailed venue information, Registration packages",
-        additional_info: "Utilize Eventbrite's professional networking category, partner with related events for cross-promotion, optimize for mobile registration",
-        influencer_partnerships: [
-          {
-            name: "EventExpert_SF",
-            followers_count: "25,000",
-            expected_reach: "12,500 event page views",
-            expected_reaction: "1,000 engagements, 125 registrations"
-          }
-        ]
-      },
-      indeed_events: {
-        audience: "Job seekers, career changers, professional development focused individuals, HR professionals, recruiters",
-        placement: "Indeed Events career fair section, Professional development events, Tech career networking, Industry advancement programs",
-        reach: "35,000 career-focused views, 2,100 professional saves, 850 career inquiries",
-        reaction: "7% career conversion rate, 280 professional registrations, 65 recruiter attendees",
-        budget: "$1,800",
-        timeline: "6 weeks career-focused promotion, networking with HR departments, professional development angle",
-        content_type: "Career advancement messaging, Professional development opportunities, Networking for job seekers, Industry insights for career growth",
-        additional_info: "Position as career advancement opportunity, partner with recruiting firms, highlight networking potential with industry leaders",
-        influencer_partnerships: [
-          {
-            name: "CareerGrowthGuru",
-            followers_count: "55,000",
-            expected_reach: "22,000 career-focused views",
-            expected_reaction: "1,800 career engagements, 165 registrations"
-          }
-        ]
-      },
-      google_ads: {
-        audience: "Tech professionals searching for conferences, AI/ML events, professional development opportunities",
-        placement: "Google search ads for 'AI conference', 'tech summit', 'machine learning events', Display ads on tech websites, YouTube pre-roll",
-        reach: "120,000 search impressions, 4,500 clicks, 350 conversions",
-        reaction: "3.75% CTR, 280 search-driven registrations, 8.5% conversion rate",
-        budget: "$3,500",
-        timeline: "6 weeks search campaign, ramping up final 2 weeks, post-event retargeting for future events",
-        content_type: "Search ads with compelling headlines, Display banners featuring speaker lineup, Video ads with event highlights and testimonials",
-        additional_info: "Target high-intent keywords, use remarketing for website visitors, A/B test ad creatives for optimal performance, geographic targeting for SF Bay Area",
-        influencer_partnerships: []
-      },
-      email_campaign: {
-        audience: "Newsletter subscribers, past event attendees, professional contacts, industry mailing lists",
-        placement: "Direct email campaigns, Newsletter inclusions, Automated drip sequences, Partner email lists, Industry publication features",
-        reach: "25,000 emails sent, 17,500 delivered, 12,250 opened, 3,675 clicked",
-        reaction: "70% open rate, 30% click rate, 22% conversion rate, 485 email-driven registrations",
-        budget: "$1,200",
-        timeline: "8 weeks email sequence: announcement → early bird → speaker spotlights → agenda reveal → final call → post-event follow-up",
-        content_type: "HTML newsletters with event highlights, Personalized speaker introductions, Interactive countdown timers, Early bird pricing announcements, Event agenda previews",
-        additional_info: "Segment by industry and seniority level, A/B test subject lines and send times, include social sharing buttons, mobile-optimized templates",
-        influencer_partnerships: []
-      },
-      whatsapp_campaign: {
-        audience: "Professional networks, tech communities, startup founder groups, personal and professional contacts",
-        placement: "WhatsApp Business groups, Tech community channels, Professional networking circles, Startup founder networks, Industry-specific groups",
-        reach: "2,500 group members across 10 groups, 1,750 active participants, 1,200 direct messages",
-        reaction: "45% message engagement rate, 38% response rate, 18% conversion rate, 315 WhatsApp-driven registrations",
-        budget: "$600",
-        timeline: "8 weeks community building and engagement, daily valuable content sharing, event announcements, live updates during event",
-        content_type: "Event announcements with compelling visuals, Speaker introduction videos, Interactive polls and discussions, Behind-the-scenes content, Voice messages from organizers",
-        additional_info: "Maintain 10 groups max 250 members each, assign dedicated community managers, share valuable content beyond just promotion, respect group guidelines and culture",
-        influencer_partnerships: []
-      },
-      offline_publicity: {
-        audience: "Local tech community, university students and faculty, co-working space members, professional associations",
-        placement: "Tech conference centers, University campuses (Stanford, UC Berkeley, UCSF), Co-working spaces, Professional association offices, Tech company lobbies",
-        reach: "45,000 physical location impressions, 2,500 flyers distributed, 85 partner locations, 15 university partnerships",
-        reaction: "2.5% physical-to-digital conversion, 125 walk-in inquiries, 285 QR code scans, 95 phone inquiries",
-        budget: "$1,800",
-        timeline: "4 weeks physical material distribution, concentrated placement 2 weeks before event, day-of signage and directions",
-        content_type: "Professional flyers with QR codes, Venue banners and directional signage, University bulletin board announcements, Co-working space digital displays",
-        additional_info: "Partner with local tech meetups for cross-promotion, strategic placement in high-traffic tech areas, Moscone Center area visibility, professional design and materials",
-        influencer_partnerships: []
-      }
-    }
-  };
-
-  const TEST_DATA_VIRTUAL = {
-    event_name: 'Global Virtual Tech Summit 2025',
-    event_type: 'virtual',
-    event_language: 'en',
-    event_description: 'Join us for an immersive 2-day virtual conference connecting tech professionals worldwide. Experience cutting-edge presentations, interactive workshops, and global networking opportunities from the comfort of your home or office. Features multi-timezone sessions, virtual expo halls, and 1-on-1 meeting capabilities.',
-    city: '',
-    target_countries: [
-      { code: 'US', name: 'United States' },
-      { code: 'CA', name: 'Canada' },
-      { code: 'GB', name: 'United Kingdom' },
-      { code: 'DE', name: 'Germany' },
-      { code: 'FR', name: 'France' },
-      { code: 'AU', name: 'Australia' },
-      { code: 'JP', name: 'Japan' },
-      { code: 'SG', name: 'Singapore' }
-    ],
-    number_of_days: 2,
-    days: [
-      {
-        event_date: '2025-11-20',
-        start_time: '09:00',
-        end_time: '17:00',
-        venue_name: '',
-        venue_capacity: '',
-        virtual_platform: {
-          platform_name: 'Hopin',
-          platform_link: 'https://app.hopin.com/events/global-virtual-tech-summit-2025',
-          max_participants: '10000',
-          features: ['Virtual venue', 'Networking', 'Expo booths', 'Multiple stages', 'Breakout rooms', 'Chat'],
-          access_requirements: 'High-speed internet connection, updated browser (Chrome/Firefox/Safari), webcam and microphone for networking'
-        },
-        primary_sector: 'Cloud Computing & DevOps',
-        speakers: `Dr. Jennifer Walsh - Cloud Architecture Director, AWS
-Miguel Santos - DevOps Lead, Netflix
-Prof. Alex Chen - Distributed Systems, Stanford
-Sarah Johnson - Site Reliability Engineer, Google
-David Kim - Container Technologies, Docker Inc.`,
-        activities: `9:00 AM (UTC) - Global Welcome & Platform Orientation
-9:30 AM - Keynote: "Cloud-Native Future"
-10:30 AM - Multi-timezone Networking Sessions
-12:00 PM - Virtual Expo Hall & Sponsor Booths
-2:00 PM - DevOps Workshop (Interactive)
-3:30 PM - Global Panel: Regional Tech Trends
-5:00 PM - Virtual Happy Hour & Closing`,
-        additional_info: `• Simultaneous sessions across 3 timezones
-• 24-hour virtual expo hall access
-• Recording available for 30 days
-• Subtitles in 8 languages
-• Mobile app available for iOS/Android
-• Virtual networking rooms with AI matching`
-      },
-      {
-        event_date: '2025-11-21',
-        start_time: '08:00',
-        end_time: '18:00',
-        venue_name: '',
-        venue_capacity: '',
-        virtual_platform: {
-          platform_name: 'Hopin',
-          platform_link: 'https://app.hopin.com/events/global-virtual-tech-summit-2025',
-          max_participants: '10000',
-          features: ['Virtual venue', 'Networking', 'Expo booths', 'Multiple stages', 'Breakout rooms', 'Chat'],
-          access_requirements: 'High-speed internet connection, updated browser (Chrome/Firefox/Safari), webcam and microphone for networking'
-        },
-        primary_sector: 'Cybersecurity & Data Privacy',
-        speakers: `Dr. Rachel Brown - Cybersecurity Research, MIT
-James Wilson - CISO, Microsoft Azure
-Lisa Zhang - Privacy Engineering, Apple
-Carlos Rodriguez - Security Architecture, Cloudflare
-Dr. Ahmed Hassan - AI Security, IBM Research`,
-        activities: `8:00 AM (UTC) - Early Bird Cybersecurity Breakfast Session
-9:00 AM - Opening: "Zero Trust Architecture"
-10:00 AM - Interactive Threat Modeling Workshop
-11:30 AM - Global Security Challenges Panel
-1:00 PM - Virtual Lunch & Learn Sessions
-2:30 PM - Hands-on: Penetration Testing
-4:00 PM - Data Privacy Compliance Workshop
-5:30 PM - Global Wrap-up & Future Connections`,
-        additional_info: `• Advanced cybersecurity simulations
-• Secure virtual environment demos
-• Industry certification opportunities
-• Global regulatory compliance session
-• 1-on-1 expert consultations available
-• Post-event security resource library access`
-      }
-    ],
-    country_marketing: [
-      {
-        country_code: 'US',
-        country_name: 'United States',
-        marketing_strategy: {
-          facebook: {
-            audience: "US tech professionals, software engineers, DevOps specialists, cybersecurity experts aged 25-50",
-            budget: "$2,500",
-            reach: "85,000 US impressions",
-            timeline: "6 weeks with Pacific/Eastern timezone targeting"
-          },
-          linkedin: {
-            audience: "US enterprise professionals, CTOs, engineering managers, tech leads",
-            budget: "$3,000",
-            reach: "120,000 professional impressions",
-            timeline: "8 weeks B2B professional targeting"
-          }
-        }
-      },
-      {
-        country_code: 'GB',
-        country_name: 'United Kingdom',
-        marketing_strategy: {
-          linkedin: {
-            audience: "UK tech professionals, fintech specialists, AI researchers, digital transformation leaders",
-            budget: "$2,200",
-            reach: "65,000 UK professional impressions",
-            timeline: "6 weeks GMT timezone optimization"
-          },
-          x_twitter: {
-            audience: "UK tech Twitter community, startups, scale-ups, university researchers",
-            budget: "$1,200",
-            reach: "35,000 UK tech impressions",
-            timeline: "5 weeks UK tech community engagement"
-          }
-        }
-      }
-    ],
-    marketing_strategy: {
-      facebook: {
-        audience: "Global tech professionals, remote workers, digital nomads, virtual event enthusiasts aged 24-50",
-        placement: "Global Facebook ads, Virtual event groups, Remote work communities, International tech pages",
-        reach: "200,000 global impressions, 12,000 engagements, 800 virtual event page visits",
-        reaction: "4% CTR, 320 virtual registrations, 1,800 global shares",
-        budget: "$4,200",
-        timeline: "8 weeks global campaign, multi-timezone targeting",
-        content_type: "Virtual event teasers, Global speaker introductions, Platform demo videos, Time zone countdown posts",
-        additional_info: "Target 8 countries simultaneously, multi-language posts, virtual networking promotion",
-        influencer_partnerships: []
-      },
-      linkedin: {
-        audience: "International business professionals, remote team leaders, global enterprise decision-makers",
-        placement: "LinkedIn global sponsored content, International professional networks, Remote work thought leaders",
-        reach: "300,000 global professional impressions, 15,000 clicks, 4,500 connections",
-        reaction: "3.2% CTR, 580 professional registrations, 85 enterprise team registrations",
-        budget: "$5,500",
-        timeline: "10 weeks global professional campaign, C-level executive outreach",
-        content_type: "Global thought leadership, Remote work insights, International speaker spotlights, Virtual networking benefits",
-        additional_info: "Target Fortune Global 500, international speaker networks, global time zone optimization",
-        influencer_partnerships: []
-      },
-      youtube: {
-        audience: "Global tech tutorial viewers, virtual learning enthusiasts, international professional development seekers",
-        placement: "YouTube global pre-roll, International tech channels, Virtual event playlists, Educational content",
-        reach: "85,000 global video views, 3,200 international subscribers, 850 comments",
-        reaction: "7% global view-through rate, 180 YouTube registrations, 450 channel subscriptions",
-        budget: "$3,200",
-        timeline: "6 weeks global video content, international speaker interviews",
-        content_type: "Global speaker introductions, Virtual platform tutorials, International tech trends, Multi-language subtitles",
-        additional_info: "8-language subtitle support, global tech YouTuber partnerships, virtual event playlist",
-        influencer_partnerships: []
-      }
-    }
-  };
-
-  const TEST_DATA_HYBRID = {
-    event_name: 'Hybrid Innovation Conference 2025',
-    event_type: 'hybrid',
-    event_language: 'en',
-    event_description: 'Experience the best of both worlds with our hybrid conference format. Join us in-person in New York City or participate virtually from anywhere in the world. Enjoy seamless integration between physical and digital attendees with interactive Q&As, virtual networking, and synchronized presentations.',
-    city: 'New York City',
-    target_countries: [
-      { code: 'US', name: 'United States' },
-      { code: 'CA', name: 'Canada' },
-      { code: 'MX', name: 'Mexico' },
-      { code: 'BR', name: 'Brazil' },
-      { code: 'GB', name: 'United Kingdom' },
-      { code: 'DE', name: 'Germany' },
-      { code: 'IN', name: 'India' },
-      { code: 'AU', name: 'Australia' }
-    ],
-    number_of_days: 2,
-    days: [
-      {
-        event_date: '2025-09-15',
-        start_time: '09:00',
-        end_time: '18:00',
-        venue_name: 'Jacob K. Javits Convention Center',
-        venue_capacity: '1200',
-        venue_address: '429 11th Avenue, New York, NY 10001',
-        virtual_platform: {
-          platform_name: 'Zoom Events + Remo',
-          platform_link: 'https://events.zoom.us/hybrid-innovation-2025',
-          max_participants: '5000',
-          features: ['Hybrid integration', 'Virtual expo', 'Breakout rooms', 'Live streaming', 'Q&A integration', 'Networking lounges'],
-          access_requirements: 'For virtual: stable internet, webcam recommended. For in-person: photo ID, health certification if required'
-        },
-        primary_sector: 'Financial Technology & Blockchain',
-        speakers: `Dr. Sarah Martinez - Blockchain Lead, JPMorgan Chase (In-person)
-Kevin O'Brien - DeFi Strategy, Coinbase (Virtual)
-Prof. Michael Zhang - Digital Finance, Columbia University (In-person)
-Lisa Thompson - FinTech Innovation, Stripe (Virtual)
-Dr. Ahmed Al-Rashid - Central Bank Digital Currencies, IMF (Virtual)`,
-        activities: `9:00 AM EST - Hybrid Welcome (In-person + Virtual)
-9:30 AM - Keynote: "The Future of Money" (Hybrid Q&A)
-10:45 AM - Interactive Workshop: DeFi Protocols (Both formats)
-12:00 PM - Hybrid Networking Lunch (Virtual breakout rooms)
-1:30 PM - Panel: "Regulation & Innovation" (Cross-platform discussion)
-3:00 PM - Hands-on: Smart Contract Development (Hybrid labs)
-4:30 PM - Virtual Expo Hall + Physical Booths
-6:00 PM - Hybrid Happy Hour & Closing Ceremony`,
-        additional_info: `• Seamless hybrid participation with live streaming
-• Virtual attendees can join all Q&A sessions
-• Physical networking mirrored in virtual rooms
-• Mobile app connects in-person and virtual attendees
-• Simultaneous translation for global audience
-• Hybrid mentorship speed-dating sessions`
-      },
-      {
-        event_date: '2025-09-16',
-        start_time: '08:30',
-        end_time: '17:30',
-        venue_name: 'Jacob K. Javits Convention Center',
-        venue_capacity: '1200',
-        venue_address: '429 11th Avenue, New York, NY 10001',
-        virtual_platform: {
-          platform_name: 'Zoom Events + Remo',
-          platform_link: 'https://events.zoom.us/hybrid-innovation-2025',
-          max_participants: '5000',
-          features: ['Hybrid integration', 'Virtual expo', 'Breakout rooms', 'Live streaming', 'Q&A integration', 'Networking lounges'],
-          access_requirements: 'For virtual: stable internet, webcam recommended. For in-person: photo ID, health certification if required'
-        },
-        primary_sector: 'Sustainable Technology & Green Innovation',
-        speakers: `Dr. Emma Green - Climate Tech, Tesla (In-person)
-Carlos Silva - Renewable Energy AI, Google (Virtual)
-Prof. Rachel Kim - Sustainable Computing, MIT (In-person)
-James Wilson - Carbon Tracking, Microsoft (Virtual)
-Dr. Maria Santos - Green Finance, World Bank (Virtual)`,
-        activities: `8:30 AM EST - Early Bird Sustainability Session (Hybrid)
-9:00 AM - Opening: "Tech for Climate Action" (Interactive keynote)
-10:15 AM - Hybrid Workshop: Carbon Footprint Calculation
-11:45 AM - Cross-platform Startup Pitch Competition
-1:00 PM - Sustainable Lunch & Global Networking
-2:30 PM - Panel: "Investment in Green Tech" (Hybrid format)
-4:00 PM - Innovation Showcase (Physical + Virtual demos)
-5:30 PM - Global Wrap-up & Future Collaboration Planning`,
-        additional_info: `• Carbon-neutral event with offset programs
-• Virtual attendees reduce travel emissions
-• Hybrid innovation challenges with global teams
-• Digital and physical product demonstrations
-• Sustainability metrics tracked and reported
-• Post-event collaboration platform access`
-      }
-    ],
-    country_marketing: [
-      {
-        country_code: 'US',
-        country_name: 'United States',
-        marketing_strategy: {
-          facebook: {
-            audience: "US tech professionals with option for in-person or virtual attendance",
-            budget: "$3,500",
-            reach: "125,000 US impressions with venue proximity targeting",
-            timeline: "8 weeks with NYC metro area emphasis for in-person attendees"
-          },
-          linkedin: {
-            audience: "US business professionals, emphasizing hybrid work trends and flexibility",
-            budget: "$4,200",
-            reach: "180,000 professional impressions with hybrid benefits messaging",
-            timeline: "10 weeks with corporate team registration incentives"
-          }
-        }
-      },
-      {
-        country_code: 'GB',
-        country_name: 'United Kingdom',
-        marketing_strategy: {
-          linkedin: {
-            audience: "UK professionals interested in virtual participation and global networking",
-            budget: "$2,800",
-            reach: "85,000 UK professional impressions with virtual convenience messaging",
-            timeline: "8 weeks GMT optimization for virtual attendance"
-          }
-        }
-      }
-    ],
-    marketing_strategy: {
-      facebook: {
-        audience: "Hybrid event enthusiasts, tech professionals seeking flexible attendance, innovation conference attendees",
-        placement: "Facebook hybrid event groups, Flexible work communities, Innovation-focused pages, NYC event promotion",
-        reach: "180,000 hybrid audience impressions, 14,000 engagements, 900 event page visits",
-        reaction: "4.5% CTR, 425 hybrid registrations (60% virtual, 40% in-person), 2,100 format inquiries",
-        budget: "$4,800",
-        timeline: "10 weeks campaign with format flexibility emphasis, venue vs virtual choice promotion",
-        content_type: "Hybrid experience videos, Format comparison posts, Venue virtual tours, Attendance option explanations",
-        additional_info: "Promote attendance flexibility, NYC venue highlights for locals, virtual convenience for global audience",
-        influencer_partnerships: []
-      },
-      linkedin: {
-        audience: "Corporate teams considering hybrid attendance, innovation leaders, flexible work advocates",
-        placement: "LinkedIn hybrid work thought leadership, Corporate event planning, Team attendance packages",
-        reach: "350,000 professional impressions, 18,000 clicks, 5,200 corporate inquiries",
-        reaction: "3.8% CTR, 720 professional registrations, 125 corporate team packages",
-        budget: "$6,200",
-        timeline: "12 weeks B2B campaign with corporate hybrid packages, team attendance incentives",
-        content_type: "Hybrid work trend articles, Corporate team benefits, Flexible attendance ROI, Innovation leadership content",
-        additional_info: "Target enterprise companies exploring hybrid events, promote team bonding across formats",
-        influencer_partnerships: []
-      },
-      youtube: {
-        audience: "Global tech community interested in hybrid participation options",
-        placement: "YouTube hybrid work content, Tech channels, Virtual event tutorials",
-        reach: "95,000 hybrid-focused video views, 4,200 subscriptions, 1,200 comments",
-        reaction: "6.8% engagement rate, 280 YouTube registrations, 520 channel interactions",
-        budget: "$3,800",
-        timeline: "8 weeks video content showcasing hybrid experience benefits",
-        content_type: "Hybrid event experience videos, Platform tutorials, Speaker accessibility content",
-        additional_info: "Showcase both in-person and virtual experiences, platform demo videos",
-        influencer_partnerships: []
-      }
-    }
-  };
-
 const onSubmit = async (formData) => {
   try {
+    console.log('🚀 Form submission initiated with data:', formData);
+    
+    // First, try Zod validation and log any errors
+    try {
+      console.log('🔍 Running Zod validation...');
+      const validatedData = TabFormSchema.parse(formData);
+      console.log('✅ Zod validation passed:', validatedData);
+    } catch (zodError) {
+      console.error('❌ ZOD VALIDATION FAILED:');
+      console.error('Full Zod Error Object:', zodError);
+      
+      if (zodError.errors) {
+        console.error('📋 Detailed Zod Errors:');
+        zodError.errors.forEach((error, index) => {
+          console.error(`Error ${index + 1}:`, {
+            path: error.path,
+            message: error.message,
+            code: error.code,
+            expected: error.expected,
+            received: error.received,
+            validation: error.validation
+          });
+        });
+        
+        // Also show user-friendly error messages
+        console.error('📝 User-friendly error messages:');
+        zodError.errors.forEach((error, index) => {
+          const fieldPath = error.path.join('.');
+          console.error(`${index + 1}. Field "${fieldPath}": ${error.message}`);
+        });
+      }
+      
+      // Show Zod validation errors to user
+      toast.error('Form validation failed - check console for details');
+      zodError.errors?.forEach((error, index) => {
+        setTimeout(() => {
+          const fieldPath = error.path.join('.');
+          toast.error(`${fieldPath}: ${error.message}`, {
+            autoHideDuration: 5000 + (index * 500)
+          });
+        }, index * 300);
+      });
+      
+      return; // Stop submission if Zod validation fails
+    }
+    
     // Manual validation with detailed error messages
     const errors = [];
     
@@ -2630,7 +2252,9 @@ const onSubmit = async (formData) => {
     );
   };
 
-  const currentTab = tabs[activeTab];  return (
+  const currentTab = tabs[activeTab];
+  
+  return (
     <DashboardContent>
       <CustomBreadcrumbs
         heading="Dynamic Tabs Simulator"
@@ -2690,36 +2314,6 @@ const onSubmit = async (formData) => {
           </Tabs>
           
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            <Button
-              variant="outlined"
-              startIcon={<Iconify icon="eva:play-circle-outline" />}
-              onClick={() => handleLoadTestData('in-person')}
-              color="success"
-              size="small"
-            >
-              Test In-Person
-            </Button>
-            
-            <Button
-              variant="outlined"
-              startIcon={<Iconify icon="eva:monitor-outline" />}
-              onClick={() => handleLoadTestData('virtual')}
-              color="info"
-              size="small"
-            >
-              Test Virtual
-            </Button>
-            
-            <Button
-              variant="outlined"
-              startIcon={<Iconify icon="eva:layers-outline" />}
-              onClick={() => handleLoadTestData('hybrid')}
-              color="warning"
-              size="small"
-            >
-              Test Hybrid
-            </Button>
-            
             <Button
               variant="outlined"
               startIcon={<Iconify icon="mingcute:add-line" />}
@@ -3326,6 +2920,36 @@ const onSubmit = async (formData) => {
               
               <Grid size={12}>
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => handleLoadTestData('in-person')}
+                    startIcon={<Iconify icon="mdi:map-marker" />}
+                    color="primary"
+                    size="small"
+                  >
+                    Test In-Person
+                  </Button>
+                  
+                  <Button
+                    variant="outlined"
+                    onClick={() => handleLoadTestData('virtual')}
+                    startIcon={<Iconify icon="mdi:monitor" />}
+                    color="secondary"
+                    size="small"
+                  >
+                    Test Virtual
+                  </Button>
+                  
+                  <Button
+                    variant="outlined"
+                    onClick={() => handleLoadTestData('hybrid')}
+                    startIcon={<Iconify icon="mdi:map-marker-plus" />}
+                    color="warning"
+                    size="small"
+                  >
+                    Test Hybrid
+                  </Button>
+                  
                   <Button
                     variant="outlined"
                     onClick={handleLoadFromDatabase}
@@ -5711,7 +5335,6 @@ const onSubmit = async (formData) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {console.log('Saved Tabs:', savedTabs) /* Debugging line */}
                     {savedTabs?.items?.map((tab) => {
                       const tabId = tab._id || tab.id;
                       const content = tab.content || {};
