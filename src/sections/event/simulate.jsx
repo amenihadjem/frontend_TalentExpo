@@ -81,95 +81,95 @@ const VIRTUAL_PLATFORMS = [
 ];
 
 // Form validation schema
-const VirtualPlatformSchema = zod.object({
-  platform_name: zod.string().min(1, { message: 'Platform name is required!' }),
-  platform_link: zod.string().url({ message: 'Please enter a valid URL!' }).optional(),
-  max_participants: zod.string().min(1, { message: 'Maximum participants is required!' }),
-  features: zod.array(zod.string()).optional(),
-  access_requirements: zod.string().optional(),
-});
+// const VirtualPlatformSchema = zod.object({
+//   platform_name: zod.string().min(1, { message: 'Platform name is required!' }),
+//   platform_link: zod.string().url({ message: 'Please enter a valid URL!' }).optional(),
+//   max_participants: zod.string().min(1, { message: 'Maximum participants is required!' }),
+//   features: zod.array(zod.string()).optional(),
+//   access_requirements: zod.string().optional(),
+// });
 
 
-const DaySchema = zod.object({
-  event_date: zod.string().min(1, { message: 'Event date is required!' }),
-  start_time: zod.string().min(1, { message: 'Start time is required!' }),
-  end_time: zod.string().min(1, { message: 'End time is required!' }),
-  venue_name: zod.string().optional(), // Optional for virtual events
-  venue_capacity: zod.string().optional(), // Optional for virtual events  
-  virtual_platform: VirtualPlatformSchema.optional(),
-  primary_sector: zod.string().min(1, { message: 'Primary sector is required!' }),
-  speakers: zod.string().optional(),
-  activities: zod.string().optional(),
-  additional_info: zod.string().optional(),
-});
+// const DaySchema = zod.object({
+//   event_date: zod.string().min(1, { message: 'Event date is required!' }),
+//   start_time: zod.string().min(1, { message: 'Start time is required!' }),
+//   end_time: zod.string().min(1, { message: 'End time is required!' }),
+//   venue_name: zod.string().optional(), // Optional for virtual events
+//   venue_capacity: zod.string().optional(), // Optional for virtual events  
+//   virtual_platform: VirtualPlatformSchema.optional(),
+//   primary_sector: zod.string().min(1, { message: 'Primary sector is required!' }),
+//   speakers: zod.string().optional(),
+//   activities: zod.string().optional(),
+//   additional_info: zod.string().optional(),
+// });
 
-const InfluencerSchema = zod.object({
-  name: zod.string().optional(),
-  followers_count: zod.string().optional(),
-  expected_reach: zod.string().optional(),
-  expected_reaction: zod.string().optional(),
-});
+// const InfluencerSchema = zod.object({
+//   name: zod.string().optional(),
+//   followers_count: zod.string().optional(),
+//   expected_reach: zod.string().optional(),
+//   expected_reaction: zod.string().optional(),
+// });
 
-const MarketingChannelSchema = zod.object({
-  audience: zod.string().optional(),
-  placement: zod.string().optional(),
-  reach: zod.string().optional(),
-  reaction: zod.string().optional(),
-  budget: zod.string().optional(),
-  timeline: zod.string().optional(),
-  content_type: zod.string().optional(),
-  additional_info: zod.string().optional(),
-  influencer_partnerships: zod.array(InfluencerSchema).optional(),
-});
+// const MarketingChannelSchema = zod.object({
+//   audience: zod.string().optional(),
+//   placement: zod.string().optional(),
+//   reach: zod.string().optional(),
+//   reaction: zod.string().optional(),
+//   budget: zod.string().optional(),
+//   timeline: zod.string().optional(),
+//   content_type: zod.string().optional(),
+//   additional_info: zod.string().optional(),
+//   influencer_partnerships: zod.array(InfluencerSchema).optional(),
+// });
 
-const MarketingStrategySchema = zod.object({
-  facebook: MarketingChannelSchema,
-  instagram: MarketingChannelSchema,
-  linkedin: MarketingChannelSchema,
-  x_twitter: MarketingChannelSchema,
-  youtube: MarketingChannelSchema,
-  google_ads: MarketingChannelSchema,
-  email_campaign: MarketingChannelSchema,
-  whatsapp_campaign: MarketingChannelSchema,
-  offline_publicity: MarketingChannelSchema,
-  reddit: MarketingChannelSchema,
-  meetup: MarketingChannelSchema,
-  eventbrite: MarketingChannelSchema,
-  indeed_events: MarketingChannelSchema,
-});
+// const MarketingStrategySchema = zod.object({
+//   facebook: MarketingChannelSchema,
+//   instagram: MarketingChannelSchema,
+//   linkedin: MarketingChannelSchema,
+//   x_twitter: MarketingChannelSchema,
+//   youtube: MarketingChannelSchema,
+//   google_ads: MarketingChannelSchema,
+//   email_campaign: MarketingChannelSchema,
+//   whatsapp_campaign: MarketingChannelSchema,
+//   offline_publicity: MarketingChannelSchema,
+//   reddit: MarketingChannelSchema,
+//   meetup: MarketingChannelSchema,
+//   eventbrite: MarketingChannelSchema,
+//   indeed_events: MarketingChannelSchema,
+// });
 
-const CountryMarketingSchema = zod.object({
-  country_code: zod.string().min(2, { message: 'Country code is required!' }),
-  country_name: zod.string().min(1, { message: 'Country name is required!' }),
-  marketing_strategy: zod.object({
-    facebook: MarketingChannelSchema.optional(),
-    instagram: MarketingChannelSchema.optional(),
-    linkedin: MarketingChannelSchema.optional(),
-    x_twitter: MarketingChannelSchema.optional(),
-    youtube: MarketingChannelSchema.optional(),
-    google_ads: MarketingChannelSchema.optional(),
-    email_campaign: MarketingChannelSchema.optional(),
-    whatsapp_campaign: MarketingChannelSchema.optional(),
-    offline_publicity: MarketingChannelSchema.optional(),
-    reddit: MarketingChannelSchema.optional(),
-    meetup: MarketingChannelSchema.optional(),
-    eventbrite: MarketingChannelSchema.optional(),
-    indeed_events: MarketingChannelSchema.optional(),
-  }).optional(),
-});
+// const CountryMarketingSchema = zod.object({
+//   country_code: zod.string().min(2, { message: 'Country code is required!' }),
+//   country_name: zod.string().min(1, { message: 'Country name is required!' }),
+//   marketing_strategy: zod.object({
+//     facebook: MarketingChannelSchema.optional(),
+//     instagram: MarketingChannelSchema.optional(),
+//     linkedin: MarketingChannelSchema.optional(),
+//     x_twitter: MarketingChannelSchema.optional(),
+//     youtube: MarketingChannelSchema.optional(),
+//     google_ads: MarketingChannelSchema.optional(),
+//     email_campaign: MarketingChannelSchema.optional(),
+//     whatsapp_campaign: MarketingChannelSchema.optional(),
+//     offline_publicity: MarketingChannelSchema.optional(),
+//     reddit: MarketingChannelSchema.optional(),
+//     meetup: MarketingChannelSchema.optional(),
+//     eventbrite: MarketingChannelSchema.optional(),
+//     indeed_events: MarketingChannelSchema.optional(),
+//   }).optional(),
+// });
 
-const TabFormSchema = zod.object({
-  event_name: zod.string().min(1, { message: 'Event name is required!' }),
-  event_type: zod.enum(['in-person', 'virtual', 'hybrid'], { message: 'Event type is required!' }),
-  event_language: zod.string().min(1, { message: 'Event language is required!' }),
-  event_description: zod.string().min(1, { message: 'Event description is required!' }),
-  city: zod.string().optional(), // Optional for virtual events
-  target_countries: zod.array(zod.string()).optional(), // For virtual/hybrid events
-  country_marketing: zod.array(CountryMarketingSchema).optional(), // Country-specific marketing
-  number_of_days: zod.number().min(1, { message: 'Number of days must be at least 1!' }),
-  days: zod.array(DaySchema).min(1, { message: 'At least one day is required!' }),
-  marketing_strategy: MarketingStrategySchema.optional(), // For in-person events
-});
+// const TabFormSchema = zod.object({
+//   event_name: zod.string().min(1, { message: 'Event name is required!' }),
+//   event_type: zod.enum(['in-person', 'virtual', 'hybrid'], { message: 'Event type is required!' }),
+//   event_language: zod.string().min(1, { message: 'Event language is required!' }),
+//   event_description: zod.string().min(1, { message: 'Event description is required!' }),
+//   city: zod.string().optional(), // Optional for virtual events
+//   target_countries: zod.array(zod.string()).optional(), // For virtual/hybrid events
+//   country_marketing: zod.array(CountryMarketingSchema).optional(), // Country-specific marketing
+//   number_of_days: zod.number().min(1, { message: 'Number of days must be at least 1!' }),
+//   days: zod.array(DaySchema).min(1, { message: 'At least one day is required!' }),
+//   marketing_strategy: MarketingStrategySchema.optional(), // For in-person events
+// });
 
 // ----------------------------------------------------------------------
 
@@ -225,7 +225,7 @@ export default function SimulatePage() {
 
   // Form methods for current tab
   const methods = useForm({
-    resolver: zodResolver(TabFormSchema),
+    // resolver: zodResolver(TabFormSchema),
     defaultValues: {
       event_name: '',
       event_type: 'in-person',
@@ -1723,65 +1723,65 @@ const onSubmit = async (formData) => {
     console.log('🚀 Form submission initiated with data:', formData);
     
     // First, try Zod validation and log any errors
-    try {
-      console.log('🔍 Running Zod validation...');
-      const validatedData = TabFormSchema.parse(formData);
-      console.log('✅ Zod validation passed:', validatedData);
-    } catch (zodError) {
-      console.error('❌ ZOD VALIDATION FAILED:');
-      console.error('Full Zod Error Object:', zodError);
+    // try {
+    //   console.log('🔍 Running Zod validation...');
+    //   const validatedData = TabFormSchema.parse(formData);
+    //   console.log('✅ Zod validation passed:', validatedData);
+    // } catch (zodError) {
+    //   console.error('❌ ZOD VALIDATION FAILED:');
+    //   console.error('Full Zod Error Object:', zodError);
       
-      if (zodError.errors) {
-        console.error('📋 Detailed Zod Errors:');
-        zodError.errors.forEach((error, index) => {
-          console.error(`Error ${index + 1}:`, {
-            path: error.path,
-            message: error.message,
-            code: error.code,
-            expected: error.expected,
-            received: error.received,
-            validation: error.validation
-          });
-        });
+    //   if (zodError.errors) {
+    //     console.error('📋 Detailed Zod Errors:');
+    //     zodError.errors.forEach((error, index) => {
+    //       console.error(`Error ${index + 1}:`, {
+    //         path: error.path,
+    //         message: error.message,
+    //         code: error.code,
+    //         expected: error.expected,
+    //         received: error.received,
+    //         validation: error.validation
+    //       });
+    //     });
         
-        // Also show user-friendly error messages
-        console.error('📝 User-friendly error messages:');
-        zodError.errors.forEach((error, index) => {
-          const fieldPath = error.path.join('.');
-          console.error(`${index + 1}. Field "${fieldPath}": ${error.message}`);
-        });
-      }
+    //     // Also show user-friendly error messages
+    //     console.error('📝 User-friendly error messages:');
+    //     zodError.errors.forEach((error, index) => {
+    //       const fieldPath = error.path.join('.');
+    //       console.error(`${index + 1}. Field "${fieldPath}": ${error.message}`);
+    //     });
+    //   }
       
-      // Show Zod validation errors to user
-      toast.error('Form validation failed - check console for details');
-      zodError.errors?.forEach((error, index) => {
-        setTimeout(() => {
-          const fieldPath = error.path.join('.');
-          toast.error(`${fieldPath}: ${error.message}`, {
-            autoHideDuration: 5000 + (index * 500)
-          });
-        }, index * 300);
-      });
+    //   // Show Zod validation errors to user
+    //   toast.error('Form validation failed - check console for details');
+    //   zodError.errors?.forEach((error, index) => {
+    //     setTimeout(() => {
+    //       const fieldPath = error.path.join('.');
+    //       toast.error(`${fieldPath}: ${error.message}`, {
+    //         autoHideDuration: 5000 + (index * 500)
+    //       });
+    //     }, index * 300);
+    //   });
       
-      return; // Stop submission if Zod validation fails
-    }
-    
+    //   return; // Stop submission if Zod validation fails
+    // }
+    console.log('ℹ️ Skipping Zod validation for now, proceeding to manual validation');
     // Manual validation with detailed error messages
     const errors = [];
     
     // Basic field validation
-    if (!formData.event_name?.trim()) {
-      errors.push('Event name is required');
-    }
-    if (!formData.event_description?.trim()) {
-      errors.push('Event description is required');
-    }
-    if (!formData.city?.trim()) {
-      errors.push('City selection is required');
-    }
-    if (!formData.number_of_days || formData.number_of_days < 1) {
-      errors.push('Number of days must be at least 1');
-    }
+    // if (!formData.event_name?.trim()) {
+    //   errors.push('Event name is required');
+    // }
+    // if (!formData.event_description?.trim()) {
+    //   errors.push('Event description is required');
+    // }
+    // if (!formData.city?.trim()) {
+    //   errors.push('City selection is required');
+    // }
+    // if (!formData.number_of_days || formData.number_of_days < 1) {
+    //   errors.push('Number of days must be at least 1');
+    // }
     
     // Days validation
     if (!formData.days || formData.days.length === 0) {
@@ -1817,9 +1817,9 @@ const onSubmit = async (formData) => {
         }
         
         // Capacity validation for days that have capacity filled
-        if (day.venue_capacity && (isNaN(day.venue_capacity) || parseInt(day.venue_capacity) <= 0)) {
-          errors.push(`Day ${index + 1}: Venue capacity must be a positive number`);
-        }
+        // if (day.venue_capacity && (isNaN(day.venue_capacity) || parseInt(day.venue_capacity) <= 0)) {
+        //   errors.push(`Day ${index + 1}: Venue capacity must be a positive number`);
+        // }
       });
       
       // Add specific error messages for empty days
@@ -1834,18 +1834,20 @@ const onSubmit = async (formData) => {
       }
       
       // Add specific error messages for incomplete days
-      incompleteDays.forEach(({ dayNumber, missing }) => {
-        errors.push(`Day ${dayNumber} missing: ${missing.join(', ')}`);
-      });
+      // incompleteDays.forEach(({ dayNumber, missing }) => {
+      //   errors.push(`Day ${dayNumber} missing: ${missing.join(', ')}`);
+      // });
     }
     
     // Location data validation
-    if (!tabs[activeTab].locationData) {
-      errors.push('Please select a location on the map');
-    }
+    // if (!tabs[activeTab].locationData) {
+    //   errors.push('Please select a location on the map');
+    // }
     
     // If there are validation errors, show them and return
     if (errors.length > 0) {
+      console.error('❌ FORM VALIDATION FAILED:');
+      console.error('Validation Errors:', errors);
       errors.forEach((error, index) => {
         setTimeout(() => {
           // Different styling for different types of errors
