@@ -30,6 +30,12 @@ import TableRow from '@mui/material/TableRow';
 import TablePagination from '@mui/material/TablePagination';
 import Checkbox from '@mui/material/Checkbox';
 import CircularProgress from '@mui/material/CircularProgress';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import Chip from '@mui/material/Chip';
+import Autocomplete from '@mui/material/Autocomplete';
 
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
@@ -37,19 +43,60 @@ import { toast } from 'src/components/snackbar';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 import { paths } from 'src/routes/paths';
+import { countries } from 'src/assets/data';
+import { allLangs } from 'src/locales/all-langs';
 import EventLocationPicker from 'src/components/map/EventLocationPicker';
 import { useAuthContext } from 'src/auth/hooks';
 import axios, { endpoints } from 'src/lib/axios';
 
 // ----------------------------------------------------------------------
 
+// Countries for virtual events (transformed from assets/data/countries.js)
+const COUNTRIES_LIST = countries.map(country => ({
+  code: country.code,
+  name: country.label,
+  flag: `https://flagcdn.com/16x12/${country.code.toLowerCase()}.png`
+}));
+
+// Available languages for events
+const LANGUAGES_LIST = allLangs.map(lang => ({
+  code: lang.value,
+  name: lang.label,
+  flag: `https://flagcdn.com/16x12/${lang.countryCode.toLowerCase()}.png`
+}));
+
+
+
+
+// Virtual platforms data
+const VIRTUAL_PLATFORMS = [
+  { name: 'Zoom', features: ['Breakout rooms', 'Screen sharing', 'Recording', 'Webinars'], maxParticipants: 1000 },
+  { name: 'Microsoft Teams', features: ['Breakout rooms', 'Screen sharing', 'Recording', 'Live events'], maxParticipants: 1000 },
+  { name: 'Google Meet', features: ['Screen sharing', 'Recording', 'Live streaming'], maxParticipants: 500 },
+  { name: 'WebEx', features: ['Breakout rooms', 'Screen sharing', 'Recording', 'Polls'], maxParticipants: 1000 },
+  { name: 'GoToWebinar', features: ['Polls', 'Q&A', 'Recording', 'Analytics'], maxParticipants: 3000 },
+  { name: 'Hopin', features: ['Virtual venue', 'Networking', 'Expo booths', 'Multiple stages'], maxParticipants: 100000 },
+  { name: 'Remo', features: ['Virtual venue', 'Networking tables', 'Presentations', 'Breakout rooms'], maxParticipants: 500 },
+  { name: 'BigMarker', features: ['Virtual venue', 'Networking', 'Analytics', 'Monetization'], maxParticipants: 10000 },
+];
+
 // Form validation schema
+const VirtualPlatformSchema = zod.object({
+  platform_name: zod.string().min(1, { message: 'Platform name is required!' }),
+  platform_link: zod.string().url({ message: 'Please enter a valid URL!' }).optional(),
+  max_participants: zod.string().min(1, { message: 'Maximum participants is required!' }),
+  features: zod.array(zod.string()).optional(),
+  access_requirements: zod.string().optional(),
+});
+
+
 const DaySchema = zod.object({
   event_date: zod.string().min(1, { message: 'Event date is required!' }),
   start_time: zod.string().min(1, { message: 'Start time is required!' }),
   end_time: zod.string().min(1, { message: 'End time is required!' }),
-  venue_name: zod.string().min(1, { message: 'Venue name is required!' }),
-  venue_capacity: zod.string().min(1, { message: 'Venue capacity is required!' }),
+  venue_name: zod.string().optional(), // Optional for virtual events
+  venue_capacity: zod.string().optional(), // Optional for virtual events  
+  virtual_platform: VirtualPlatformSchema.optional(),
   primary_sector: zod.string().min(1, { message: 'Primary sector is required!' }),
   speakers: zod.string().optional(),
   activities: zod.string().optional(),
@@ -85,15 +132,43 @@ const MarketingStrategySchema = zod.object({
   email_campaign: MarketingChannelSchema,
   whatsapp_campaign: MarketingChannelSchema,
   offline_publicity: MarketingChannelSchema,
+  reddit: MarketingChannelSchema,
+  meetup: MarketingChannelSchema,
+  eventbrite: MarketingChannelSchema,
+  indeed_events: MarketingChannelSchema,
+});
+
+const CountryMarketingSchema = zod.object({
+  country_code: zod.string().min(2, { message: 'Country code is required!' }),
+  country_name: zod.string().min(1, { message: 'Country name is required!' }),
+  marketing_strategy: zod.object({
+    facebook: MarketingChannelSchema.optional(),
+    instagram: MarketingChannelSchema.optional(),
+    linkedin: MarketingChannelSchema.optional(),
+    x_twitter: MarketingChannelSchema.optional(),
+    youtube: MarketingChannelSchema.optional(),
+    google_ads: MarketingChannelSchema.optional(),
+    email_campaign: MarketingChannelSchema.optional(),
+    whatsapp_campaign: MarketingChannelSchema.optional(),
+    offline_publicity: MarketingChannelSchema.optional(),
+    reddit: MarketingChannelSchema.optional(),
+    meetup: MarketingChannelSchema.optional(),
+    eventbrite: MarketingChannelSchema.optional(),
+    indeed_events: MarketingChannelSchema.optional(),
+  }).optional(),
 });
 
 const TabFormSchema = zod.object({
   event_name: zod.string().min(1, { message: 'Event name is required!' }),
+  event_type: zod.enum(['in-person', 'virtual', 'hybrid'], { message: 'Event type is required!' }),
+  event_language: zod.string().min(1, { message: 'Event language is required!' }),
   event_description: zod.string().min(1, { message: 'Event description is required!' }),
-  city: zod.string().min(1, { message: 'City is required!' }),
+  city: zod.string().optional(), // Optional for virtual events
+  target_countries: zod.array(zod.string()).optional(), // For virtual/hybrid events
+  country_marketing: zod.array(CountryMarketingSchema).optional(), // Country-specific marketing
   number_of_days: zod.number().min(1, { message: 'Number of days must be at least 1!' }),
   days: zod.array(DaySchema).min(1, { message: 'At least one day is required!' }),
-  marketing_strategy: MarketingStrategySchema.optional(),
+  marketing_strategy: MarketingStrategySchema.optional(), // For in-person events
 });
 
 // ----------------------------------------------------------------------
@@ -137,6 +212,13 @@ export default function SimulatePage() {
   // Marketing modal states
   const [marketingModalOpen, setMarketingModalOpen] = useState(false);
   const [selectedMarketingChannel, setSelectedMarketingChannel] = useState(null);
+  
+  // Country marketing states for virtual/hybrid events
+  const [selectedCountries, setSelectedCountries] = useState([]);
+  const [countryMarketingData, setCountryMarketingData] = useState([]);
+  const [activeCountryTab, setActiveCountryTab] = useState(0);
+  const [countryMarketingModalOpen, setCountryMarketingModalOpen] = useState(false);
+  const [selectedCountryForMarketing, setSelectedCountryForMarketing] = useState(null);
 
   // Auth context for user information
   const user = useAuthContext()?.user?.data;
@@ -147,8 +229,12 @@ export default function SimulatePage() {
     resolver: zodResolver(TabFormSchema),
     defaultValues: {
       event_name: '',
+      event_type: 'in-person',
+      event_language: 'en',
       event_description: '',
       city: '',
+      target_countries: [],
+      country_marketing: [],
       number_of_days: 1,
       days: [
         {
@@ -157,6 +243,13 @@ export default function SimulatePage() {
           end_time: '',
           venue_name: '',
           venue_capacity: '',
+          virtual_platform: {
+            platform_name: '',
+            platform_link: '',
+            max_participants: '',
+            features: [],
+            access_requirements: '',
+          },
           primary_sector: '',
           speakers: '',
           activities: '',
@@ -250,6 +343,47 @@ export default function SimulatePage() {
           additional_info: '',
         },
         offline_publicity: {
+          audience: '',
+          placement: '',
+          reach: '',
+          reaction: '',
+          budget: '',
+          timeline: '',
+          content_type: '',
+          additional_info: '',
+        },
+        reddit: {
+          audience: '',
+          placement: '',
+          reach: '',
+          reaction: '',
+          budget: '',
+          timeline: '',
+          content_type: '',
+          additional_info: '',
+          influencer_partnerships: [],
+        },
+        meetup: {
+          audience: '',
+          placement: '',
+          reach: '',
+          reaction: '',
+          budget: '',
+          timeline: '',
+          content_type: '',
+          additional_info: '',
+        },
+        eventbrite: {
+          audience: '',
+          placement: '',
+          reach: '',
+          reaction: '',
+          budget: '',
+          timeline: '',
+          content_type: '',
+          additional_info: '',
+        },
+        indeed_events: {
           audience: '',
           placement: '',
           reach: '',
@@ -363,6 +497,10 @@ export default function SimulatePage() {
               email_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
               whatsapp_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
               offline_publicity: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              reddit: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+              meetup: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
+              eventbrite: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
+              indeed_events: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
             },
           });
         }
@@ -561,8 +699,28 @@ export default function SimulatePage() {
     const day = daysData?.[dayIndex];
     if (!day) return 'empty';
     
-    const requiredFields = ['event_date', 'start_time', 'end_time', 'venue_name', 'venue_capacity', 'primary_sector'];
-    const filledRequired = requiredFields.filter(field => day[field]?.trim()).length;
+    const eventType = watch('event_type');
+    
+    // Define required fields based on event type
+    let requiredFields = ['event_date', 'start_time', 'end_time', 'primary_sector'];
+    
+    if (eventType === 'in-person') {
+      requiredFields.push('venue_name', 'venue_capacity');
+    } else if (eventType === 'virtual') {
+      requiredFields.push('virtual_platform.platform_name', 'virtual_platform.max_participants');
+    } else if (eventType === 'hybrid') {
+      requiredFields.push('venue_name', 'venue_capacity', 'virtual_platform.platform_name', 'virtual_platform.max_participants');
+    }
+    
+    // Check filled required fields (handle nested fields)
+    const filledRequired = requiredFields.filter(field => {
+      if (field.includes('.')) {
+        const [parent, child] = field.split('.');
+        return day[parent]?.[child]?.toString().trim();
+      }
+      return day[field]?.toString().trim();
+    }).length;
+    
     const optionalFields = ['speakers', 'activities', 'additional_info'];
     const filledOptional = optionalFields.filter(field => day[field]?.trim()).length;
     
@@ -578,9 +736,18 @@ export default function SimulatePage() {
       }
     }
     
-    // Capacity validation
-    if (day.venue_capacity && (isNaN(day.venue_capacity) || parseInt(day.venue_capacity) <= 0)) {
-      hasErrors.push('Invalid capacity');
+    // Capacity validation for venues
+    if (eventType === 'in-person' || eventType === 'hybrid') {
+      if (day.venue_capacity && (isNaN(day.venue_capacity) || parseInt(day.venue_capacity) <= 0)) {
+        hasErrors.push('Invalid venue capacity');
+      }
+    }
+    
+    // Capacity validation for virtual platforms
+    if (eventType === 'virtual' || eventType === 'hybrid') {
+      if (day.virtual_platform?.max_participants && (isNaN(day.virtual_platform.max_participants) || parseInt(day.virtual_platform.max_participants) <= 0)) {
+        hasErrors.push('Invalid virtual capacity');
+      }
     }
     
     // Date validation (check if date is in the past)
@@ -680,7 +847,7 @@ export default function SimulatePage() {
     const filledFields = fields.filter(field => marketingData?.[field]?.trim()).length;
     
     // Check for influencer partnerships in social media channels
-    const socialMediaChannels = ['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube'];
+    const socialMediaChannels = ['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube', 'reddit'];
     let influencerCount = 0;
     if (socialMediaChannels.includes(selectedMarketingChannel) && marketingData?.influencer_partnerships?.length > 0) {
       influencerCount = marketingData.influencer_partnerships.filter(inf => 
@@ -712,7 +879,11 @@ export default function SimulatePage() {
       google_ads: 'Google Ads',
       email_campaign: 'Email Campaign',
       whatsapp_campaign: 'WhatsApp Campaign',
-      offline_publicity: 'Offline Publicity'
+      offline_publicity: 'Offline Publicity',
+      reddit: 'Reddit',
+      meetup: 'Meetup',
+      eventbrite: 'Eventbrite',
+      indeed_events: 'Indeed Events'
     };
     return channelNames[channel] || channel;
   };
@@ -727,7 +898,40 @@ export default function SimulatePage() {
     const filledOptional = optionalFields.filter(field => marketingData[field]?.trim()).length;
     
     // Check influencer partnerships for social media channels
-    const socialMediaChannels = ['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube'];
+    const socialMediaChannels = ['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube', 'reddit'];
+    let influencerBonus = 0;
+    if (socialMediaChannels.includes(channel) && marketingData.influencer_partnerships?.length > 0) {
+      const validInfluencers = marketingData.influencer_partnerships.filter(inf => 
+        inf.name?.trim() && inf.followers_count?.trim()
+      ).length;
+      if (validInfluencers > 0) {
+        influencerBonus = 1; // Boost status if has valid influencers
+      }
+    }
+    
+    // Determine completion status with influencer bonus
+    const totalOptional = filledOptional + influencerBonus;
+    if (filledRequired === requiredFields.length && totalOptional > 1) return 'complete';
+    if (filledRequired === requiredFields.length && totalOptional > 0) return 'basic';
+    if (filledRequired > 0) return 'partial';
+    return 'empty';
+  };
+
+  // Country marketing channel status
+  const getCountryMarketingChannelStatus = (channel, countryCode) => {
+    const countryMarketingArray = getValues('country_marketing') || [];
+    const countryData = countryMarketingArray.find(cm => cm.country_code === countryCode);
+    const marketingData = countryData?.marketing_strategy?.[channel];
+    
+    if (!marketingData) return 'empty';
+    
+    const requiredFields = ['audience', 'placement', 'reach', 'reaction'];
+    const optionalFields = ['budget', 'timeline', 'content_type', 'additional_info'];
+    const filledRequired = requiredFields.filter(field => marketingData[field]?.trim()).length;
+    const filledOptional = optionalFields.filter(field => marketingData[field]?.trim()).length;
+    
+    // Check influencer partnerships for social media channels
+    const socialMediaChannels = ['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube', 'reddit'];
     let influencerBonus = 0;
     if (socialMediaChannels.includes(channel) && marketingData.influencer_partnerships?.length > 0) {
       const validInfluencers = marketingData.influencer_partnerships.filter(inf => 
@@ -784,6 +988,10 @@ export default function SimulatePage() {
           email_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
           whatsapp_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
           offline_publicity: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          reddit: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          meetup: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
+          eventbrite: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
+          indeed_events: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
         },
       });
     } else {
@@ -890,8 +1098,12 @@ export default function SimulatePage() {
           user_id: user._id, // Include both formats for compatibility
           input_data: {
             event_name: currentData.event_name,
+            event_type: currentData.event_type,
+            event_language: currentData.event_language,
             event_description: currentData.event_description,
             city: currentData.city,
+            target_countries: currentData.target_countries,
+            country_marketing: currentData.country_marketing,
             number_of_days: currentData.number_of_days,
             days: currentData.days,
             marketing_strategy: currentData.marketing_strategy,
@@ -1005,6 +1217,47 @@ export default function SimulatePage() {
     }
     
     toast.success(`Location selected: ${locationData.city}`);
+  };
+
+  // Handle countries selection for virtual/hybrid events
+  const handleCountriesChange = (selectedCountryCodes) => {
+    // Create country marketing data for selected countries
+    const newCountryMarketing = selectedCountryCodes.map(countryCode => {
+      const country = COUNTRIES_LIST.find(c => c.code === countryCode);
+      
+      // Check if we already have data for this country
+      const existingData = countryMarketingData.find(cm => cm.country_code === countryCode);
+      
+      return existingData || {
+        country_code: countryCode,
+        country_name: country?.name || '',
+        marketing_strategy: {
+          facebook: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          instagram: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          linkedin: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          x_twitter: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          youtube: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          google_ads: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          email_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          whatsapp_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          offline_publicity: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          reddit: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          meetup: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
+          eventbrite: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
+          indeed_events: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
+        }
+      };
+    });
+    
+    setCountryMarketingData(newCountryMarketing);
+    setSelectedCountries(selectedCountryCodes);
+    
+    // Update form value
+    setValue('country_marketing', newCountryMarketing);
+    
+    if (selectedCountryCodes.length > 0) {
+      toast.success(`Selected ${selectedCountryCodes.length} countries for virtual event marketing`);
+    }
   };
 
   // Load from Database handlers
@@ -1215,6 +1468,8 @@ export default function SimulatePage() {
     // Mock test data
     const testData = {
       event_name: 'Global AI & Innovation Summit 2025',
+      event_type: 'in-person',
+      event_language: 'en',
       event_description: 'A comprehensive 3-day conference bringing together AI researchers, tech entrepreneurs, and industry leaders to explore cutting-edge developments in artificial intelligence, machine learning, and digital transformation. Features hands-on workshops, networking sessions, and startup showcases.',
       city: 'San Francisco',
       number_of_days: 3,
@@ -1474,6 +1729,8 @@ Prof. Michael Zhang - Robotics & AI, UC Berkeley`,
 
     // Set form values
     setValue('event_name', testData.event_name);
+    setValue('event_type', testData.event_type);
+    setValue('event_language', testData.event_language);
     setValue('event_description', testData.event_description);
     setValue('city', testData.city);
     setValue('number_of_days', testData.number_of_days);
@@ -1646,8 +1903,12 @@ const onSubmit = async (formData) => {
     // Prepare the payload for POST request
     const payload = {
       event_name: formData.event_name,
+      event_type: formData.event_type,
+      event_language: formData.event_language,
       event_description: formData.event_description,
       city: formData.city,
+      target_countries: formData.target_countries,
+      country_marketing: formData.country_marketing,
       number_of_days: formData.number_of_days,
       // Include location data if available
       ...(tabs[activeTab].locationData && {
@@ -1811,7 +2072,11 @@ const onSubmit = async (formData) => {
       google_ads: "e.g., Google search ads for AI keywords, Display ads on tech websites, YouTube pre-roll ads, Retargeting campaigns",
       email_campaign: "e.g., Newsletter announcements, Targeted email lists, Drip campaigns, Speaker introductions via email, Registration reminders",
       whatsapp_campaign: "e.g., WhatsApp groups, Personal invites, Community channels, Status updates, Direct messaging to contacts",
-      offline_publicity: "e.g., Tech conference flyers, University bulletin boards, Co-working space posters, Industry magazine ads, Radio sponsorships"
+      offline_publicity: "e.g., Tech conference flyers, University bulletin boards, Co-working space posters, Industry magazine ads, Radio sponsorships",
+      reddit: "e.g., Reddit ads in relevant subreddits, AMA sessions, Sponsored posts, Community engagement through comments",
+      meetup: "e.g., Local meetup groups, Event sponsorships, Community partnerships, Cross-promotion with other events",
+      eventbrite: "e.g., Event listing on Eventbrite, Paid promotions, Featured events, Community outreach",
+      indeed_events: "e.g., Job fairs, Industry meetups, Sponsored listings, Community engagement"
     };
     return placeholders[channel] || "Describe your placement and distribution strategy...";
   };
@@ -1826,7 +2091,11 @@ const onSubmit = async (formData) => {
       google_ads: "e.g., Google search ads for AI keywords, Display ads on tech websites, YouTube pre-roll ads, Retargeting campaigns",
       email_campaign: "e.g., HTML newsletters with event details, Personalized invitations, Speaker interviews, Early bird promotions, Event countdown series",
       whatsapp_campaign: "e.g., Event announcements, Speaker introduction videos, Interactive polls, Voice messages from speakers, Event reminders",
-      offline_publicity: "e.g., Professional flyers with QR codes, Branded banners, Magazine advertisements, Radio spot scripts, Direct mail campaigns"
+      offline_publicity: "e.g., Professional flyers with QR codes, Branded banners, Magazine advertisements, Radio spot scripts, Direct mail campaigns",
+      reddit: "e.g., Informative posts, AMA sessions, Engaging comments, Visual content, Polls and discussions",
+      meetup: "e.g., Event descriptions, Speaker bios, Community posts, Visual teasers, Follow-up content",
+      eventbrite: "e.g., Compelling event descriptions, Speaker highlights, Visual banners, Early bird announcements, Reminder emails",
+      indeed_events: "e.g., Event summaries, Speaker introductions, Industry relevance posts, Visual ads, Follow-up content"
     };
     return placeholders[channel] || "Describe your content strategy...";
   };
@@ -1986,15 +2255,7 @@ const onSubmit = async (formData) => {
         sx={{ mb: 3 }}
       />
 
-      {/* User Status Indicator */}
-      {user?._id && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          <Typography variant="body2">
-            Logged in as: <strong>{user.full_name || user.email || user.name || `User ${user._id}`}</strong>
-            {' '}- Your tabs will be saved to your account
-          </Typography>
-        </Alert>
-      )}
+      
       
       {!user?._id && (
         <Alert severity="warning" sx={{ mb: 2 }}>
@@ -2080,6 +2341,78 @@ const onSubmit = async (formData) => {
               </Grid>
               
               <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="event_type"
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <FormControl fullWidth error={!!error}>
+                      <InputLabel>Event Type</InputLabel>
+                      <Select
+                        {...field}
+                        label="Event Type"
+                      >
+                        <MenuItem value="in-person">
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Iconify icon="mdi:map-marker" />
+                            In-Person Event
+                          </Box>
+                        </MenuItem>
+                        <MenuItem value="virtual">
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Iconify icon="mdi:monitor" />
+                            Virtual Event
+                          </Box>
+                        </MenuItem>
+                        <MenuItem value="hybrid">
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Iconify icon="mdi:map-marker-plus" />
+                            Hybrid Event
+                          </Box>
+                        </MenuItem>
+                      </Select>
+                      {error && (
+                        <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                          {error.message}
+                        </Typography>
+                      )}
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+              
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="event_language"
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <FormControl fullWidth error={!!error}>
+                      <InputLabel>Event Language</InputLabel>
+                      <Select
+                        {...field}
+                        label="Event Language"
+                      >
+                        {LANGUAGES_LIST.map((language) => (
+                          <MenuItem key={language.code} value={language.code}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography variant="body2">
+                                <img src={language.flag} alt={language.code} style={{ width: 16, height: 12, marginRight: 8 }} />
+                                {language.name}
+                              </Typography>
+                            </Box>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {error && (
+                        <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                          {error.message}
+                        </Typography>
+                      )}
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+              
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Number of Days"
                   type="number"
@@ -2100,20 +2433,88 @@ const onSubmit = async (formData) => {
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <EventLocationPicker
-                  onLocationSelect={handleLocationSelect}
-                  initialLocation={currentTab.locationData}
-                />
-              </Grid>
+              {/* Location fields - only for in-person and hybrid events */}
+              {(watch('event_type') === 'in-person' || watch('event_type') === 'hybrid') && (
+                <>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <EventLocationPicker
+                      onLocationSelect={handleLocationSelect}
+                      initialLocation={currentTab.locationData}
+                    />
+                  </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Field.Text 
-                  name="city" 
-                  label="City" 
-                  placeholder="e.g., San Francisco"
-                />
-              </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Field.Text 
+                      name="city" 
+                      label="City" 
+                      placeholder="e.g., San Francisco"
+                    />
+                  </Grid>
+                </>
+              )}
+
+              {/* Country selection - only for virtual and hybrid events */}
+              {(watch('event_type') === 'virtual' || watch('event_type') === 'hybrid') && (
+                <Grid size={12}>
+                  <Controller
+                    name="target_countries"
+                    control={methods.control}
+                    render={({ field, fieldState: { error } }) => (
+                      <Autocomplete
+                        {...field}
+                        multiple
+                        options={COUNTRIES_LIST.map(country => country.code)}
+                        getOptionLabel={(option) => {
+                          const country = COUNTRIES_LIST.find(c => c.code === option);
+                          return country ? country.name : option;
+                        }}
+                        renderOption={(props, option) => {
+                          const country = COUNTRIES_LIST.find(c => c.code === option);
+                          return (
+                            <Box component="li" {...props}>
+                              <Typography variant="body2">
+                                <img src={country?.flag} alt={country?.code} style={{ width: 16, height: 12, marginRight: 8 }} /> {country?.name}
+                              </Typography>
+                            </Box>
+                          );
+                        }}
+                        renderTags={(selected, getTagProps) =>
+                          selected.map((option, index) => {
+                            const country = COUNTRIES_LIST.find(c => c.code === option);
+                            return (
+                              <Chip
+                                {...getTagProps({ index })}
+                                key={option}
+                                label={
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <img src={country?.flag} alt={country?.code} style={{ width: 16, height: 12 }} />
+                                    {country?.name}
+                                  </Box>
+                                }
+                                size="small"
+                              />
+                            );
+                          })
+                        }
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Target Countries"
+                            placeholder="Select countries for your virtual event"
+                            error={!!error}
+                            helperText={error?.message || "Choose countries where you want to promote your virtual event"}
+                          />
+                        )}
+                        onChange={(_, value) => {
+                          field.onChange(value);
+                          // Update country marketing data when countries change
+                          handleCountriesChange(value);
+                        }}
+                      />
+                    )}
+                  />
+                </Grid>
+              )}
             
               
               {/* Dynamic Day Fields */}
@@ -2258,19 +2659,21 @@ const onSubmit = async (formData) => {
                 </Grid>
               </Grid>
               
-              {/* Marketing Strategy Section */}
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
-                  Marketing Strategy
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Click on each marketing channel to configure audience targeting and campaign details.
-                </Typography>
-              </Grid>
-              
-              <Grid size={{ xs: 12, sm: 12 }}>
-                <Grid container spacing={2}>
-                  {['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube', 'google_ads', 'email_campaign', 'whatsapp_campaign', 'offline_publicity'].map((channel) => {
+              {/* Marketing Strategy Section - In-Person Events */}
+              {watch('event_type') === 'in-person' && (
+                <>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+                      Marketing Strategy
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Click on each marketing channel to configure audience targeting and campaign details.
+                    </Typography>
+                  </Grid>
+                  
+                  <Grid size={{ xs: 12, sm: 12 }}>
+                    <Grid container spacing={2}>
+                      {['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube', 'reddit', 'meetup', 'eventbrite', 'indeed_events', 'google_ads', 'email_campaign', 'whatsapp_campaign', 'offline_publicity'].map((channel) => {
                     const status = getMarketingChannelStatus(channel);
                     const channelName = getChannelDisplayName(channel);
                     
@@ -2297,7 +2700,11 @@ const onSubmit = async (formData) => {
                       'google_ads': 'logos:google-ads',
                       'email_campaign': 'logos:google-gmail',
                       'whatsapp_campaign': 'logos:whatsapp-icon',
-                      'offline_publicity': 'material-symbols:campaign-outline'
+                      'offline_publicity': 'material-symbols:campaign-outline',
+                      'reddit': 'logos:reddit-icon',
+                      'meetup': 'cib:meetup',
+                      'eventbrite': 'logos:eventbrite-icon',
+                      'indeed_events': 'simple-icons:indeed',
                     };
                     
                     return (
@@ -2351,6 +2758,163 @@ const onSubmit = async (formData) => {
                   })}
                 </Grid>
               </Grid>
+                </>
+              )}
+
+              {/* Country Marketing Strategy Section - Virtual/Hybrid Events */}
+              {(watch('event_type') === 'virtual' || watch('event_type') === 'hybrid') && selectedCountries.length > 0 && (
+                <>
+                  <Grid size={12}>
+                    <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+                      Country-Specific Marketing Strategy
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Complete marketing strategy for each target country. Each country has the full range of marketing channels.
+                    </Typography>
+                  </Grid>
+                  
+                  <Grid size={12}>
+                    <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+                      <Tabs 
+                        value={activeCountryTab} 
+                        onChange={(e, newValue) => setActiveCountryTab(newValue)}
+                        variant="scrollable"
+                        scrollButtons="auto"
+                      >
+                        {selectedCountries.map((countryCode, index) => {
+                          const country = COUNTRIES_LIST.find(c => c.code === countryCode);
+                          return (
+                            <Tab 
+                              key={countryCode}
+                              label={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Typography variant="body2">
+                                    <img src={country?.flag} alt={country?.code} style={{ width: 16, height: 12, marginRight: 8 }} />
+                                    {country?.name}
+                                  </Typography>
+                                  <Chip 
+                                    label={LANGUAGES_LIST.find(l => l.code === watch('event_language'))?.name || 'Language not set'} 
+                                    size="small" 
+                                    variant="outlined"
+                                    sx={{ fontSize: '0.7rem' }}
+                                  />
+                                </Box>
+                              }
+                            />
+                          );
+                        })}
+                      </Tabs>
+                    </Box>
+
+                    {selectedCountries.map((countryCode, index) => {
+                      const country = COUNTRIES_LIST.find(c => c.code === countryCode);
+                      return (
+                        <Box key={countryCode} hidden={activeCountryTab !== index}>
+                          <Grid container spacing={2}>
+                            <Grid size={12}>
+                              <Typography variant="h6" sx={{ mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <img src={country?.flag} alt={country?.code} style={{ width: 16, height: 12 }} />
+                                Marketing Strategy for {country?.name} ({LANGUAGES_LIST.find(l => l.code === watch('event_language'))?.name || 'Language not set'})
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                Click on each marketing channel to configure audience targeting and campaign details for {country?.name}.
+                              </Typography>
+                            </Grid>
+                            
+                            {/* Full marketing channels grid - same as in-person events */}
+                            {['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube', 'reddit', 'meetup', 'eventbrite', 'indeed_events', 'google_ads', 'email_campaign', 'whatsapp_campaign', 'offline_publicity'].map((channel) => {
+                              const status = getCountryMarketingChannelStatus(channel, countryCode);
+                              const channelName = getChannelDisplayName(channel);
+                              
+                              const statusColors = {
+                                'empty': { bgcolor: 'grey.100', color: 'grey.600', border: '1px dashed grey.300' },
+                                'partial': { bgcolor: 'warning.lighter', color: 'warning.darker', border: '1px solid orange.300' },
+                                'basic': { bgcolor: 'info.lighter', color: 'info.darker', border: '1px solid info.300' },
+                                'complete': { bgcolor: 'success.lighter', color: 'success.darker', border: '1px solid success.300' }
+                              };
+                              
+                              const statusIcons = {
+                                'empty': 'material-symbols:campaign-outline',
+                                'partial': 'material-symbols:schedule',
+                                'basic': 'material-symbols:check-circle-outline', 
+                                'complete': 'material-symbols:task-alt'
+                              };
+                              
+                              const channelIcons = {
+                                'facebook': 'devicon:facebook',
+                                'instagram': 'skill-icons:instagram',
+                                'linkedin': 'skill-icons:linkedin',
+                                'x_twitter': 'devicon:twitter',
+                                'youtube': 'logos:youtube-icon',
+                                'google_ads': 'logos:google-ads',
+                                'email_campaign': 'logos:google-gmail',
+                                'whatsapp_campaign': 'logos:whatsapp-icon',
+                                'offline_publicity': 'material-symbols:campaign-outline',
+                                'reddit': 'logos:reddit-icon',
+                                'meetup': 'cib:meetup',
+                                'eventbrite': 'logos:eventbrite-icon',
+                                'indeed_events': 'simple-icons:indeed',
+                              };
+                              
+                              return (
+                                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={channel}>
+                                  <Paper 
+                                    sx={{ 
+                                      p: 2, 
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      '&:hover': { 
+                                        transform: 'translateY(-2px)', 
+                                        boxShadow: 3
+                                      },
+                                      ...statusColors[status]
+                                    }}
+                                    onClick={() => {
+                                      setSelectedCountryForMarketing({ countryCode, channel });
+                                      setCountryMarketingModalOpen(true);
+                                    }}
+                                  >
+                                    <Stack spacing={1} alignItems="center">
+                                      <Iconify 
+                                        icon={channelIcons[channel]} 
+                                        width={32} 
+                                        sx={{ 
+                                          color: statusColors[status].color,
+                                        }}
+                                      />
+                                      <Typography variant="h6" sx={{ color: statusColors[status].color, fontSize: '0.9rem' }}>
+                                        {channelName}
+                                      </Typography>
+                                      <Iconify 
+                                        icon={statusIcons[status]} 
+                                        width={20} 
+                                        sx={{ 
+                                          color: statusColors[status].color,
+                                          opacity: 0.7
+                                        }}
+                                      />
+                                      <Typography variant="caption" sx={{ 
+                                        textAlign: 'center', 
+                                        color: statusColors[status].color,
+                                        textTransform: 'capitalize',
+                                        fontWeight: 'medium'
+                                      }}>
+                                        {status === 'empty' ? 'Not configured' :
+                                         status === 'partial' ? 'In progress' :
+                                         status === 'basic' ? 'Basic setup' : 'Complete'}
+                                      </Typography>
+                                    </Stack>
+                                  </Paper>
+                                </Grid>
+                              );
+                            })}
+                          </Grid>
+                        </Box>
+                      );
+                    })}
+                  </Grid>
+                </>
+              )}
               
               <Grid size={12}>
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
@@ -3960,6 +4524,281 @@ const onSubmit = async (formData) => {
         </DialogActions>
       </Dialog>
 
+      {/* Country Marketing Configuration Modal - Same as In-Person Marketing Modal */}
+      <Dialog 
+        open={countryMarketingModalOpen} 
+        onClose={() => setCountryMarketingModalOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: { minHeight: '80vh' }
+        }}
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {selectedCountryForMarketing && (
+                <>
+                  <img 
+                    src={COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.flag} 
+                    alt={selectedCountryForMarketing.countryCode} 
+                    style={{ width: 16, height: 12 }} 
+                  />
+                  {getChannelDisplayName(selectedCountryForMarketing.channel)} for {COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}
+                </>
+              )}
+            </Typography>
+            <IconButton onClick={() => setCountryMarketingModalOpen(false)}>
+              <Iconify icon="mingcute:close-line" />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {selectedCountryForMarketing && (
+            <Grid container spacing={3} sx={{ mt: 1 }}>
+              <Grid size={12}>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Configure {getChannelDisplayName(selectedCountryForMarketing.channel)} marketing strategy for{' '}
+                  <strong>{COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}</strong>{' '}
+                  in <strong>{LANGUAGES_LIST.find(l => l.code === watch('event_language'))?.name}</strong>.
+                  Consider local culture, timing, and preferred platforms.
+                </Alert>
+              </Grid>
+
+              {/* Target Audience */}
+              <Grid size={12}>
+                <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
+                  🎯 Target Audience
+                </Typography>
+              </Grid>
+
+              <Grid size={12}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.audience`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Target Audience"
+                      placeholder={selectedCountryForMarketing.channel === 'offline_publicity' 
+                        ? `e.g., Tech professionals aged 25-45 in ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}, Local business owners, Industry leaders`
+                        : `e.g., Tech professionals in ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}, AI researchers, Startup founders aged 25-45`
+                      }
+                      multiline
+                      rows={3}
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* Placement Strategy */}
+              <Grid size={12}>
+                <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'secondary.main' }}>
+                  📍 Placement & Distribution Strategy
+                </Typography>
+              </Grid>
+
+              <Grid size={12}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.placement`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Placement Strategy"
+                      placeholder={`${getPlacementPlaceholder(selectedCountryForMarketing.channel)} - adapted for ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}`}
+                      multiline
+                      rows={4}
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* Reach & Engagement Goals */}
+              <Grid size={12}>
+                <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'info.main' }}>
+                  📈 Reach & Engagement Goals
+                </Typography>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.reach`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Expected Reach/Impressions"
+                      placeholder={selectedCountryForMarketing.channel === 'offline_publicity' 
+                        ? `e.g., 25,000 people in ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}, 500 flyers distributed`
+                        : `e.g., 50,000 impressions in ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}, 3,000 engagements`
+                      }
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.reaction`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Expected Reaction/Response"
+                      placeholder="e.g., 2% CTR, 150 registrations, High engagement"
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* Budget & Timeline */}
+              <Grid size={12}>
+                <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'warning.main' }}>
+                  💰 Budget & Timeline
+                </Typography>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.budget`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Budget Allocation"
+                      placeholder="e.g., $2,000 USD, €1,500, Local currency equivalent"
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.timeline`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Campaign Timeline"
+                      placeholder="e.g., 4 weeks before event, Consider local holidays"
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* Content Strategy */}
+              <Grid size={12}>
+                <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'success.main' }}>
+                  🎨 Content Strategy
+                </Typography>
+              </Grid>
+
+              <Grid size={12}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.content_type`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Content Type & Format"
+                      placeholder={`${getContentPlaceholder(selectedCountryForMarketing.channel)} - localized for ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name} in ${LANGUAGES_LIST.find(l => l.code === watch('event_language'))?.name}`}
+                      multiline
+                      rows={3}
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* Influencer Partnerships - Only for social media channels */}
+              {['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube'].includes(selectedCountryForMarketing.channel) && (
+                <>
+                  <Grid size={12}>
+                    <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'purple.main' }}>
+                      🤝 Local Influencer Partnerships
+                    </Typography>
+                  </Grid>
+                  
+                  <Grid size={12}>
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Add local influencers from {COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name} for this {getChannelDisplayName(selectedCountryForMarketing.channel)} campaign
+                      </Typography>
+                      <InfluencerPartnershipsSection 
+                        channelName={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}`}
+                        methods={methods}
+                      />
+                    </Box>
+                  </Grid>
+                </>
+              )}
+
+              {/* Additional Information */}
+              <Grid size={12}>
+                <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'text.secondary' }}>
+                  ℹ️ Additional Strategy Notes
+                </Typography>
+              </Grid>
+              
+              <Grid size={12}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.additional_info`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Additional Information"
+                      multiline
+                      rows={3}
+                      placeholder={`Cultural considerations, local partnerships, timezone optimizations for ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}...`}
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 2 }}>
+          <Button onClick={() => setCountryMarketingModalOpen(false)} variant="outlined">
+            Close
+          </Button>
+          <Button 
+            variant="contained"
+            onClick={() => {
+              setCountryMarketingModalOpen(false);
+              toast.success(`${getChannelDisplayName(selectedCountryForMarketing?.channel)} marketing strategy saved for ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing?.countryCode)?.name}!`);
+            }}
+            startIcon={<Iconify icon="eva:checkmark-circle-2-outline" />}
+          >
+            Save Marketing Strategy
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Day Configuration Modal */}
       <Dialog 
         open={dayModalOpen} 
@@ -4044,46 +4883,203 @@ const onSubmit = async (formData) => {
                 />
               </Grid>
 
-              {/* Venue Information */}
+              {/* Venue Information - Only for In-Person and Hybrid Events */}
+              {(watch('event_type') === 'in-person' || watch('event_type') === 'hybrid') && (
+                <>
+                  <Grid size={12}>
+                    <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'secondary.main' }}>
+                      🏢 Venue Information
+                    </Typography>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 8 }}>
+                    <Controller
+                      name={`days.${selectedDayIndex}.venue_name`}
+                      control={methods.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <TextField
+                          {...field}
+                          label="Venue Name"
+                          placeholder="e.g., Moscone Center, Convention Hall A"
+                          fullWidth
+                          error={!!error}
+                          helperText={error?.message}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <Controller
+                      name={`days.${selectedDayIndex}.venue_capacity`}
+                      control={methods.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <TextField
+                          {...field}
+                          label="Venue Capacity"
+                          placeholder="e.g., 5000"
+                          type="number"
+                          fullWidth
+                          error={!!error}
+                          helperText={error?.message}
+                        />
+                      )}
+                    />
+                  </Grid>
+                </>
+              )}
+
+              {/* Virtual Platform Information - Only for Virtual and Hybrid Events */}
+              {(watch('event_type') === 'virtual' || watch('event_type') === 'hybrid') && (
+                <>
+                  <Grid size={12}>
+                    <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'info.main' }}>
+                      💻 Virtual Platform Information
+                    </Typography>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Controller
+                      name={`days.${selectedDayIndex}.virtual_platform.platform_name`}
+                      control={methods.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <FormControl fullWidth error={!!error}>
+                          <InputLabel>Platform</InputLabel>
+                          <Select
+                            {...field}
+                            label="Platform"
+                          >
+                            {VIRTUAL_PLATFORMS.map((platform) => (
+                              <MenuItem key={platform.name} value={platform.name}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Iconify icon="mdi:monitor" />
+                                  {platform.name}
+                                  <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                                    (up to {platform.maxParticipants.toLocaleString()})
+                                  </Typography>
+                                </Box>
+                              </MenuItem>
+                            ))}
+                            <MenuItem value="other">
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Iconify icon="mdi:plus" />
+                                Other Platform
+                              </Box>
+                            </MenuItem>
+                          </Select>
+                          {error && (
+                            <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                              {error.message}
+                            </Typography>
+                          )}
+                        </FormControl>
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Controller
+                      name={`days.${selectedDayIndex}.virtual_platform.max_participants`}
+                      control={methods.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <TextField
+                          {...field}
+                          label="Max Participants"
+                          placeholder="e.g., 1000"
+                          type="number"
+                          fullWidth
+                          error={!!error}
+                          helperText={error?.message || "Maximum number of attendees for this session"}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid size={12}>
+                    <Controller
+                      name={`days.${selectedDayIndex}.virtual_platform.platform_link`}
+                      control={methods.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <TextField
+                          {...field}
+                          label="Meeting/Event Link (Optional)"
+                          placeholder="e.g., https://zoom.us/j/123456789 or https://teams.microsoft.com/..."
+                          fullWidth
+                          error={!!error}
+                          helperText={error?.message || "Direct link for attendees to join the virtual event"}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Controller
+                      name={`days.${selectedDayIndex}.virtual_platform.features`}
+                      control={methods.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <Autocomplete
+                          {...field}
+                          multiple
+                          freeSolo
+                          options={[
+                            'Breakout rooms',
+                            'Screen sharing',
+                            'Recording',
+                            'Live streaming',
+                            'Q&A sessions',
+                            'Polls and surveys',
+                            'Chat functionality',
+                            'Networking rooms',
+                            'Virtual backgrounds',
+                            'Whiteboard collaboration'
+                          ]}
+                          value={field.value || []}
+                          onChange={(_, newValue) => field.onChange(newValue)}
+                          renderTags={(value, getTagProps) =>
+                            value.map((option, index) => (
+                              <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
+                            ))
+                          }
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Platform Features"
+                              placeholder="Select or type features"
+                              error={!!error}
+                              helperText={error?.message || "Features available on this platform"}
+                            />
+                          )}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Controller
+                      name={`days.${selectedDayIndex}.virtual_platform.access_requirements`}
+                      control={methods.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <TextField
+                          {...field}
+                          label="Access Requirements (Optional)"
+                          placeholder="e.g., Registration required, Free access, Paid ticket needed"
+                          multiline
+                          rows={2}
+                          fullWidth
+                          error={!!error}
+                          helperText={error?.message || "What attendees need to access this virtual event"}
+                        />
+                      )}
+                    />
+                  </Grid>
+                </>
+              )}
+
+              {/* Event Sector and Activities */}
               <Grid size={12}>
-                <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'secondary.main' }}>
-                  🏢 Venue Information
+                <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'info.main' }}>
+                  🎯 Event Details
                 </Typography>
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 8 }}>
-                <Controller
-                  name={`days.${selectedDayIndex}.venue_name`}
-                  control={methods.control}
-                  render={({ field, fieldState: { error } }) => (
-                    <TextField
-                      {...field}
-                      label="Venue Name"
-                      placeholder="e.g., Moscone Center, Convention Hall A"
-                      fullWidth
-                      error={!!error}
-                      helperText={error?.message}
-                    />
-                  )}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Controller
-                  name={`days.${selectedDayIndex}.venue_capacity`}
-                  control={methods.control}
-                  render={({ field, fieldState: { error } }) => (
-                    <TextField
-                      {...field}
-                      label="Venue Capacity"
-                      placeholder="e.g., 5000"
-                      type="number"
-                      fullWidth
-                      error={!!error}
-                      helperText={error?.message}
-                    />
-                  )}
-                />
               </Grid>
               
               <Grid size={12}>
@@ -4414,3 +5410,4 @@ const onSubmit = async (formData) => {
     </DashboardContent>
   );
 }
+
