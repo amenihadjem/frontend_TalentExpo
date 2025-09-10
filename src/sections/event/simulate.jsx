@@ -1464,286 +1464,43 @@ export default function SimulatePage() {
     }
   };
 
-  const handleLoadTestData = () => {
-    // Mock test data
-    const testData = {
-      event_name: 'Global AI & Innovation Summit 2025',
-      event_type: 'in-person',
-      event_language: 'en',
-      event_description: 'A comprehensive 3-day conference bringing together AI researchers, tech entrepreneurs, and industry leaders to explore cutting-edge developments in artificial intelligence, machine learning, and digital transformation. Features hands-on workshops, networking sessions, and startup showcases.',
-      city: 'San Francisco',
-      number_of_days: 3,
-      days: [
-        {
-          event_date: '2025-10-15',
-          start_time: '09:00',
-          end_time: '18:00',
-          venue_name: 'Moscone Center West Hall',
-          venue_capacity: '5000',
-          primary_sector: 'Artificial Intelligence & Machine Learning',
-          speakers: `Dr. Sarah Chen - Director of AI Research, Stanford University
-Marcus Rodriguez - Chief AI Officer, Google DeepMind  
-Prof. Elena Volkov - Machine Learning Pioneer, MIT
-James Park - Founder & CEO, OpenAI
-Dr. Raj Patel - VP of AI Ethics, Microsoft`,
-          activities: `9:00 AM - Registration & Welcome Coffee
-9:30 AM - Opening Keynote: "The Future of AGI"
-10:30 AM - AI Ethics Panel Discussion
-12:00 PM - Networking Lunch & Tech Expo
-2:00 PM - Machine Learning Workshop
-4:00 PM - Startup Pitch Competition
-5:30 PM - Welcome Reception & Networking`,
-          additional_info: `• Business professional dress code recommended
-• All meals and refreshments provided
-• Live streaming available for virtual attendees
-• Simultaneous translation in Spanish and Mandarin
-• Parking available at Moscone Garage ($25/day)`
-        },
-        {
-          event_date: '2025-10-16',
-          start_time: '08:30',
-          end_time: '19:00',
-          venue_name: 'Moscone Center South Hall',
-          venue_capacity: '3500',
-          primary_sector: 'Digital Transformation & Enterprise AI',
-          speakers: `Lisa Wang - CTO, Salesforce
-David Kumar - Head of AI Strategy, IBM
-Dr. Michelle Foster - Digital Innovation Leader, Accenture
-Alex Thompson - VP Engineering, NVIDIA
-Maria Santos - AI Product Manager, Meta`,
-          activities: `8:30 AM - Continental Breakfast & Networking
-9:00 AM - Enterprise AI Implementation Keynote
-10:00 AM - Industry Use Cases Panel
-11:30 AM - Hands-on AI Development Workshop
-1:00 PM - Networking Lunch & Solution Showcase
-3:00 PM - Technical Deep-dive Sessions
-5:00 PM - Innovation Awards Ceremony
-6:30 PM - Evening Gala Dinner`,
-          additional_info: `• Laptops required for hands-on workshops
-• Technical skill level: Intermediate to Advanced
-• GitHub account needed for coding sessions
-• Awards ceremony features industry recognition
-• Formal attire for evening gala`
-        },
-        {
-          event_date: '2025-10-17',
-          start_time: '09:00',
-          end_time: '16:30',
-          venue_name: 'San Francisco Convention Center',
-          venue_capacity: '2000',
-          primary_sector: 'AI Startups & Future Technologies',
-          speakers: `Robert Chang - Managing Partner, Andreessen Horowitz
-Dr. Amanda Liu - Quantum Computing Researcher, IBM Research
-Carlos Mendez - AI Startup Accelerator Director, Y Combinator
-Jennifer Kim - Venture Capitalist, Sequoia Capital
-Prof. Michael Zhang - Robotics & AI, UC Berkeley`,
-          activities: `9:00 AM - Startup Breakfast & Demo Setup
-9:30 AM - Future Tech Trends Keynote
-10:30 AM - Investor-Entrepreneur Panel
-12:00 PM - Startup Demo Showcase (20 companies)
-2:00 PM - Funding & Investment Workshop
-3:30 PM - Closing Keynote: "AI in 2030"
-4:15 PM - Final Networking & Wrap-up`,
-          additional_info: `• Startup Demo Day featuring 20 selected companies
-• Investor meetings available by appointment
-• Business cards strongly recommended
-• Final networking focused on partnerships
-• Event app available for continued connections`
-        }
-      ],
-      marketing_strategy: {
-        facebook: {
-          audience: "Tech professionals aged 25-45, AI researchers, startup founders, and decision-makers in technology companies",
-          placement: "Facebook ads targeting tech professionals, Event page promotion in AI/ML groups, Sponsored posts in technology communities, Partner company shares",
-          reach: "150,000 impressions, 8,000 engagements, 500 event page visits",
-          reaction: "3% CTR, 200 registrations, 1,200 shares and comments",
-          budget: "$3,500",
-          timeline: "6 weeks before event launch, intensive 2 weeks prior",
-          content_type: "Event announcement videos, Speaker spotlight posts, Countdown graphics, Live Q&A sessions with speakers",
-          additional_info: "Partner with tech companies for employee sharing, utilize AI/ML Facebook groups with 50K+ members",
-          influencer_partnerships: [
-            {
-              name: "TechGuru Mike",
-              followers_count: "250,000",
-              expected_reach: "75,000 impressions",
-              expected_reaction: "3,000 engagements, 150 registrations"
-            },
-            {
-              name: "AI Insights Sarah",
-              followers_count: "180,000",
-              expected_reach: "54,000 impressions", 
-              expected_reaction: "2,200 engagements, 110 registrations"
-            }
-          ]
-        },
-        instagram: {
-          audience: "Young tech professionals, AI enthusiasts, startup community, visual learners aged 22-40",
-          placement: "Instagram Stories ads, Influencer partnerships with tech personalities, AI/tech hashtag campaigns, Visual event teasers",
-          reach: "100,000 impressions, 5,000 story views, 2,000 profile visits",
-          reaction: "4% engagement rate, 300 story interactions, 150 DMs",
-          budget: "$2,500",
-          timeline: "4 weeks campaign with daily posts 2 weeks before",
-          content_type: "Visual speaker cards, Behind-the-scenes venue prep, IGTV speaker interviews, Stories polls and Q&As",
-          additional_info: "Collaborate with tech influencers, create branded hashtag #AIInnovationSF2025",
-          influencer_partnerships: [
-            {
-              name: "CodeWithEmily",
-              followers_count: "320,000",
-              expected_reach: "80,000 story views",
-              expected_reaction: "5,000 engagements, 200 registrations"
-            },
-            {
-              name: "StartupLifeAlex",
-              followers_count: "150,000",
-              expected_reach: "45,000 post reach",
-              expected_reaction: "3,500 engagements, 140 registrations"
-            },
-            {
-              name: "TechReelsJenna",
-              followers_count: "280,000",
-              expected_reach: "70,000 reel views",
-              expected_reaction: "4,200 engagements, 180 registrations"
-            }
-          ]
-        },
-        linkedin: {
-          audience: "Senior tech professionals, C-level executives, industry leaders, enterprise decision-makers, career-focused individuals",
-          placement: "LinkedIn sponsored content, Professional network posts, Industry leader endorsements, LinkedIn Events promotion, Company page updates",
-          reach: "200,000 impressions, 10,000 clicks, 3,000 professional connections",
-          reaction: "2.5% CTR, 400 professional registrations, 50 company team registrations",
-          budget: "$4,000",
-          timeline: "8 weeks professional campaign, executive outreach 3 weeks prior",
-          content_type: "Professional articles about AI trends, Thought leadership posts, Speaker professional achievements, Industry insights",
-          additional_info: "Target Fortune 500 tech companies, leverage speaker professional networks, create LinkedIn Event page",
-          influencer_partnerships: [
-            {
-              name: "Dr. Robert Chen (CTO)",
-              followers_count: "95,000",
-              expected_reach: "28,500 professional impressions",
-              expected_reaction: "1,400 engagements, 85 registrations"
-            },
-            {
-              name: "Lisa Martinez (AI Director)",
-              followers_count: "120,000",
-              expected_reach: "36,000 professional reach",
-              expected_reaction: "1,800 engagements, 110 registrations"
-            }
-          ]
-        },
-        x_twitter: {
-          audience: "Tech community, AI researchers, startup ecosystem, tech journalists, early adopters aged 25-50",
-          placement: "Twitter promoted tweets, Tech hashtag campaigns (#AIConf2025 #TechSummitSF), Live tweeting strategy, Speaker quote cards",
-          reach: "80,000 impressions, 3,000 retweets, 1,500 replies",
-          reaction: "5% engagement rate, 250 registrations via Twitter, 500 hashtag uses",
-          budget: "$1,500",
-          timeline: "Continuous 6-week campaign, live-tweeting during event",
-          content_type: "Tweet threads about AI trends, Speaker quote graphics, Real-time event updates, Polls and tech discussions",
-          additional_info: "Engage with tech Twitter community, partner with tech journalists for coverage, create event Twitter moment",
-          influencer_partnerships: [
-            {
-              name: "@TechThreadGuru",
-              followers_count: "180,000",
-              expected_reach: "54,000 impressions",
-              expected_reaction: "2,700 engagements, 135 registrations"
-            },
-            {
-              name: "@AINewsNow",
-              followers_count: "220,000",
-              expected_reach: "66,000 impressions",
-              expected_reaction: "3,300 engagements, 165 registrations"
-            }
-          ]
-        },
-        youtube: {
-          audience: "Tech tutorial viewers, AI/ML learners, startup enthusiasts, professional development seekers",
-          placement: "Pre-roll ads on tech channels, Speaker interview teasers, Event highlight videos, Educational content tie-ins",
-          reach: "50,000 video views, 2,000 subscribers, 500 comments",
-          reaction: "6% view-through rate, 100 registrations from YouTube, 300 channel subscriptions",
-          budget: "$2,000",
-          timeline: "4 weeks of video content, speaker interviews 3 weeks before",
-          content_type: "Speaker introduction videos, Event preview trailers, AI tutorial tie-ins, Behind-the-scenes venue setup",
-          additional_info: "Create dedicated event playlist, collaborate with tech YouTubers, post-event content strategy",
-          influencer_partnerships: [
-            {
-              name: "TechExplainedTV",
-              followers_count: "450,000",
-              expected_reach: "135,000 video views",
-              expected_reaction: "8,100 engagements, 270 registrations"
-            },
-            {
-              name: "CodeWithMike",
-              followers_count: "280,000",
-              expected_reach: "84,000 video views",
-              expected_reaction: "5,000 engagements, 168 registrations"
-            },
-            {
-              name: "AITutorialsDaily",
-              followers_count: "350,000",
-              expected_reach: "105,000 video views",
-              expected_reaction: "6,300 engagements, 210 registrations"
-            }
-          ]
-        },
-        google_ads: {
-          audience: "Tech professionals, AI/ML enthusiasts, startup founders, conference attendees",
-          placement: "Google search ads, Display ads on tech websites, YouTube ads",
-          reach: "100,000 impressions, 5,000 clicks, 300 conversions",
-          reaction: "3% CTR, 150 registrations from Google Ads",
-          budget: "$3,000",
-          timeline: "4 weeks of ad campaigns, ramping up 2 weeks before the event",
-          content_type: "Search ads targeting AI keywords, Display banners showcasing event highlights, Video ads featuring speaker testimonials",
-          additional_info: "Utilize remarketing strategies for website visitors, A/B test ad creatives for optimization"
-        },
-        email_campaign: {
-          audience: "Tech professionals, newsletter subscribers, past event attendees, AI/ML community members aged 25-50",
-          placement: "Newsletter campaigns, Targeted email lists, Automated drip campaigns, Speaker introduction emails, Registration reminder sequences",
-          reach: "15,000 emails sent, 10,275 opened, 4,245 clicked, 750 conversions",
-          reaction: "68.5% open rate, 28.3% click rate, 18.7% conversion rate, 420 registrations",
-          budget: "$1,200",
-          timeline: "6-week email sequence: Welcome → Speaker spotlights → Early bird → Agenda reveal → Final call → Day-of updates",
-          content_type: "HTML newsletters with event details, Personalized speaker invitations, Interactive countdown timers, Early bird promotion emails, Event agenda highlights",
-          additional_info: "A/B test subject lines, Segment by industry and experience level, Include calendar invites and venue directions"
-        },
-        whatsapp_campaign: {
-          audience: "Tech community members, professional networks, AI enthusiasts, startup founders, personal contacts aged 22-45",
-          placement: "WhatsApp groups (8 industry-specific), Personal invites, Community channels, Status updates, Direct messaging campaigns",
-          reach: "1,200 group members, 420 active participants, 850 messages sent, 575 responses",
-          reaction: "35.2% engagement rate, 67.8% message response rate, 15.0% conversion rate, 180 registrations",
-          budget: "$700",
-          timeline: "6-week community building: Group creation → Member invites → Daily engagement → Event announcements → Live updates",
-          content_type: "Event announcements, Speaker introduction videos, Interactive polls, Voice messages from speakers, Behind-the-scenes content",
-          additional_info: "Create 8 groups max 150 members each, Assign 2-3 moderators per group, Cross-promote with email signatures"
-        },
-        offline_publicity: {
-          audience: "Local tech community, university students, co-working space members, conference center visitors",
-          placement: "Tech conference flyers, University bulletin boards (Stanford, UC Berkeley), Co-working space posters, SF tech hub displays",
-          reach: "25,000 physical impressions, 1,000 flyers distributed, 50 partner locations",
-          reaction: "2% conversion rate from physical materials, 50 walk-in inquiries, 100 QR code scans",
-          budget: "$1,000",
-          timeline: "3 weeks of poster/flyer distribution, concentrated 1 week before",
-          content_type: "Professional event flyers with QR codes, Branded banners for partner locations, Direct mail to tech companies",
-          additional_info: "Partner with local tech meetups, place materials in Moscone Center area, SF tech district visibility"
-        }
-      }
-    };
+  // Handle loading test data for different event types
+  const handleLoadTestData = (eventType) => {
+    let testData;
+    
+    switch(eventType) {
+      case 'in-person':
+        testData = TEST_DATA_IN_PERSON;
+        break;
+      case 'virtual':
+        testData = TEST_DATA_VIRTUAL;
+        break;
+      case 'hybrid':
+        testData = TEST_DATA_HYBRID;
+        break;
+      default:
+        testData = TEST_DATA_IN_PERSON;
+    }
 
-    // Set form values
+    // Load basic event information
     setValue('event_name', testData.event_name);
     setValue('event_type', testData.event_type);
     setValue('event_language', testData.event_language);
     setValue('event_description', testData.event_description);
     setValue('city', testData.city);
+    setValue('target_countries', testData.target_countries);
     setValue('number_of_days', testData.number_of_days);
     setValue('days', testData.days);
+    setValue('country_marketing', testData.country_marketing || []);
     setValue('marketing_strategy', testData.marketing_strategy);
 
-    // Mock location data for San Francisco
+    // Mock location data for the city
     const mockLocationData = {
-      city: 'San Francisco',
-      state: 'California',
-      population: '884,363',
-      coordinates: [37.7749, -122.4194],
-      suggestedVenues: ['Moscone Center West Hall', 'Moscone Center South Hall', 'San Francisco Convention Center']
+      city: testData.city || testData.event_name.includes('Virtual') ? 'Global' : 'San Francisco',
+      state: testData.city ? 'Various' : 'California',
+      population: testData.city ? 'Global Audience' : '884,363',
+      coordinates: testData.city ? [0, 0] : [37.7749, -122.4194],
+      suggestedVenues: testData.city ? [] : ['Moscone Center West Hall', 'Moscone Center South Hall', 'San Francisco Convention Center']
     };
 
     // Update tab with mock location data
@@ -1752,7 +1509,637 @@ Prof. Michael Zhang - Robotics & AI, UC Berkeley`,
     );
     setTabs(updatedTabs);
 
-    toast.success('Test data loaded successfully!');
+    // Show success message
+    toast.success(`${eventType.charAt(0).toUpperCase() + eventType.slice(1)} event test data loaded successfully!`);
+  };
+
+  // Test data for different event types
+  const TEST_DATA_IN_PERSON = {
+    event_name: 'Global AI & Innovation Summit 2025',
+    event_type: 'in-person',
+    event_language: 'en',
+    event_description: 'A comprehensive 3-day conference bringing together AI researchers, tech entrepreneurs, and industry leaders to explore cutting-edge developments in artificial intelligence, machine learning, and digital transformation. Features hands-on workshops, networking sessions, and startup showcases.',
+    city: 'San Francisco',
+    target_countries: [],
+    country_marketing: [],
+    number_of_days: 3,
+    days: [
+      {
+        event_date: '2025-10-15',
+        start_time: '09:00',
+        end_time: '18:00',
+        venue_name: 'Moscone Center West Hall',
+        venue_capacity: '5000',
+        primary_sector: 'Artificial Intelligence & Machine Learning',
+        speakers: `Dr. Sarah Chen - Director of AI Research, Stanford University
+Marcus Rodriguez - Chief AI Officer, Google DeepMind  
+Prof. Elena Volkov - Machine Learning Pioneer, MIT
+James Park - Founder & CEO, OpenAI
+Dr. Raj Patel - VP of AI Ethics, Microsoft`,
+        activities: `9:00 AM - Registration & Welcome Coffee
+9:30 AM - Opening Keynote: "The Future of AGI"
+10:30 AM - AI Ethics Panel Discussion
+12:00 PM - Networking Lunch & Tech Expo
+2:00 PM - Machine Learning Workshop
+4:00 PM - Startup Pitch Competition
+5:30 PM - Welcome Reception & Networking`,
+        additional_info: `• Business professional dress code recommended
+• All meals and refreshments provided
+• Live streaming available for virtual attendees
+• Simultaneous translation in Spanish and Mandarin
+• Parking available at Moscone Garage ($25/day)`
+      },
+      {
+        event_date: '2025-10-16',
+        start_time: '08:30',
+        end_time: '19:00',
+        venue_name: 'Moscone Center South Hall',
+        venue_capacity: '3500',
+        primary_sector: 'Digital Transformation & Enterprise AI',
+        speakers: `Lisa Wang - CTO, Salesforce
+David Kumar - Head of AI Strategy, IBM
+Dr. Michelle Foster - Digital Innovation Leader, Accenture
+Alex Thompson - VP Engineering, NVIDIA
+Maria Santos - AI Product Manager, Meta`,
+        activities: `8:30 AM - Continental Breakfast & Networking
+9:00 AM - Enterprise AI Implementation Keynote
+10:00 AM - Industry Use Cases Panel
+11:30 AM - Hands-on AI Development Workshop
+1:00 PM - Networking Lunch & Solution Showcase
+3:00 PM - Technical Deep-dive Sessions
+5:00 PM - Innovation Awards Ceremony
+6:30 PM - Evening Gala Dinner`,
+        additional_info: `• Laptops required for hands-on workshops
+• Technical skill level: Intermediate to Advanced
+• GitHub account needed for coding sessions
+• Awards ceremony features industry recognition
+• Formal attire for evening gala`
+      },
+      {
+        event_date: '2025-10-17',
+        start_time: '09:00',
+        end_time: '16:30',
+        venue_name: 'San Francisco Convention Center',
+        venue_capacity: '2000',
+        primary_sector: 'AI Startups & Future Technologies',
+        speakers: `Robert Chang - Managing Partner, Andreessen Horowitz
+Dr. Amanda Liu - Quantum Computing Researcher, IBM Research
+Carlos Mendez - AI Startup Accelerator Director, Y Combinator
+Jennifer Kim - Venture Capitalist, Sequoia Capital
+Prof. Michael Zhang - Robotics & AI, UC Berkeley`,
+        activities: `9:00 AM - Startup Breakfast & Demo Setup
+9:30 AM - Future Tech Trends Keynote
+10:30 AM - Investor-Entrepreneur Panel
+12:00 PM - Startup Demo Showcase (20 companies)
+2:00 PM - Funding & Investment Workshop
+3:30 PM - Closing Keynote: "AI in 2030"
+4:15 PM - Final Networking & Wrap-up`,
+        additional_info: `• Startup Demo Day featuring 20 selected companies
+• Investor meetings available by appointment
+• Business cards strongly recommended
+• Final networking focused on partnerships
+• Event app available for continued connections`
+      }
+    ],
+    marketing_strategy: {
+      facebook: {
+        audience: "Tech professionals aged 25-45, AI researchers, startup founders, and decision-makers in technology companies",
+        placement: "Facebook ads targeting tech professionals, Event page promotion in AI/ML groups, Sponsored posts in technology communities, Partner company shares",
+        reach: "150,000 impressions, 8,000 engagements, 500 event page visits",
+        reaction: "3% CTR, 200 registrations, 1,200 shares and comments",
+        budget: "$3,500",
+        timeline: "6 weeks before event launch, intensive 2 weeks prior",
+        content_type: "Event announcement videos, Speaker spotlight posts, Countdown graphics, Live Q&A sessions with speakers",
+        additional_info: "Partner with tech companies for employee sharing, utilize AI/ML Facebook groups with 50K+ members",
+        influencer_partnerships: [
+          {
+            name: "TechGuru Mike",
+            followers_count: "250,000",
+            expected_reach: "75,000 impressions",
+            expected_reaction: "3,000 engagements, 150 registrations"
+          },
+          {
+            name: "AI Insights Sarah",
+            followers_count: "180,000",
+            expected_reach: "54,000 impressions", 
+            expected_reaction: "2,200 engagements, 110 registrations"
+          }
+        ]
+      },
+      instagram: {
+        audience: "Young tech professionals, AI enthusiasts, startup community, visual learners aged 22-40",
+        placement: "Instagram Stories ads, Influencer partnerships with tech personalities, AI/tech hashtag campaigns, Visual event teasers",
+        reach: "100,000 impressions, 5,000 story views, 2,000 profile visits",
+        reaction: "4% engagement rate, 300 story interactions, 150 DMs",
+        budget: "$2,500",
+        timeline: "4 weeks campaign with daily posts 2 weeks before",
+        content_type: "Visual speaker cards, Behind-the-scenes venue prep, IGTV speaker interviews, Stories polls and Q&As",
+        additional_info: "Collaborate with tech influencers, create branded hashtag #AIInnovationSF2025",
+        influencer_partnerships: [
+          {
+            name: "CodeWithEmily",
+            followers_count: "320,000",
+            expected_reach: "80,000 story views",
+            expected_reaction: "5,000 engagements, 200 registrations"
+          },
+          {
+            name: "StartupLifeAlex",
+            followers_count: "150,000",
+            expected_reach: "45,000 post reach",
+            expected_reaction: "3,500 engagements, 140 registrations"
+          }
+        ]
+      },
+      linkedin: {
+        audience: "Senior tech professionals, C-level executives, industry leaders, enterprise decision-makers, career-focused individuals",
+        placement: "LinkedIn sponsored content, Professional network posts, Industry leader endorsements, LinkedIn Events promotion, Company page updates",
+        reach: "200,000 impressions, 10,000 clicks, 3,000 professional connections",
+        reaction: "2.5% CTR, 400 professional registrations, 50 company team registrations",
+        budget: "$4,000",
+        timeline: "8 weeks professional campaign, executive outreach 3 weeks prior",
+        content_type: "Professional articles about AI trends, Thought leadership posts, Speaker professional achievements, Industry insights",
+        additional_info: "Target Fortune 500 tech companies, leverage speaker professional networks, create LinkedIn Event page",
+        influencer_partnerships: [
+          {
+            name: "Dr. Robert Chen (CTO)",
+            followers_count: "95,000",
+            expected_reach: "28,500 professional impressions",
+            expected_reaction: "1,400 engagements, 85 registrations"
+          }
+        ]
+      },
+      x_twitter: {
+        audience: "Tech community, AI researchers, startup ecosystem, tech journalists, early adopters aged 25-50",
+        placement: "Twitter promoted tweets, Tech hashtag campaigns (#AIConf2025 #TechSummitSF), Live tweeting strategy, Speaker quote cards",
+        reach: "80,000 impressions, 3,000 retweets, 1,500 replies",
+        reaction: "5% engagement rate, 250 registrations via Twitter, 500 hashtag uses",
+        budget: "$1,500",
+        timeline: "Continuous 6-week campaign, live-tweeting during event",
+        content_type: "Tweet threads about AI trends, Speaker quote graphics, Real-time event updates, Polls and tech discussions",
+        additional_info: "Engage with tech Twitter community, partner with tech journalists for coverage, create event Twitter moment",
+        influencer_partnerships: [
+          {
+            name: "@TechThreadGuru",
+            followers_count: "180,000",
+            expected_reach: "54,000 impressions",
+            expected_reaction: "2,700 engagements, 135 registrations"
+          }
+        ]
+      },
+      youtube: {
+        audience: "Tech tutorial viewers, AI/ML learners, startup enthusiasts, professional development seekers",
+        placement: "Pre-roll ads on tech channels, Speaker interview teasers, Event highlight videos, Educational content tie-ins",
+        reach: "50,000 video views, 2,000 subscribers, 500 comments",
+        reaction: "6% view-through rate, 100 registrations from YouTube, 300 channel subscriptions",
+        budget: "$2,000",
+        timeline: "4 weeks of video content, speaker interviews 3 weeks before",
+        content_type: "Speaker introduction videos, Event preview trailers, AI tutorial tie-ins, Behind-the-scenes venue setup",
+        additional_info: "Create dedicated event playlist, collaborate with tech YouTubers, post-event content strategy",
+        influencer_partnerships: [
+          {
+            name: "TechExplainedTV",
+            followers_count: "450,000",
+            expected_reach: "135,000 video views",
+            expected_reaction: "8,100 engagements, 270 registrations"
+          }
+        ]
+      },
+      reddit: {
+        audience: "Tech enthusiasts, developers, AI/ML practitioners, startup founders, early technology adopters",
+        placement: "r/MachineLearning, r/artificial, r/tech, r/startups promoted posts, AMA sessions with speakers",
+        reach: "75,000 impressions, 2,500 upvotes, 800 comments",
+        reaction: "6.5% engagement rate, 180 registrations, 15 AMA participants",
+        budget: "$1,200",
+        timeline: "6 weeks community engagement, 2 AMA sessions, daily discussions",
+        content_type: "Technical discussions, Speaker AMAs, AI trend analysis, Event announcements in relevant subreddits",
+        additional_info: "Host 2 AMA sessions with keynote speakers, engage authentically in tech communities, avoid over-promotion",
+        influencer_partnerships: [
+          {
+            name: "u/AIResearcher_Pro",
+            followers_count: "85,000",
+            expected_reach: "25,500 community impressions",
+            expected_reaction: "1,500 engagements, 75 registrations"
+          }
+        ]
+      },
+      meetup: {
+        audience: "Local tech professionals, developers, entrepreneurs, networking enthusiasts in SF Bay Area",
+        placement: "SF AI Meetup groups, Tech networking events, Professional development meetups, Startup founder groups",
+        reach: "15,000 meetup members, 25 related groups, 8 partnerships",
+        reaction: "12% RSVP rate, 220 registrations, 45 group partnerships",
+        budget: "$800",
+        timeline: "8 weeks networking, attend 12 related meetups, host 2 pre-events",
+        content_type: "Meetup event pages, Pre-event networking sessions, Speaker meet-and-greets, Professional networking",
+        additional_info: "Partner with existing SF tech meetups, host pre-conference networking events, leverage local tech community leaders",
+        influencer_partnerships: [
+          {
+            name: "SF Tech Meetup Leader",
+            followers_count: "12,000",
+            expected_reach: "8,500 local professionals",
+            expected_reaction: "850 meetup views, 95 registrations"
+          }
+        ]
+      },
+      eventbrite: {
+        audience: "Event attendees, professional development seekers, conference enthusiasts, local professionals",
+        placement: "Eventbrite featured listings, Professional development category, Tech event recommendations, Related event suggestions",
+        reach: "50,000 event page views, 3,200 saves, 1,800 shares",
+        reaction: "8% conversion rate, 320 direct registrations, 15% early bird uptake",
+        budget: "$1,500",
+        timeline: "6 weeks featured listing, early bird promotion first 3 weeks, regular promotion following weeks",
+        content_type: "Professional event page with agenda, Speaker bios and photos, Detailed venue information, Registration packages",
+        additional_info: "Utilize Eventbrite's professional networking category, partner with related events for cross-promotion, optimize for mobile registration",
+        influencer_partnerships: [
+          {
+            name: "EventExpert_SF",
+            followers_count: "25,000",
+            expected_reach: "12,500 event page views",
+            expected_reaction: "1,000 engagements, 125 registrations"
+          }
+        ]
+      },
+      indeed_events: {
+        audience: "Job seekers, career changers, professional development focused individuals, HR professionals, recruiters",
+        placement: "Indeed Events career fair section, Professional development events, Tech career networking, Industry advancement programs",
+        reach: "35,000 career-focused views, 2,100 professional saves, 850 career inquiries",
+        reaction: "7% career conversion rate, 280 professional registrations, 65 recruiter attendees",
+        budget: "$1,800",
+        timeline: "6 weeks career-focused promotion, networking with HR departments, professional development angle",
+        content_type: "Career advancement messaging, Professional development opportunities, Networking for job seekers, Industry insights for career growth",
+        additional_info: "Position as career advancement opportunity, partner with recruiting firms, highlight networking potential with industry leaders",
+        influencer_partnerships: [
+          {
+            name: "CareerGrowthGuru",
+            followers_count: "55,000",
+            expected_reach: "22,000 career-focused views",
+            expected_reaction: "1,800 career engagements, 165 registrations"
+          }
+        ]
+      },
+      google_ads: {
+        audience: "Tech professionals searching for conferences, AI/ML events, professional development opportunities",
+        placement: "Google search ads for 'AI conference', 'tech summit', 'machine learning events', Display ads on tech websites, YouTube pre-roll",
+        reach: "120,000 search impressions, 4,500 clicks, 350 conversions",
+        reaction: "3.75% CTR, 280 search-driven registrations, 8.5% conversion rate",
+        budget: "$3,500",
+        timeline: "6 weeks search campaign, ramping up final 2 weeks, post-event retargeting for future events",
+        content_type: "Search ads with compelling headlines, Display banners featuring speaker lineup, Video ads with event highlights and testimonials",
+        additional_info: "Target high-intent keywords, use remarketing for website visitors, A/B test ad creatives for optimal performance, geographic targeting for SF Bay Area",
+        influencer_partnerships: []
+      },
+      email_campaign: {
+        audience: "Newsletter subscribers, past event attendees, professional contacts, industry mailing lists",
+        placement: "Direct email campaigns, Newsletter inclusions, Automated drip sequences, Partner email lists, Industry publication features",
+        reach: "25,000 emails sent, 17,500 delivered, 12,250 opened, 3,675 clicked",
+        reaction: "70% open rate, 30% click rate, 22% conversion rate, 485 email-driven registrations",
+        budget: "$1,200",
+        timeline: "8 weeks email sequence: announcement → early bird → speaker spotlights → agenda reveal → final call → post-event follow-up",
+        content_type: "HTML newsletters with event highlights, Personalized speaker introductions, Interactive countdown timers, Early bird pricing announcements, Event agenda previews",
+        additional_info: "Segment by industry and seniority level, A/B test subject lines and send times, include social sharing buttons, mobile-optimized templates",
+        influencer_partnerships: []
+      },
+      whatsapp_campaign: {
+        audience: "Professional networks, tech communities, startup founder groups, personal and professional contacts",
+        placement: "WhatsApp Business groups, Tech community channels, Professional networking circles, Startup founder networks, Industry-specific groups",
+        reach: "2,500 group members across 10 groups, 1,750 active participants, 1,200 direct messages",
+        reaction: "45% message engagement rate, 38% response rate, 18% conversion rate, 315 WhatsApp-driven registrations",
+        budget: "$600",
+        timeline: "8 weeks community building and engagement, daily valuable content sharing, event announcements, live updates during event",
+        content_type: "Event announcements with compelling visuals, Speaker introduction videos, Interactive polls and discussions, Behind-the-scenes content, Voice messages from organizers",
+        additional_info: "Maintain 10 groups max 250 members each, assign dedicated community managers, share valuable content beyond just promotion, respect group guidelines and culture",
+        influencer_partnerships: []
+      },
+      offline_publicity: {
+        audience: "Local tech community, university students and faculty, co-working space members, professional associations",
+        placement: "Tech conference centers, University campuses (Stanford, UC Berkeley, UCSF), Co-working spaces, Professional association offices, Tech company lobbies",
+        reach: "45,000 physical location impressions, 2,500 flyers distributed, 85 partner locations, 15 university partnerships",
+        reaction: "2.5% physical-to-digital conversion, 125 walk-in inquiries, 285 QR code scans, 95 phone inquiries",
+        budget: "$1,800",
+        timeline: "4 weeks physical material distribution, concentrated placement 2 weeks before event, day-of signage and directions",
+        content_type: "Professional flyers with QR codes, Venue banners and directional signage, University bulletin board announcements, Co-working space digital displays",
+        additional_info: "Partner with local tech meetups for cross-promotion, strategic placement in high-traffic tech areas, Moscone Center area visibility, professional design and materials",
+        influencer_partnerships: []
+      }
+    }
+  };
+
+  const TEST_DATA_VIRTUAL = {
+    event_name: 'Global Virtual Tech Summit 2025',
+    event_type: 'virtual',
+    event_language: 'en',
+    event_description: 'Join us for an immersive 2-day virtual conference connecting tech professionals worldwide. Experience cutting-edge presentations, interactive workshops, and global networking opportunities from the comfort of your home or office. Features multi-timezone sessions, virtual expo halls, and 1-on-1 meeting capabilities.',
+    city: '',
+    target_countries: [
+      { code: 'US', name: 'United States' },
+      { code: 'CA', name: 'Canada' },
+      { code: 'GB', name: 'United Kingdom' },
+      { code: 'DE', name: 'Germany' },
+      { code: 'FR', name: 'France' },
+      { code: 'AU', name: 'Australia' },
+      { code: 'JP', name: 'Japan' },
+      { code: 'SG', name: 'Singapore' }
+    ],
+    number_of_days: 2,
+    days: [
+      {
+        event_date: '2025-11-20',
+        start_time: '09:00',
+        end_time: '17:00',
+        venue_name: '',
+        venue_capacity: '',
+        virtual_platform: {
+          platform_name: 'Hopin',
+          platform_link: 'https://app.hopin.com/events/global-virtual-tech-summit-2025',
+          max_participants: '10000',
+          features: ['Virtual venue', 'Networking', 'Expo booths', 'Multiple stages', 'Breakout rooms', 'Chat'],
+          access_requirements: 'High-speed internet connection, updated browser (Chrome/Firefox/Safari), webcam and microphone for networking'
+        },
+        primary_sector: 'Cloud Computing & DevOps',
+        speakers: `Dr. Jennifer Walsh - Cloud Architecture Director, AWS
+Miguel Santos - DevOps Lead, Netflix
+Prof. Alex Chen - Distributed Systems, Stanford
+Sarah Johnson - Site Reliability Engineer, Google
+David Kim - Container Technologies, Docker Inc.`,
+        activities: `9:00 AM (UTC) - Global Welcome & Platform Orientation
+9:30 AM - Keynote: "Cloud-Native Future"
+10:30 AM - Multi-timezone Networking Sessions
+12:00 PM - Virtual Expo Hall & Sponsor Booths
+2:00 PM - DevOps Workshop (Interactive)
+3:30 PM - Global Panel: Regional Tech Trends
+5:00 PM - Virtual Happy Hour & Closing`,
+        additional_info: `• Simultaneous sessions across 3 timezones
+• 24-hour virtual expo hall access
+• Recording available for 30 days
+• Subtitles in 8 languages
+• Mobile app available for iOS/Android
+• Virtual networking rooms with AI matching`
+      },
+      {
+        event_date: '2025-11-21',
+        start_time: '08:00',
+        end_time: '18:00',
+        venue_name: '',
+        venue_capacity: '',
+        virtual_platform: {
+          platform_name: 'Hopin',
+          platform_link: 'https://app.hopin.com/events/global-virtual-tech-summit-2025',
+          max_participants: '10000',
+          features: ['Virtual venue', 'Networking', 'Expo booths', 'Multiple stages', 'Breakout rooms', 'Chat'],
+          access_requirements: 'High-speed internet connection, updated browser (Chrome/Firefox/Safari), webcam and microphone for networking'
+        },
+        primary_sector: 'Cybersecurity & Data Privacy',
+        speakers: `Dr. Rachel Brown - Cybersecurity Research, MIT
+James Wilson - CISO, Microsoft Azure
+Lisa Zhang - Privacy Engineering, Apple
+Carlos Rodriguez - Security Architecture, Cloudflare
+Dr. Ahmed Hassan - AI Security, IBM Research`,
+        activities: `8:00 AM (UTC) - Early Bird Cybersecurity Breakfast Session
+9:00 AM - Opening: "Zero Trust Architecture"
+10:00 AM - Interactive Threat Modeling Workshop
+11:30 AM - Global Security Challenges Panel
+1:00 PM - Virtual Lunch & Learn Sessions
+2:30 PM - Hands-on: Penetration Testing
+4:00 PM - Data Privacy Compliance Workshop
+5:30 PM - Global Wrap-up & Future Connections`,
+        additional_info: `• Advanced cybersecurity simulations
+• Secure virtual environment demos
+• Industry certification opportunities
+• Global regulatory compliance session
+• 1-on-1 expert consultations available
+• Post-event security resource library access`
+      }
+    ],
+    country_marketing: [
+      {
+        country_code: 'US',
+        country_name: 'United States',
+        marketing_strategy: {
+          facebook: {
+            audience: "US tech professionals, software engineers, DevOps specialists, cybersecurity experts aged 25-50",
+            budget: "$2,500",
+            reach: "85,000 US impressions",
+            timeline: "6 weeks with Pacific/Eastern timezone targeting"
+          },
+          linkedin: {
+            audience: "US enterprise professionals, CTOs, engineering managers, tech leads",
+            budget: "$3,000",
+            reach: "120,000 professional impressions",
+            timeline: "8 weeks B2B professional targeting"
+          }
+        }
+      },
+      {
+        country_code: 'GB',
+        country_name: 'United Kingdom',
+        marketing_strategy: {
+          linkedin: {
+            audience: "UK tech professionals, fintech specialists, AI researchers, digital transformation leaders",
+            budget: "$2,200",
+            reach: "65,000 UK professional impressions",
+            timeline: "6 weeks GMT timezone optimization"
+          },
+          x_twitter: {
+            audience: "UK tech Twitter community, startups, scale-ups, university researchers",
+            budget: "$1,200",
+            reach: "35,000 UK tech impressions",
+            timeline: "5 weeks UK tech community engagement"
+          }
+        }
+      }
+    ],
+    marketing_strategy: {
+      facebook: {
+        audience: "Global tech professionals, remote workers, digital nomads, virtual event enthusiasts aged 24-50",
+        placement: "Global Facebook ads, Virtual event groups, Remote work communities, International tech pages",
+        reach: "200,000 global impressions, 12,000 engagements, 800 virtual event page visits",
+        reaction: "4% CTR, 320 virtual registrations, 1,800 global shares",
+        budget: "$4,200",
+        timeline: "8 weeks global campaign, multi-timezone targeting",
+        content_type: "Virtual event teasers, Global speaker introductions, Platform demo videos, Time zone countdown posts",
+        additional_info: "Target 8 countries simultaneously, multi-language posts, virtual networking promotion",
+        influencer_partnerships: []
+      },
+      linkedin: {
+        audience: "International business professionals, remote team leaders, global enterprise decision-makers",
+        placement: "LinkedIn global sponsored content, International professional networks, Remote work thought leaders",
+        reach: "300,000 global professional impressions, 15,000 clicks, 4,500 connections",
+        reaction: "3.2% CTR, 580 professional registrations, 85 enterprise team registrations",
+        budget: "$5,500",
+        timeline: "10 weeks global professional campaign, C-level executive outreach",
+        content_type: "Global thought leadership, Remote work insights, International speaker spotlights, Virtual networking benefits",
+        additional_info: "Target Fortune Global 500, international speaker networks, global time zone optimization",
+        influencer_partnerships: []
+      },
+      youtube: {
+        audience: "Global tech tutorial viewers, virtual learning enthusiasts, international professional development seekers",
+        placement: "YouTube global pre-roll, International tech channels, Virtual event playlists, Educational content",
+        reach: "85,000 global video views, 3,200 international subscribers, 850 comments",
+        reaction: "7% global view-through rate, 180 YouTube registrations, 450 channel subscriptions",
+        budget: "$3,200",
+        timeline: "6 weeks global video content, international speaker interviews",
+        content_type: "Global speaker introductions, Virtual platform tutorials, International tech trends, Multi-language subtitles",
+        additional_info: "8-language subtitle support, global tech YouTuber partnerships, virtual event playlist",
+        influencer_partnerships: []
+      }
+    }
+  };
+
+  const TEST_DATA_HYBRID = {
+    event_name: 'Hybrid Innovation Conference 2025',
+    event_type: 'hybrid',
+    event_language: 'en',
+    event_description: 'Experience the best of both worlds with our hybrid conference format. Join us in-person in New York City or participate virtually from anywhere in the world. Enjoy seamless integration between physical and digital attendees with interactive Q&As, virtual networking, and synchronized presentations.',
+    city: 'New York City',
+    target_countries: [
+      { code: 'US', name: 'United States' },
+      { code: 'CA', name: 'Canada' },
+      { code: 'MX', name: 'Mexico' },
+      { code: 'BR', name: 'Brazil' },
+      { code: 'GB', name: 'United Kingdom' },
+      { code: 'DE', name: 'Germany' },
+      { code: 'IN', name: 'India' },
+      { code: 'AU', name: 'Australia' }
+    ],
+    number_of_days: 2,
+    days: [
+      {
+        event_date: '2025-09-15',
+        start_time: '09:00',
+        end_time: '18:00',
+        venue_name: 'Jacob K. Javits Convention Center',
+        venue_capacity: '1200',
+        venue_address: '429 11th Avenue, New York, NY 10001',
+        virtual_platform: {
+          platform_name: 'Zoom Events + Remo',
+          platform_link: 'https://events.zoom.us/hybrid-innovation-2025',
+          max_participants: '5000',
+          features: ['Hybrid integration', 'Virtual expo', 'Breakout rooms', 'Live streaming', 'Q&A integration', 'Networking lounges'],
+          access_requirements: 'For virtual: stable internet, webcam recommended. For in-person: photo ID, health certification if required'
+        },
+        primary_sector: 'Financial Technology & Blockchain',
+        speakers: `Dr. Sarah Martinez - Blockchain Lead, JPMorgan Chase (In-person)
+Kevin O'Brien - DeFi Strategy, Coinbase (Virtual)
+Prof. Michael Zhang - Digital Finance, Columbia University (In-person)
+Lisa Thompson - FinTech Innovation, Stripe (Virtual)
+Dr. Ahmed Al-Rashid - Central Bank Digital Currencies, IMF (Virtual)`,
+        activities: `9:00 AM EST - Hybrid Welcome (In-person + Virtual)
+9:30 AM - Keynote: "The Future of Money" (Hybrid Q&A)
+10:45 AM - Interactive Workshop: DeFi Protocols (Both formats)
+12:00 PM - Hybrid Networking Lunch (Virtual breakout rooms)
+1:30 PM - Panel: "Regulation & Innovation" (Cross-platform discussion)
+3:00 PM - Hands-on: Smart Contract Development (Hybrid labs)
+4:30 PM - Virtual Expo Hall + Physical Booths
+6:00 PM - Hybrid Happy Hour & Closing Ceremony`,
+        additional_info: `• Seamless hybrid participation with live streaming
+• Virtual attendees can join all Q&A sessions
+• Physical networking mirrored in virtual rooms
+• Mobile app connects in-person and virtual attendees
+• Simultaneous translation for global audience
+• Hybrid mentorship speed-dating sessions`
+      },
+      {
+        event_date: '2025-09-16',
+        start_time: '08:30',
+        end_time: '17:30',
+        venue_name: 'Jacob K. Javits Convention Center',
+        venue_capacity: '1200',
+        venue_address: '429 11th Avenue, New York, NY 10001',
+        virtual_platform: {
+          platform_name: 'Zoom Events + Remo',
+          platform_link: 'https://events.zoom.us/hybrid-innovation-2025',
+          max_participants: '5000',
+          features: ['Hybrid integration', 'Virtual expo', 'Breakout rooms', 'Live streaming', 'Q&A integration', 'Networking lounges'],
+          access_requirements: 'For virtual: stable internet, webcam recommended. For in-person: photo ID, health certification if required'
+        },
+        primary_sector: 'Sustainable Technology & Green Innovation',
+        speakers: `Dr. Emma Green - Climate Tech, Tesla (In-person)
+Carlos Silva - Renewable Energy AI, Google (Virtual)
+Prof. Rachel Kim - Sustainable Computing, MIT (In-person)
+James Wilson - Carbon Tracking, Microsoft (Virtual)
+Dr. Maria Santos - Green Finance, World Bank (Virtual)`,
+        activities: `8:30 AM EST - Early Bird Sustainability Session (Hybrid)
+9:00 AM - Opening: "Tech for Climate Action" (Interactive keynote)
+10:15 AM - Hybrid Workshop: Carbon Footprint Calculation
+11:45 AM - Cross-platform Startup Pitch Competition
+1:00 PM - Sustainable Lunch & Global Networking
+2:30 PM - Panel: "Investment in Green Tech" (Hybrid format)
+4:00 PM - Innovation Showcase (Physical + Virtual demos)
+5:30 PM - Global Wrap-up & Future Collaboration Planning`,
+        additional_info: `• Carbon-neutral event with offset programs
+• Virtual attendees reduce travel emissions
+• Hybrid innovation challenges with global teams
+• Digital and physical product demonstrations
+• Sustainability metrics tracked and reported
+• Post-event collaboration platform access`
+      }
+    ],
+    country_marketing: [
+      {
+        country_code: 'US',
+        country_name: 'United States',
+        marketing_strategy: {
+          facebook: {
+            audience: "US tech professionals with option for in-person or virtual attendance",
+            budget: "$3,500",
+            reach: "125,000 US impressions with venue proximity targeting",
+            timeline: "8 weeks with NYC metro area emphasis for in-person attendees"
+          },
+          linkedin: {
+            audience: "US business professionals, emphasizing hybrid work trends and flexibility",
+            budget: "$4,200",
+            reach: "180,000 professional impressions with hybrid benefits messaging",
+            timeline: "10 weeks with corporate team registration incentives"
+          }
+        }
+      },
+      {
+        country_code: 'GB',
+        country_name: 'United Kingdom',
+        marketing_strategy: {
+          linkedin: {
+            audience: "UK professionals interested in virtual participation and global networking",
+            budget: "$2,800",
+            reach: "85,000 UK professional impressions with virtual convenience messaging",
+            timeline: "8 weeks GMT optimization for virtual attendance"
+          }
+        }
+      }
+    ],
+    marketing_strategy: {
+      facebook: {
+        audience: "Hybrid event enthusiasts, tech professionals seeking flexible attendance, innovation conference attendees",
+        placement: "Facebook hybrid event groups, Flexible work communities, Innovation-focused pages, NYC event promotion",
+        reach: "180,000 hybrid audience impressions, 14,000 engagements, 900 event page visits",
+        reaction: "4.5% CTR, 425 hybrid registrations (60% virtual, 40% in-person), 2,100 format inquiries",
+        budget: "$4,800",
+        timeline: "10 weeks campaign with format flexibility emphasis, venue vs virtual choice promotion",
+        content_type: "Hybrid experience videos, Format comparison posts, Venue virtual tours, Attendance option explanations",
+        additional_info: "Promote attendance flexibility, NYC venue highlights for locals, virtual convenience for global audience",
+        influencer_partnerships: []
+      },
+      linkedin: {
+        audience: "Corporate teams considering hybrid attendance, innovation leaders, flexible work advocates",
+        placement: "LinkedIn hybrid work thought leadership, Corporate event planning, Team attendance packages",
+        reach: "350,000 professional impressions, 18,000 clicks, 5,200 corporate inquiries",
+        reaction: "3.8% CTR, 720 professional registrations, 125 corporate team packages",
+        budget: "$6,200",
+        timeline: "12 weeks B2B campaign with corporate hybrid packages, team attendance incentives",
+        content_type: "Hybrid work trend articles, Corporate team benefits, Flexible attendance ROI, Innovation leadership content",
+        additional_info: "Target enterprise companies exploring hybrid events, promote team bonding across formats",
+        influencer_partnerships: []
+      },
+      youtube: {
+        audience: "Global tech community interested in hybrid participation options",
+        placement: "YouTube hybrid work content, Tech channels, Virtual event tutorials",
+        reach: "95,000 hybrid-focused video views, 4,200 subscriptions, 1,200 comments",
+        reaction: "6.8% engagement rate, 280 YouTube registrations, 520 channel interactions",
+        budget: "$3,800",
+        timeline: "8 weeks video content showcasing hybrid experience benefits",
+        content_type: "Hybrid event experience videos, Platform tutorials, Speaker accessibility content",
+        additional_info: "Showcase both in-person and virtual experiences, platform demo videos",
+        influencer_partnerships: []
+      }
+    }
   };
 
 const onSubmit = async (formData) => {
@@ -2302,14 +2689,35 @@ const onSubmit = async (formData) => {
             ))}
           </Tabs>
           
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
               startIcon={<Iconify icon="eva:play-circle-outline" />}
-              onClick={handleLoadTestData}
+              onClick={() => handleLoadTestData('in-person')}
               color="success"
+              size="small"
             >
-              Test
+              Test In-Person
+            </Button>
+            
+            <Button
+              variant="outlined"
+              startIcon={<Iconify icon="eva:monitor-outline" />}
+              onClick={() => handleLoadTestData('virtual')}
+              color="info"
+              size="small"
+            >
+              Test Virtual
+            </Button>
+            
+            <Button
+              variant="outlined"
+              startIcon={<Iconify icon="eva:layers-outline" />}
+              onClick={() => handleLoadTestData('hybrid')}
+              color="warning"
+              size="small"
+            >
+              Test Hybrid
             </Button>
             
             <Button
