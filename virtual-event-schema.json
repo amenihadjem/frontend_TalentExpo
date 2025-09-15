@@ -1,0 +1,724 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Virtual Event Analysis Response",
+  "type": "object",
+  "required": [
+    "event_analysis_type",
+    "tool_utilization_summary",
+    "global_reach_analysis",
+    "timezone_optimization",
+    "virtual_platform_analysis",
+    "international_marketing_effectiveness",
+    "global_audience_modeling",
+    "registration_expected",
+    "attendance_expected",
+    "confidence_level",
+    "virtual_optimization_recommendations",
+    "data_visualizations",
+    "key_insights",
+    "recommendations",
+    "actionable_metrics"
+  ],
+  "properties": {
+    "event_analysis_type": {
+      "type": "string",
+      "enum": ["virtual"],
+      "description": "Type of event analysis performed"
+    },
+    "tool_utilization_summary": {
+      "type": "object",
+      "required": [
+        "strategic_analysis_insights",
+        "global_economic_assessment",
+        "international_competitive_landscape", 
+        "virtual_platform_evaluation",
+        "global_audience_analysis"
+      ],
+      "properties": {
+        "strategic_analysis_insights": {
+          "type": "string",
+          "description": "Virtual event optimization strategies"
+        },
+        "global_economic_assessment": {
+          "type": "string",
+          "description": "International economic conditions and purchasing power"
+        },
+        "international_competitive_landscape": {
+          "type": "string",
+          "description": "Competing virtual events and global market opportunities"
+        },
+        "virtual_platform_evaluation": {
+          "type": "string",
+          "description": "Virtual platform capabilities and constraints assessment"
+        },
+        "global_audience_analysis": {
+          "type": "string",
+          "description": "International talent pool and audience analysis"
+        }
+      }
+    },
+    "global_reach_analysis": {
+      "type": "object",
+      "required": [
+        "target_countries_assessment",
+        "cultural_considerations",
+        "language_accessibility",
+        "international_compliance"
+      ],
+      "properties": {
+        "target_countries_assessment": {
+          "type": "string",
+          "description": "Analysis of primary target countries and regions"
+        },
+        "cultural_considerations": {
+          "type": "string",
+          "description": "Cultural factors affecting event appeal and participation"
+        },
+        "language_accessibility": {
+          "type": "string",
+          "description": "Language support and localization requirements"
+        },
+        "international_compliance": {
+          "type": "string",
+          "description": "Regulatory and legal considerations by country"
+        }
+      }
+    },
+    "timezone_optimization": {
+      "type": "object",
+      "required": [
+        "optimal_scheduling_windows",
+        "regional_attendance_patterns",
+        "multi_session_strategy",
+        "recording_accessibility"
+      ],
+      "properties": {
+        "optimal_scheduling_windows": {
+          "type": "string",
+          "description": "Best time slots for maximum global participation"
+        },
+        "regional_attendance_patterns": {
+          "type": "string",
+          "description": "Expected attendance patterns by timezone"
+        },
+        "multi_session_strategy": {
+          "type": "string",
+          "description": "Strategy for multiple sessions across timezones"
+        },
+        "recording_accessibility": {
+          "type": "string",
+          "description": "On-demand access strategy for timezone coverage"
+        }
+      }
+    },
+    "virtual_platform_analysis": {
+      "type": "object",
+      "required": [
+        "platform_capacity_limits",
+        "technical_requirements",
+        "interactive_features_assessment",
+        "accessibility_compliance"
+      ],
+      "properties": {
+        "platform_capacity_limits": {
+          "type": "string",
+          "description": "Virtual platform maximum capacity and scalability"
+        },
+        "technical_requirements": {
+          "type": "string",
+          "description": "Bandwidth, device, and software requirements analysis"
+        },
+        "interactive_features_assessment": {
+          "type": "string",
+          "description": "Available interaction tools and engagement features"
+        },
+        "accessibility_compliance": {
+          "type": "string",
+          "description": "Virtual accessibility standards and inclusion features"
+        }
+      }
+    },
+    "international_marketing_effectiveness": {
+      "type": "object",
+      "required": [
+        "digital_channel_performance",
+        "social_media_global_reach",
+        "country_specific_strategies",
+        "international_influencer_impact"
+      ],
+      "properties": {
+        "digital_channel_performance": {
+          "type": "string",
+          "description": "Global digital marketing channel effectiveness"
+        },
+        "social_media_global_reach": {
+          "type": "string",
+          "description": "International social media platform penetration"
+        },
+        "country_specific_strategies": {
+          "type": "string",
+          "description": "Localized marketing approaches by region"
+        },
+        "international_influencer_impact": {
+          "type": "string",
+          "description": "Global thought leader and influencer network reach"
+        }
+      }
+    },
+    "global_audience_modeling": {
+      "type": "object",
+      "required": [
+        "country_participation_rates",
+        "virtual_conversion_patterns",
+        "technology_accessibility_factors",
+        "international_pricing_sensitivity"
+      ],
+      "properties": {
+        "country_participation_rates": {
+          "type": "string",
+          "description": "Expected participation rates by country/region"
+        },
+        "virtual_conversion_patterns": {
+          "type": "string",
+          "description": "Virtual event conversion funnel patterns globally"
+        },
+        "technology_accessibility_factors": {
+          "type": "string",
+          "description": "Technology barriers and access limitations by region"
+        },
+        "international_pricing_sensitivity": {
+          "type": "string",
+          "description": "Pricing strategy impact across different economic regions"
+        }
+      }
+    },
+    "registration_expected": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Expected registrations for virtual event"
+    },
+    "attendance_expected": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Expected live attendance for virtual event"
+    },
+    "confidence_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "description": "Confidence level based on global data quality"
+    },
+    "virtual_optimization_recommendations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "List of specific optimization strategies for virtual events"
+    },
+    "data_visualizations": {
+      "$ref": "#/$defs/dataVisualizationsSchema"
+    },
+    "key_insights": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 3,
+      "description": "Key analytical insights specific to virtual events"
+    },
+    "recommendations": {
+      "type": "object",
+      "required": ["optimization_strategies", "risk_mitigation"],
+      "properties": {
+        "optimization_strategies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 3,
+          "description": "Global reach and virtual platform optimization strategies"
+        },
+        "risk_mitigation": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2,
+          "description": "Technology and international accessibility risk mitigation"
+        }
+      }
+    },
+    "actionable_metrics": {
+      "type": "object",
+      "required": ["conversion_rates", "revenue_projections", "engagement_metrics"],
+      "properties": {
+        "conversion_rates": {
+          "type": "object",
+          "required": [
+            "awareness_to_interest",
+            "interest_to_registration",
+            "registration_to_attendance"
+          ],
+          "properties": {
+            "awareness_to_interest": {
+              "type": "string",
+              "pattern": "^\\d+(\\.\\d+)?%$",
+              "description": "Global percentage conversion from awareness to interest"
+            },
+            "interest_to_registration": {
+              "type": "string",
+              "pattern": "^\\d+(\\.\\d+)?%$",
+              "description": "Global percentage conversion from interest to registration"
+            },
+            "registration_to_attendance": {
+              "type": "string",
+              "pattern": "^\\d+(\\.\\d+)?%$",
+              "description": "Virtual event attendance rate"
+            }
+          }
+        },
+        "revenue_projections": {
+          "type": "object",
+          "required": ["total_revenue", "average_ticket_price", "break_even_attendance"],
+          "properties": {
+            "total_revenue": {
+              "type": "string",
+              "pattern": "^\\$[0-9,]+$",
+              "description": "Total projected revenue across all regions"
+            },
+            "average_ticket_price": {
+              "type": "string",
+              "pattern": "^\\$[0-9,]+$",
+              "description": "Average ticket price (weighted by regional pricing)"
+            },
+            "break_even_attendance": {
+              "type": "string",
+              "pattern": "^[0-9,]+ attendees$",
+              "description": "Number of virtual attendees needed to break even"
+            }
+          }
+        },
+        "engagement_metrics": {
+          "type": "object",
+          "required": ["live_engagement_rate", "replay_viewing_rate", "interaction_rate"],
+          "properties": {
+            "live_engagement_rate": {
+              "type": "string",
+              "pattern": "^\\d+(\\.\\d+)?%$",
+              "description": "Expected live session engagement rate"
+            },
+            "replay_viewing_rate": {
+              "type": "string",
+              "pattern": "^\\d+(\\.\\d+)?%$",
+              "description": "Expected recorded session viewing rate"
+            },
+            "interaction_rate": {
+              "type": "string",
+              "pattern": "^\\d+(\\.\\d+)?%$",
+              "description": "Expected interactive feature usage rate"
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "dataVisualizationsSchema": {
+      "type": "object",
+      "required": [
+        "global_audience_segmentation",
+        "registration_trend",
+        "geographic_distribution",
+        "conversion_funnel",
+        "timezone_attendance_forecast",
+        "industry_breakdown",
+        "confidence_indicators",
+        "risk_assessment",
+        "marketing_effectiveness"
+      ],
+      "properties": {
+        "global_audience_segmentation": {
+          "type": "object",
+          "required": ["type", "title", "data", "chart_config"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["pie", "donut"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["label", "value", "color"],
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$"
+                  }
+                }
+              }
+            },
+            "chart_config": {
+              "type": "object",
+              "required": ["innerRadius", "showLabels", "showLegends"],
+              "properties": {
+                "innerRadius": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "showLabels": {
+                  "type": "boolean"
+                },
+                "showLegends": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "registration_trend": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["line", "area"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["categories", "series"],
+              "properties": {
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "data", "color"],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "geographic_distribution": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["world-map", "choropleth"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["locations"],
+              "properties": {
+                "locations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["country", "value", "color"],
+                    "properties": {
+                      "country": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "conversion_funnel": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["funnel"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["stage", "value", "color"],
+                "properties": {
+                  "stage": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "timezone_attendance_forecast": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["stacked-bar", "grouped-bar"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["categories", "series"],
+              "properties": {
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "data", "color"],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "industry_breakdown": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["bar", "horizontal-bar"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["label", "value", "color"],
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "confidence_indicators": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["radar"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["categories", "series"],
+              "properties": {
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "data", "color"],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "risk_assessment": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["gauge", "meter"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "value", "color"],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "marketing_effectiveness": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["stacked-bar", "grouped-bar"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["categories", "series"],
+              "properties": {
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "data", "color"],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

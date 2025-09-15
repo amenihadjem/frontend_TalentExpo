@@ -1,0 +1,696 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "In-Person Event Analysis Response",
+  "type": "object",
+  "required": [
+    "event_analysis_type",
+    "tool_utilization_summary",
+    "venue_analysis",
+    "weather_impact_analysis",
+    "local_marketing_effectiveness",
+    "attendance_modeling",
+    "registration_expected",
+    "attendance_expected",
+    "confidence_level",
+    "local_optimization_recommendations",
+    "data_visualizations",
+    "key_insights",
+    "recommendations",
+    "actionable_metrics"
+  ],
+  "properties": {
+    "event_analysis_type": {
+      "type": "string",
+      "enum": ["in-person"],
+      "description": "Type of event analysis performed"
+    },
+    "tool_utilization_summary": {
+      "type": "object",
+      "required": [
+        "strategic_analysis_insights",
+        "weather_impact_assessment",
+        "local_economic_conditions",
+        "local_competitive_landscape",
+        "regional_audience_analysis"
+      ],
+      "properties": {
+        "strategic_analysis_insights": {
+          "type": "string",
+          "description": "In-person event optimization strategies"
+        },
+        "weather_impact_assessment": {
+          "type": "string",
+          "description": "Local weather forecast and attendance impact"
+        },
+        "local_economic_conditions": {
+          "type": "string",
+          "description": "Regional economic health and purchasing power"
+        },
+        "local_competitive_landscape": {
+          "type": "string",
+          "description": "Competing in-person events and market opportunities"
+        },
+        "regional_audience_analysis": {
+          "type": "string",
+          "description": "Local and regional talent pool analysis"
+        }
+      }
+    },
+    "venue_analysis": {
+      "type": "object",
+      "required": [
+        "capacity_optimization",
+        "accessibility_assessment",
+        "location_advantages",
+        "multi_day_logistics"
+      ],
+      "properties": {
+        "capacity_optimization": {
+          "type": "string",
+          "description": "Venue capacity vs predicted demand analysis"
+        },
+        "accessibility_assessment": {
+          "type": "string",
+          "description": "Transportation, parking, and venue accessibility"
+        },
+        "location_advantages": {
+          "type": "string",
+          "description": "Venue location benefits and professional appeal"
+        },
+        "multi_day_logistics": {
+          "type": "string",
+          "description": "Cross-day venue logistics and attendee experience"
+        }
+      }
+    },
+    "weather_impact_analysis": {
+      "type": "object",
+      "required": [
+        "daily_weather_conditions",
+        "attendance_impact_scenarios",
+        "transportation_considerations",
+        "contingency_planning"
+      ],
+      "properties": {
+        "daily_weather_conditions": {
+          "type": "string",
+          "description": "Weather forecast for each event day"
+        },
+        "attendance_impact_scenarios": {
+          "type": "string",
+          "description": "Weather-adjusted attendance predictions"
+        },
+        "transportation_considerations": {
+          "type": "string",
+          "description": "Weather impact on commuting and access"
+        },
+        "contingency_planning": {
+          "type": "string",
+          "description": "Weather-related backup strategies"
+        }
+      }
+    },
+    "local_marketing_effectiveness": {
+      "type": "object",
+      "required": [
+        "offline_publicity",
+        "meetup_community_building",
+        "geographic_digital_targeting",
+        "regional_influencer_impact"
+      ],
+      "properties": {
+        "offline_publicity": {
+          "type": "string",
+          "description": "Local media and traditional marketing ROI"
+        },
+        "meetup_community_building": {
+          "type": "string",
+          "description": "Local professional networking potential"
+        },
+        "geographic_digital_targeting": {
+          "type": "string",
+          "description": "Location-based digital marketing effectiveness"
+        },
+        "regional_influencer_impact": {
+          "type": "string",
+          "description": "Local business leader and professional influencer reach"
+        }
+      }
+    },
+    "attendance_modeling": {
+      "type": "object",
+      "required": [
+        "distance_decay_analysis",
+        "local_vs_regional_conversion",
+        "accommodation_impact",
+        "transportation_friction"
+      ],
+      "properties": {
+        "distance_decay_analysis": {
+          "type": "string",
+          "description": "Attendance drop-off by distance from venue"
+        },
+        "local_vs_regional_conversion": {
+          "type": "string",
+          "description": "Different conversion rates by audience proximity"
+        },
+        "accommodation_impact": {
+          "type": "string",
+          "description": "Lodging requirements effect on multi-day attendance"
+        },
+        "transportation_friction": {
+          "type": "string",
+          "description": "Access convenience impact on registration and attendance"
+        }
+      }
+    },
+    "registration_expected": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Expected registrations for in-person event"
+    },
+    "attendance_expected": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Expected attendance for in-person event"
+    },
+    "confidence_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "description": "Confidence level based on local data quality"
+    },
+    "local_optimization_recommendations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "List of specific optimization strategies for in-person events"
+    },
+    "data_visualizations": {
+      "$ref": "#/$defs/dataVisualizationsSchema"
+    },
+    "key_insights": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 3,
+      "description": "Key analytical insights specific to in-person events"
+    },
+    "recommendations": {
+      "type": "object",
+      "required": ["optimization_strategies", "risk_mitigation"],
+      "properties": {
+        "optimization_strategies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 3,
+          "description": "Venue and location-specific optimization strategies"
+        },
+        "risk_mitigation": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2,
+          "description": "Weather and logistics risk mitigation strategies"
+        }
+      }
+    },
+    "actionable_metrics": {
+      "type": "object",
+      "required": ["conversion_rates", "revenue_projections", "capacity_utilization"],
+      "properties": {
+        "conversion_rates": {
+          "type": "object",
+          "required": [
+            "awareness_to_interest",
+            "interest_to_registration",
+            "registration_to_attendance"
+          ],
+          "properties": {
+            "awareness_to_interest": {
+              "type": "string",
+              "pattern": "^\\d+(\\.\\d+)?%$",
+              "description": "Percentage conversion from awareness to interest"
+            },
+            "interest_to_registration": {
+              "type": "string", 
+              "pattern": "^\\d+(\\.\\d+)?%$",
+              "description": "Percentage conversion from interest to registration"
+            },
+            "registration_to_attendance": {
+              "type": "string",
+              "pattern": "^\\d+(\\.\\d+)?%$",
+              "description": "Percentage conversion from registration to actual attendance"
+            }
+          }
+        },
+        "revenue_projections": {
+          "type": "object",
+          "required": ["total_revenue", "average_ticket_price", "break_even_attendance"],
+          "properties": {
+            "total_revenue": {
+              "type": "string",
+              "pattern": "^\\$[0-9,]+$",
+              "description": "Total projected revenue"
+            },
+            "average_ticket_price": {
+              "type": "string",
+              "pattern": "^\\$[0-9,]+$",
+              "description": "Average ticket price"
+            },
+            "break_even_attendance": {
+              "type": "string",
+              "pattern": "^[0-9,]+ attendees$",
+              "description": "Number of attendees needed to break even"
+            }
+          }
+        },
+        "capacity_utilization": {
+          "type": "object",
+          "required": ["day_1", "day_2", "day_3"],
+          "properties": {
+            "day_1": {
+              "type": "string",
+              "pattern": "^\\d+(\\.\\d+)?%$",
+              "description": "Day 1 venue capacity utilization percentage"
+            },
+            "day_2": {
+              "type": "string",
+              "pattern": "^\\d+(\\.\\d+)?%$",
+              "description": "Day 2 venue capacity utilization percentage"
+            },
+            "day_3": {
+              "type": "string",
+              "pattern": "^\\d+(\\.\\d+)?%$",
+              "description": "Day 3 venue capacity utilization percentage"
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "dataVisualizationsSchema": {
+      "type": "object",
+      "required": [
+        "audience_segmentation",
+        "registration_trend",
+        "geographic_distribution",
+        "conversion_funnel",
+        "daily_attendance_forecast",
+        "industry_breakdown",
+        "confidence_indicators",
+        "risk_assessment",
+        "marketing_effectiveness"
+      ],
+      "properties": {
+        "audience_segmentation": {
+          "type": "object",
+          "required": ["type", "title", "data", "chart_config"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["pie", "donut"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["label", "value", "color"],
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$"
+                  }
+                }
+              }
+            },
+            "chart_config": {
+              "type": "object",
+              "required": ["innerRadius", "showLabels", "showLegends"],
+              "properties": {
+                "innerRadius": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "showLabels": {
+                  "type": "boolean"
+                },
+                "showLegends": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "registration_trend": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["line", "area"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["categories", "series"],
+              "properties": {
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "data", "color"],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "geographic_distribution": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["map", "choropleth"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["locations"],
+              "properties": {
+                "locations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["country", "value", "color"],
+                    "properties": {
+                      "country": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "conversion_funnel": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["funnel"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["stage", "value", "color"],
+                "properties": {
+                  "stage": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "daily_attendance_forecast": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["bar", "column"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["categories", "series"],
+              "properties": {
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "data", "color"],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "industry_breakdown": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["bar", "horizontal-bar"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["label", "value", "color"],
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "confidence_indicators": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["radar"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["categories", "series"],
+              "properties": {
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "data", "color"],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "risk_assessment": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["gauge", "meter"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "value", "color"],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "marketing_effectiveness": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["stacked-bar", "grouped-bar"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["categories", "series"],
+              "properties": {
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "data", "color"],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,948 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hybrid Event Analysis Response",
+  "type": "object",
+  "required": [
+    "event_analysis_type",
+    "tool_utilization_summary",
+    "hybrid_optimization_analysis",
+    "audience_segmentation_strategy",
+    "dual_platform_coordination",
+    "integrated_marketing_effectiveness",
+    "attendance_distribution_modeling",
+    "registration_expected",
+    "attendance_expected",
+    "confidence_level",
+    "hybrid_optimization_recommendations",
+    "data_visualizations",
+    "key_insights",
+    "recommendations",
+    "actionable_metrics"
+  ],
+  "properties": {
+    "event_analysis_type": {
+      "type": "string",
+      "enum": ["hybrid"],
+      "description": "Type of event analysis performed"
+    },
+    "tool_utilization_summary": {
+      "type": "object",
+      "required": [
+        "strategic_analysis_insights",
+        "synthesis_coordination",
+        "dual_infrastructure_assessment",
+        "integrated_competitive_landscape",
+        "comprehensive_audience_analysis"
+      ],
+      "properties": {
+        "strategic_analysis_insights": {
+          "type": "string",
+          "description": "Hybrid event optimization strategies combining both formats"
+        },
+        "synthesis_coordination": {
+          "type": "string",
+          "description": "Coordination between in-person and virtual analysis components"
+        },
+        "dual_infrastructure_assessment": {
+          "type": "string",
+          "description": "Assessment of both venue and virtual platform capabilities"
+        },
+        "integrated_competitive_landscape": {
+          "type": "string",
+          "description": "Combined analysis of in-person and virtual competition"
+        },
+        "comprehensive_audience_analysis": {
+          "type": "string",
+          "description": "Unified analysis of local and global audience segments"
+        }
+      }
+    },
+    "hybrid_optimization_analysis": {
+      "type": "object",
+      "required": [
+        "in_person_virtual_balance",
+        "cross_platform_engagement",
+        "resource_allocation_strategy",
+        "experience_parity_assessment"
+      ],
+      "properties": {
+        "in_person_virtual_balance": {
+          "type": "string",
+          "description": "Optimal balance between in-person and virtual components"
+        },
+        "cross_platform_engagement": {
+          "type": "string",
+          "description": "Strategies for engaging both audiences simultaneously"
+        },
+        "resource_allocation_strategy": {
+          "type": "string",
+          "description": "Budget and resource distribution between formats"
+        },
+        "experience_parity_assessment": {
+          "type": "string",
+          "description": "Ensuring comparable value for both attendance types"
+        }
+      }
+    },
+    "audience_segmentation_strategy": {
+      "type": "object",
+      "required": [
+        "local_vs_global_targeting",
+        "preference_based_routing",
+        "accessibility_considerations",
+        "pricing_tier_optimization"
+      ],
+      "properties": {
+        "local_vs_global_targeting": {
+          "type": "string",
+          "description": "Targeting strategies for local vs global audience segments"
+        },
+        "preference_based_routing": {
+          "type": "string",
+          "description": "Directing audiences to optimal attendance format"
+        },
+        "accessibility_considerations": {
+          "type": "string",
+          "description": "Ensuring both formats meet accessibility requirements"
+        },
+        "pricing_tier_optimization": {
+          "type": "string",
+          "description": "Pricing strategy for different attendance formats"
+        }
+      }
+    },
+    "dual_platform_coordination": {
+      "type": "object",
+      "required": [
+        "technical_integration_requirements",
+        "simultaneous_delivery_challenges",
+        "interaction_synchronization",
+        "content_adaptation_strategy"
+      ],
+      "properties": {
+        "technical_integration_requirements": {
+          "type": "string",
+          "description": "Technical requirements for venue-virtual integration"
+        },
+        "simultaneous_delivery_challenges": {
+          "type": "string",
+          "description": "Challenges in delivering content to both audiences"
+        },
+        "interaction_synchronization": {
+          "type": "string",
+          "description": "Synchronizing Q&A, networking, and interactions"
+        },
+        "content_adaptation_strategy": {
+          "type": "string",
+          "description": "Adapting content for both delivery formats"
+        }
+      }
+    },
+    "integrated_marketing_effectiveness": {
+      "type": "object",
+      "required": [
+        "unified_campaign_strategy",
+        "channel_optimization_hybrid",
+        "cross_format_promotion",
+        "audience_conversion_paths"
+      ],
+      "properties": {
+        "unified_campaign_strategy": {
+          "type": "string",
+          "description": "Marketing strategy covering both attendance options"
+        },
+        "channel_optimization_hybrid": {
+          "type": "string",
+          "description": "Optimizing marketing channels for hybrid promotion"
+        },
+        "cross_format_promotion": {
+          "type": "string",
+          "description": "Promoting benefits of both attendance formats"
+        },
+        "audience_conversion_paths": {
+          "type": "string",
+          "description": "Conversion paths from awareness to format selection"
+        }
+      }
+    },
+    "attendance_distribution_modeling": {
+      "type": "object",
+      "required": [
+        "in_person_virtual_ratio",
+        "geographic_distribution_patterns",
+        "format_switching_probability",
+        "capacity_constraint_impact"
+      ],
+      "properties": {
+        "in_person_virtual_ratio": {
+          "type": "string",
+          "description": "Expected ratio of in-person to virtual attendees"
+        },
+        "geographic_distribution_patterns": {
+          "type": "string",
+          "description": "How geography influences format choice"
+        },
+        "format_switching_probability": {
+          "type": "string",
+          "description": "Likelihood of attendees switching between formats"
+        },
+        "capacity_constraint_impact": {
+          "type": "string",
+          "description": "How venue capacity affects virtual attendance uptake"
+        }
+      }
+    },
+    "registration_expected": {
+      "type": "object",
+      "required": ["total", "in_person", "virtual"],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total expected registrations across both formats"
+        },
+        "in_person": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Expected in-person registrations"
+        },
+        "virtual": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Expected virtual registrations"
+        }
+      }
+    },
+    "attendance_expected": {
+      "type": "object",
+      "required": ["total", "in_person", "virtual"],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total expected attendance across both formats"
+        },
+        "in_person": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Expected in-person attendance"
+        },
+        "virtual": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Expected virtual attendance"
+        }
+      }
+    },
+    "confidence_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "description": "Confidence level based on hybrid analysis data quality"
+    },
+    "hybrid_optimization_recommendations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "List of specific optimization strategies for hybrid events"
+    },
+    "data_visualizations": {
+      "$ref": "#/$defs/dataVisualizationsSchema"
+    },
+    "key_insights": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 3,
+      "description": "Key analytical insights specific to hybrid events"
+    },
+    "recommendations": {
+      "type": "object",
+      "required": ["optimization_strategies", "risk_mitigation"],
+      "properties": {
+        "optimization_strategies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 3,
+          "description": "Hybrid format optimization strategies"
+        },
+        "risk_mitigation": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2,
+          "description": "Dual-platform risk mitigation strategies"
+        }
+      }
+    },
+    "actionable_metrics": {
+      "type": "object",
+      "required": ["conversion_rates", "revenue_projections", "format_distribution"],
+      "properties": {
+        "conversion_rates": {
+          "type": "object",
+          "required": [
+            "awareness_to_interest",
+            "interest_to_registration",
+            "registration_to_attendance"
+          ],
+          "properties": {
+            "awareness_to_interest": {
+              "type": "object",
+              "required": ["total", "in_person", "virtual"],
+              "properties": {
+                "total": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)?%$",
+                  "description": "Overall awareness to interest conversion"
+                },
+                "in_person": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)?%$",
+                  "description": "In-person awareness to interest conversion"
+                },
+                "virtual": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)?%$",
+                  "description": "Virtual awareness to interest conversion"
+                }
+              }
+            },
+            "interest_to_registration": {
+              "type": "object",
+              "required": ["total", "in_person", "virtual"],
+              "properties": {
+                "total": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)?%$",
+                  "description": "Overall interest to registration conversion"
+                },
+                "in_person": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)?%$",
+                  "description": "In-person interest to registration conversion"
+                },
+                "virtual": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)?%$",
+                  "description": "Virtual interest to registration conversion"
+                }
+              }
+            },
+            "registration_to_attendance": {
+              "type": "object",
+              "required": ["total", "in_person", "virtual"],
+              "properties": {
+                "total": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)?%$",
+                  "description": "Overall registration to attendance conversion"
+                },
+                "in_person": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)?%$",
+                  "description": "In-person registration to attendance rate"
+                },
+                "virtual": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)?%$",
+                  "description": "Virtual registration to attendance rate"
+                }
+              }
+            }
+          }
+        },
+        "revenue_projections": {
+          "type": "object",
+          "required": ["total_revenue", "revenue_breakdown", "break_even_analysis"],
+          "properties": {
+            "total_revenue": {
+              "type": "string",
+              "pattern": "^\\$[0-9,]+$",
+              "description": "Total projected revenue from both formats"
+            },
+            "revenue_breakdown": {
+              "type": "object",
+              "required": ["in_person_revenue", "virtual_revenue"],
+              "properties": {
+                "in_person_revenue": {
+                  "type": "string",
+                  "pattern": "^\\$[0-9,]+$",
+                  "description": "Revenue from in-person attendees"
+                },
+                "virtual_revenue": {
+                  "type": "string",
+                  "pattern": "^\\$[0-9,]+$",
+                  "description": "Revenue from virtual attendees"
+                }
+              }
+            },
+            "break_even_analysis": {
+              "type": "object",
+              "required": ["total_attendees", "in_person_attendees", "virtual_attendees"],
+              "properties": {
+                "total_attendees": {
+                  "type": "string",
+                  "pattern": "^[0-9,]+ attendees$",
+                  "description": "Total attendees needed to break even"
+                },
+                "in_person_attendees": {
+                  "type": "string",
+                  "pattern": "^[0-9,]+ attendees$",
+                  "description": "In-person attendees needed for break even"
+                },
+                "virtual_attendees": {
+                  "type": "string",
+                  "pattern": "^[0-9,]+ attendees$",
+                  "description": "Virtual attendees needed for break even"
+                }
+              }
+            }
+          }
+        },
+        "format_distribution": {
+          "type": "object",
+          "required": ["capacity_utilization", "format_preference_split", "engagement_comparison"],
+          "properties": {
+            "capacity_utilization": {
+              "type": "object",
+              "required": ["venue_capacity", "virtual_capacity"],
+              "properties": {
+                "venue_capacity": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)?%$",
+                  "description": "Physical venue capacity utilization"
+                },
+                "virtual_capacity": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)?%$",
+                  "description": "Virtual platform capacity utilization"
+                }
+              }
+            },
+            "format_preference_split": {
+              "type": "object",
+              "required": ["in_person_preference", "virtual_preference"],
+              "properties": {
+                "in_person_preference": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)?%$",
+                  "description": "Percentage preferring in-person attendance"
+                },
+                "virtual_preference": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)?%$",
+                  "description": "Percentage preferring virtual attendance"
+                }
+              }
+            },
+            "engagement_comparison": {
+              "type": "object",
+              "required": ["in_person_engagement", "virtual_engagement"],
+              "properties": {
+                "in_person_engagement": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)?%$",
+                  "description": "Expected in-person engagement rate"
+                },
+                "virtual_engagement": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)?%$",
+                  "description": "Expected virtual engagement rate"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "dataVisualizationsSchema": {
+      "type": "object",
+      "required": [
+        "hybrid_audience_segmentation",
+        "registration_trend_comparison",
+        "geographic_format_distribution",
+        "dual_conversion_funnel",
+        "format_attendance_forecast",
+        "industry_format_preference",
+        "confidence_indicators",
+        "risk_assessment",
+        "integrated_marketing_effectiveness"
+      ],
+      "properties": {
+        "hybrid_audience_segmentation": {
+          "type": "object",
+          "required": ["type", "title", "data", "chart_config"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["stacked-pie", "nested-donut"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["label", "value", "format", "color"],
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": ["in-person", "virtual", "mixed"]
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$"
+                  }
+                }
+              }
+            },
+            "chart_config": {
+              "type": "object",
+              "required": ["innerRadius", "showLabels", "showLegends", "showFormatSplit"],
+              "properties": {
+                "innerRadius": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "showLabels": {
+                  "type": "boolean"
+                },
+                "showLegends": {
+                  "type": "boolean"
+                },
+                "showFormatSplit": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "registration_trend_comparison": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["stacked-line", "dual-axis"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["categories", "series"],
+              "properties": {
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "data", "format", "color"],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "format": {
+                        "type": "string",
+                        "enum": ["in-person", "virtual", "total"]
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "geographic_format_distribution": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["bubble-map", "split-choropleth"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["locations"],
+              "properties": {
+                "locations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["country", "in_person_value", "virtual_value", "color"],
+                    "properties": {
+                      "country": {
+                        "type": "string"
+                      },
+                      "in_person_value": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "virtual_value": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "dual_conversion_funnel": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["side-by-side-funnel", "split-funnel"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["in_person_funnel", "virtual_funnel"],
+              "properties": {
+                "in_person_funnel": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["stage", "value", "color"],
+                    "properties": {
+                      "stage": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                },
+                "virtual_funnel": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["stage", "value", "color"],
+                    "properties": {
+                      "stage": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "format_attendance_forecast": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["stacked-bar", "grouped-bar"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["categories", "series"],
+              "properties": {
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "data", "format", "color"],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "format": {
+                        "type": "string",
+                        "enum": ["in-person", "virtual"]
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "industry_format_preference": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["stacked-horizontal-bar", "grouped-horizontal-bar"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["label", "in_person_value", "virtual_value", "color"],
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "in_person_value": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "virtual_value": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[0-9A-Fa-f]{6}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "confidence_indicators": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["dual-radar", "comparison-radar"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["categories", "series"],
+              "properties": {
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "data", "format", "color"],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      },
+                      "format": {
+                        "type": "string",
+                        "enum": ["in-person", "virtual", "combined"]
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "risk_assessment": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["dual-gauge", "comparison-gauge"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["in_person_risks", "virtual_risks"],
+              "properties": {
+                "in_person_risks": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "value", "color"],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                },
+                "virtual_risks": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "value", "color"],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "integrated_marketing_effectiveness": {
+          "type": "object",
+          "required": ["type", "title", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["stacked-area", "dual-axis-line"]
+            },
+            "title": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "required": ["categories", "series"],
+              "properties": {
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "series": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "data", "format", "color"],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "format": {
+                        "type": "string",
+                        "enum": ["in-person", "virtual", "integrated"]
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
