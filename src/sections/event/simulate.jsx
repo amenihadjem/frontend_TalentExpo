@@ -30,6 +30,12 @@ import TableRow from '@mui/material/TableRow';
 import TablePagination from '@mui/material/TablePagination';
 import Checkbox from '@mui/material/Checkbox';
 import CircularProgress from '@mui/material/CircularProgress';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import Chip from '@mui/material/Chip';
+import Autocomplete from '@mui/material/Autocomplete';
 
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
@@ -37,64 +43,134 @@ import { toast } from 'src/components/snackbar';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 import { paths } from 'src/routes/paths';
+import { Chart, useChart } from 'src/components/chart';
+import { countries } from 'src/assets/data';
+import { allLangs } from 'src/locales/all-langs';
 import EventLocationPicker from 'src/components/map/EventLocationPicker';
 import { useAuthContext } from 'src/auth/hooks';
 import axios, { endpoints } from 'src/lib/axios';
 
 // ----------------------------------------------------------------------
 
+// Countries for virtual events (transformed from assets/data/countries.js)
+const COUNTRIES_LIST = countries.map(country => ({
+  code: country.code,
+  name: country.label,
+  flag: `https://flagcdn.com/16x12/${country.code.toLowerCase()}.png`
+}));
+
+// Available languages for events
+const LANGUAGES_LIST = allLangs.map(lang => ({
+  code: lang.value,
+  name: lang.label,
+  flag: `https://flagcdn.com/16x12/${lang.countryCode.toLowerCase()}.png`
+}));
+
+
+
+
+// Virtual platforms data
+const VIRTUAL_PLATFORMS = [
+  { name: 'Zoom', features: ['Breakout rooms', 'Screen sharing', 'Recording', 'Webinars'], maxParticipants: 1000 },
+  { name: 'Microsoft Teams', features: ['Breakout rooms', 'Screen sharing', 'Recording', 'Live events'], maxParticipants: 1000 },
+  { name: 'Google Meet', features: ['Screen sharing', 'Recording', 'Live streaming'], maxParticipants: 500 },
+  { name: 'WebEx', features: ['Breakout rooms', 'Screen sharing', 'Recording', 'Polls'], maxParticipants: 1000 },
+  { name: 'GoToWebinar', features: ['Polls', 'Q&A', 'Recording', 'Analytics'], maxParticipants: 3000 },
+  { name: 'Hopin', features: ['Virtual venue', 'Networking', 'Expo booths', 'Multiple stages'], maxParticipants: 100000 },
+  { name: 'Remo', features: ['Virtual venue', 'Networking tables', 'Presentations', 'Breakout rooms'], maxParticipants: 500 },
+  { name: 'BigMarker', features: ['Virtual venue', 'Networking', 'Analytics', 'Monetization'], maxParticipants: 10000 },
+];
+
 // Form validation schema
-const DaySchema = zod.object({
-  event_date: zod.string().min(1, { message: 'Event date is required!' }),
-  start_time: zod.string().min(1, { message: 'Start time is required!' }),
-  end_time: zod.string().min(1, { message: 'End time is required!' }),
-  venue_name: zod.string().min(1, { message: 'Venue name is required!' }),
-  venue_capacity: zod.string().min(1, { message: 'Venue capacity is required!' }),
-  primary_sector: zod.string().min(1, { message: 'Primary sector is required!' }),
-  speakers: zod.string().optional(),
-  activities: zod.string().optional(),
-  additional_info: zod.string().optional(),
-});
+// const VirtualPlatformSchema = zod.object({
+//   platform_name: zod.string().min(1, { message: 'Platform name is required!' }),
+//   platform_link: zod.string().url({ message: 'Please enter a valid URL!' }).optional(),
+//   max_participants: zod.string().min(1, { message: 'Maximum participants is required!' }),
+//   features: zod.array(zod.string()).optional(),
+//   access_requirements: zod.string().optional(),
+// });
 
-const InfluencerSchema = zod.object({
-  name: zod.string().optional(),
-  followers_count: zod.string().optional(),
-  expected_reach: zod.string().optional(),
-  expected_reaction: zod.string().optional(),
-});
 
-const MarketingChannelSchema = zod.object({
-  audience: zod.string().optional(),
-  placement: zod.string().optional(),
-  reach: zod.string().optional(),
-  reaction: zod.string().optional(),
-  budget: zod.string().optional(),
-  timeline: zod.string().optional(),
-  content_type: zod.string().optional(),
-  additional_info: zod.string().optional(),
-  influencer_partnerships: zod.array(InfluencerSchema).optional(),
-});
+// const DaySchema = zod.object({
+//   event_date: zod.string().min(1, { message: 'Event date is required!' }),
+//   start_time: zod.string().min(1, { message: 'Start time is required!' }),
+//   end_time: zod.string().min(1, { message: 'End time is required!' }),
+//   venue_name: zod.string().optional(), // Optional for virtual events
+//   venue_capacity: zod.string().optional(), // Optional for virtual events  
+//   virtual_platform: VirtualPlatformSchema.optional(),
+//   primary_sector: zod.string().min(1, { message: 'Primary sector is required!' }),
+//   speakers: zod.string().optional(),
+//   activities: zod.string().optional(),
+//   additional_info: zod.string().optional(),
+// });
 
-const MarketingStrategySchema = zod.object({
-  facebook: MarketingChannelSchema,
-  instagram: MarketingChannelSchema,
-  linkedin: MarketingChannelSchema,
-  x_twitter: MarketingChannelSchema,
-  youtube: MarketingChannelSchema,
-  google_ads: MarketingChannelSchema,
-  email_campaign: MarketingChannelSchema,
-  whatsapp_campaign: MarketingChannelSchema,
-  offline_publicity: MarketingChannelSchema,
-});
+// const InfluencerSchema = zod.object({
+//   name: zod.string().optional(),
+//   followers_count: zod.string().optional(),
+//   expected_reach: zod.string().optional(),
+//   expected_reaction: zod.string().optional(),
+// });
 
-const TabFormSchema = zod.object({
-  event_name: zod.string().min(1, { message: 'Event name is required!' }),
-  event_description: zod.string().min(1, { message: 'Event description is required!' }),
-  city: zod.string().min(1, { message: 'City is required!' }),
-  number_of_days: zod.number().min(1, { message: 'Number of days must be at least 1!' }),
-  days: zod.array(DaySchema).min(1, { message: 'At least one day is required!' }),
-  marketing_strategy: MarketingStrategySchema.optional(),
-});
+// const MarketingChannelSchema = zod.object({
+//   audience: zod.string().optional(),
+//   placement: zod.string().optional(),
+//   reach: zod.string().optional(),
+//   reaction: zod.string().optional(),
+//   budget: zod.string().optional(),
+//   timeline: zod.string().optional(),
+//   content_type: zod.string().optional(),
+//   additional_info: zod.string().optional(),
+//   influencer_partnerships: zod.array(InfluencerSchema).optional(),
+// });
+
+// const MarketingStrategySchema = zod.object({
+//   facebook: MarketingChannelSchema,
+//   instagram: MarketingChannelSchema,
+//   linkedin: MarketingChannelSchema,
+//   x_twitter: MarketingChannelSchema,
+//   youtube: MarketingChannelSchema,
+//   google_ads: MarketingChannelSchema,
+//   email_campaign: MarketingChannelSchema,
+//   whatsapp_campaign: MarketingChannelSchema,
+//   offline_publicity: MarketingChannelSchema,
+//   reddit: MarketingChannelSchema,
+//   meetup: MarketingChannelSchema,
+//   eventbrite: MarketingChannelSchema,
+//   indeed_events: MarketingChannelSchema,
+// });
+
+// const CountryMarketingSchema = zod.object({
+//   country_code: zod.string().min(2, { message: 'Country code is required!' }),
+//   country_name: zod.string().min(1, { message: 'Country name is required!' }),
+//   marketing_strategy: zod.object({
+//     facebook: MarketingChannelSchema.optional(),
+//     instagram: MarketingChannelSchema.optional(),
+//     linkedin: MarketingChannelSchema.optional(),
+//     x_twitter: MarketingChannelSchema.optional(),
+//     youtube: MarketingChannelSchema.optional(),
+//     google_ads: MarketingChannelSchema.optional(),
+//     email_campaign: MarketingChannelSchema.optional(),
+//     whatsapp_campaign: MarketingChannelSchema.optional(),
+//     offline_publicity: MarketingChannelSchema.optional(),
+//     reddit: MarketingChannelSchema.optional(),
+//     meetup: MarketingChannelSchema.optional(),
+//     eventbrite: MarketingChannelSchema.optional(),
+//     indeed_events: MarketingChannelSchema.optional(),
+//   }).optional(),
+// });
+
+// const TabFormSchema = zod.object({
+//   event_name: zod.string().min(1, { message: 'Event name is required!' }),
+//   event_type: zod.enum(['in-person', 'virtual', 'hybrid'], { message: 'Event type is required!' }),
+//   event_language: zod.string().min(1, { message: 'Event language is required!' }),
+//   event_description: zod.string().min(1, { message: 'Event description is required!' }),
+//   city: zod.string().optional(), // Optional for virtual events
+//   target_countries: zod.array(zod.string()).optional(), // For virtual/hybrid events
+//   country_marketing: zod.array(CountryMarketingSchema).optional(), // Country-specific marketing
+//   number_of_days: zod.number().min(1, { message: 'Number of days must be at least 1!' }),
+//   days: zod.array(DaySchema).min(1, { message: 'At least one day is required!' }),
+//   marketing_strategy: MarketingStrategySchema.optional(), // For in-person events
+// });
 
 // ----------------------------------------------------------------------
 
@@ -137,18 +213,72 @@ export default function SimulatePage() {
   // Marketing modal states
   const [marketingModalOpen, setMarketingModalOpen] = useState(false);
   const [selectedMarketingChannel, setSelectedMarketingChannel] = useState(null);
+  
+  // Country marketing states for virtual/hybrid events
+  const [selectedCountries, setSelectedCountries] = useState([]);
+  const [countryMarketingData, setCountryMarketingData] = useState([]);
+  const [activeCountryTab, setActiveCountryTab] = useState(0);
+  const [countryMarketingModalOpen, setCountryMarketingModalOpen] = useState(false);
+  const [selectedCountryForMarketing, setSelectedCountryForMarketing] = useState(null);
+  
+  // Hybrid event result tabs state
+  const [hybridResultTab, setHybridResultTab] = useState(0);
+
+  // TabPanel component for hybrid results
+  const TabPanel = ({ children, value, index, ...other }) => (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`hybrid-tabpanel-${index}`}
+      aria-labelledby={`hybrid-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box>{children}</Box>}
+    </div>
+  );
+
+  // Function to detect and extract hybrid event components
+  const getHybridComponents = (data) => {
+    console.log('🔍 getHybridComponents called with data:', data);
+    console.log('🔍 Event analysis type:', data[0]);
+    
+    try {
+      // Check if data[0] exists and is an object
+      if (!data || !data[0] || typeof data[0] !== 'object') {
+        console.warn('Invalid data structure for hybrid components');
+        return [];
+      }
+      
+      // Convert object keys to components array
+      const response = Object.entries(data[0]).map(([key, value]) => ({
+        type: key,
+        data: value,
+        label: key.charAt(0).toUpperCase() + key.slice(1).replace('-', ' ')
+      }));
+      
+      console.log('📊 Components created from object:', response);
+      return response;
+      
+    } catch (error) {
+      console.error('Error processing hybrid components:', error);
+      return [];
+    }
+  };
 
   // Auth context for user information
   const user = useAuthContext()?.user?.data;
-  console.log('Authenticated user:', user);
 
   // Form methods for current tab
   const methods = useForm({
-    resolver: zodResolver(TabFormSchema),
+    // resolver: zodResolver(TabFormSchema),
     defaultValues: {
       event_name: '',
+      event_type: 'in-person',
+      event_language: 'en',
       event_description: '',
       city: '',
+      target_countries: [],
+      country_marketing: [],
       number_of_days: 1,
       days: [
         {
@@ -157,6 +287,13 @@ export default function SimulatePage() {
           end_time: '',
           venue_name: '',
           venue_capacity: '',
+          virtual_platform: {
+            platform_name: '',
+            platform_link: '',
+            max_participants: '',
+            features: [],
+            access_requirements: '',
+          },
           primary_sector: '',
           speakers: '',
           activities: '',
@@ -259,6 +396,47 @@ export default function SimulatePage() {
           content_type: '',
           additional_info: '',
         },
+        reddit: {
+          audience: '',
+          placement: '',
+          reach: '',
+          reaction: '',
+          budget: '',
+          timeline: '',
+          content_type: '',
+          additional_info: '',
+          influencer_partnerships: [],
+        },
+        meetup: {
+          audience: '',
+          placement: '',
+          reach: '',
+          reaction: '',
+          budget: '',
+          timeline: '',
+          content_type: '',
+          additional_info: '',
+        },
+        eventbrite: {
+          audience: '',
+          placement: '',
+          reach: '',
+          reaction: '',
+          budget: '',
+          timeline: '',
+          content_type: '',
+          additional_info: '',
+        },
+        indeed_events: {
+          audience: '',
+          placement: '',
+          reach: '',
+          reaction: '',
+          budget: '',
+          timeline: '',
+          content_type: '',
+          additional_info: '',
+        },
       },
     },
   });
@@ -272,137 +450,368 @@ export default function SimulatePage() {
     formState: { isSubmitting },
   } = methods;
 
-  // Load saved tabs from API - REPLACED WITH MODAL-BASED LOADING
-  /*
-  const loadTabsFromAPI = async () => {
-    // Check if user is authenticated
-    if (!user || !user._id) {
-      toast.warning('Please log in to load saved tabs');
-      return;
+  // Base chart options
+  const baseChartOptions = useChart({
+    chart: { height: 250 },
+    legend: { show: true, position: 'bottom' },
+    tooltip: { enabled: true },
+  });
+
+  // Chart rendering function
+  const renderChart = (vizData) => {
+    if (!vizData || !vizData.type) {
+      return (
+        <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', mt: 10 }}>
+          No chart data available
+        </Typography>
+      );
     }
 
     try {
-      // Make request with user ID as query parameter to filter tabs by user
-      const response = await axios.get(endpoints.tabs.list(user._id), {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log('Loaded tabs from API for user:', user._id, response.data);
-
-      if (response.data && response.data.length > 0) {
-        // Filter tabs that belong to the current user and are of type "event"
-        const userTabs = response.data.filter(tab => 
-          tab.type === "event" && 
-          (tab.content?.userId === user._id || tab.content?.user_id === user._id)
-        );
+      switch (vizData.type) {
+      case 'donut':
+      case 'pie': {
+        // Ensure data is an array
+        const dataArray = Array.isArray(vizData.data) ? vizData.data : [];
+        const series = dataArray.map(item => parseInt(item.value) || 0);
+        const labels = dataArray.map(item => item.label || 'Unknown');
+        const colors = dataArray.map(item => item.color) || [];
         
-        if (userTabs.length === 0) {
-          toast.info('No saved event tabs found for your account');
-          return;
-        }
-
-        // Check for existing tabs with same API IDs to prevent duplicates
-        const existingApiIds = tabs.map(tab => tab.apiId).filter(Boolean);
-        const newTabs = userTabs.filter(apiTab => !existingApiIds.includes(apiTab.id || apiTab._id));
-        
-        if (newTabs.length === 0) {
-          toast.info('All your saved tabs are already loaded');
-          return;
-        }
-
-        const loadedTabs = newTabs.map((apiTab, index) => ({
-          id: tabCounter + index, // Use current counter to avoid ID conflicts
-          name: apiTab.title || `Loaded Tab ${index + 1}`,
-          saved: true,
-          result: apiTab.content?.output_data,
-          loading: false,
-          locationData: apiTab.content?.input_data?.location_data,
-          apiId: apiTab.id || apiTab._id,
-          inputData: apiTab.content?.input_data, // Store the loaded input data
-        }));
-
-        // Add loaded tabs to existing tabs instead of replacing them
-        setTabs(prevTabs => [...prevTabs, ...loadedTabs]);
-        setTabCounter(prev => prev + loadedTabs.length);
-        
-        // Switch to the first loaded tab and load its data
-        const newActiveTabIndex = tabs.length; // Index of first loaded tab
-        setActiveTab(newActiveTabIndex);
-        
-        if (loadedTabs[0]?.inputData) {
-          const firstTabData = loadedTabs[0].inputData;
-          
-          // Reset form with loaded data
-          reset({
-            event_name: firstTabData.event_name || '',
-            event_description: firstTabData.event_description || '',
-            city: firstTabData.city || '',
-            number_of_days: firstTabData.number_of_days || 1,
-            days: firstTabData.days || [
-              {
-                event_date: '',
-                start_time: '',
-                end_time: '',
-                venue_name: '',
-                venue_capacity: '',
-                primary_sector: '',
-                speakers: '',
-                activities: '',
-                additional_info: '',
+        return (
+          <Chart
+            type="donut"
+            series={series}
+            options={{
+              ...baseChartOptions,
+              labels,
+              colors,
+              plotOptions: {
+                pie: {
+                  donut: {
+                    size: vizData.chart_config?.innerRadius || '50%',
+                    labels: {
+                      show: vizData.chart_config?.showLabels !== false,
+                    }
+                  }
+                }
+              },
+              legend: {
+                show: vizData.chart_config?.showLegends !== false,
+                position: 'bottom'
               }
-            ],
-            marketing_strategy: firstTabData.marketing_strategy || {
-              facebook: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              instagram: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              linkedin: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              x_twitter: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              youtube: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              google_ads: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              email_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              whatsapp_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-              offline_publicity: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
-            },
-          });
-        }
+            }}
+          />
+        );
+      }
 
-        toast.success(`Loaded ${loadedTabs.length} saved tab${loadedTabs.length > 1 ? 's' : ''} from database`);
-      } else {
-        toast.info('No saved tabs found for your account');
-      }
-    } catch (error) {
-      console.error('Error loading tabs from API:', error);
-      
-      // Don't show error if it's just that no tabs exist yet
-      if (error.response?.status !== 404) {
-        let errorMessage = 'Failed to load saved tabs';
+      case 'area':
+      case 'line': {
+        const seriesData = vizData.data?.series || [];
+        const series = Array.isArray(seriesData) ? seriesData.map(s => ({
+          name: s.name || 'Series',
+          data: Array.isArray(s.data) ? s.data.map(val => parseInt(val) || 0) : []
+        })) : [];
+        const categories = vizData.data?.categories || [];
         
-        if (error.code === 'ERR_NETWORK') {
-          errorMessage = 'Network connection failed. Working in offline mode.';
-        } else if (error.response) {
-          const status = error.response.status;
-          if (status === 401) {
-            errorMessage = 'Authentication failed. Please login again.';
-          } else if (status === 403) {
-            errorMessage = 'Access denied. You do not have permission to load tabs.';
-          } else if (status >= 500) {
-            errorMessage = 'Server error. Working in offline mode.';
-          }
+        return (
+          <Chart
+            type={vizData.type}
+            series={series}
+            options={{
+              ...baseChartOptions,
+              xaxis: { categories },
+              fill: {
+                type: vizData.type === 'area' ? 'gradient' : 'solid',
+              }
+            }}
+          />
+        );
+      }
+
+      case 'bar':
+      case 'stacked-bar': {
+        if (vizData.data?.series) {
+          // Series format (stacked bar)
+          const seriesData = Array.isArray(vizData.data.series) ? vizData.data.series : [];
+          const series = seriesData.map(s => ({
+            name: s.name || 'Series',
+            data: Array.isArray(s.data) ? s.data.map(val => parseInt(val) || 0) : []
+          }));
+          const categories = vizData.data.categories || [];
+          
+          return (
+            <Chart
+              type="bar"
+              series={series}
+              options={{
+                ...baseChartOptions,
+                xaxis: { categories },
+                plotOptions: {
+                  bar: {
+                    horizontal: false,
+                    columnWidth: '55%',
+                    endingShape: 'rounded'
+                  }
+                },
+                dataLabels: { enabled: false },
+                stroke: { show: true, width: 2, colors: ['transparent'] }
+              }}
+            />
+          );
+        } else {
+          // Simple data format
+          const dataArray = Array.isArray(vizData.data) ? vizData.data : [];
+          const series = [{
+            name: vizData.title || 'Data',
+            data: dataArray.map(item => parseInt(item.value) || 0)
+          }];
+          const categories = dataArray.map(item => item.label || 'Unknown');
+          const colors = dataArray.map(item => item.color) || [];
+          
+          return (
+            <Chart
+              type="bar"
+              series={series}
+              options={{
+                ...baseChartOptions,
+                xaxis: { categories },
+                colors,
+                plotOptions: {
+                  bar: {
+                    horizontal: false,
+                    columnWidth: '55%',
+                    endingShape: 'rounded'
+                  }
+                }
+              }}
+            />
+          );
         }
-        
-        toast.warning(errorMessage);
       }
+
+      case 'funnel': {
+        // Funnel chart using bar chart with custom styling
+        const dataArray = Array.isArray(vizData.data) ? vizData.data : [];
+        const series = [{
+          name: 'Funnel',
+          data: dataArray.map(item => parseInt(item.value) || 0)
+        }];
+        const categories = dataArray.map(item => item.stage || item.label || 'Unknown');
+        const colors = dataArray.map(item => item.color) || [];
+        
+        return (
+          <Chart
+            type="bar"
+            series={series}
+            options={{
+              ...baseChartOptions,
+              xaxis: { categories },
+              colors,
+              plotOptions: {
+                bar: {
+                  horizontal: true,
+                  barHeight: '70%',
+                  endingShape: 'rounded'
+                }
+              }
+            }}
+          />
+        );
+      }
+
+      case 'world-map': {
+        // For world map, we'll show a simple bar chart of top countries
+        const locations = vizData.data?.locations || [];
+        const topCountries = Array.isArray(locations) ? locations.slice(0, 10) : [];
+        const series = [{
+          name: 'Registrations',
+          data: topCountries.map(item => parseInt(item.value) || 0)
+        }];
+        const categories = topCountries.map(item => item.country || 'Unknown');
+        const colors = topCountries.map(item => item.color) || [];
+        
+        return (
+          <Chart
+            type="bar"
+            series={series}
+            options={{
+              ...baseChartOptions,
+              xaxis: { 
+                categories,
+                labels: { rotate: -45 }
+              },
+              colors,
+              title: { text: 'Top Countries by Registration' }
+            }}
+          />
+        );
+      }
+
+      case 'map': {
+        // For map charts, we'll show a bar chart of locations
+        const locations = vizData.data?.locations || vizData.data || [];
+        const locationsArray = Array.isArray(locations) ? locations : [];
+        const series = [{
+          name: 'Value',
+          data: locationsArray.map(item => parseInt(item.value) || 0)
+        }];
+        const categories = locationsArray.map(item => item.country || item.region || item.label || 'Unknown');
+        const colors = locationsArray.map(item => item.color) || [];
+        
+        return (
+          <Chart
+            type="bar"
+            series={series}
+            options={{
+              ...baseChartOptions,
+              xaxis: { 
+                categories,
+                labels: { rotate: -45 }
+              },
+              colors,
+              title: { text: vizData.title || 'Geographic Distribution' }
+            }}
+          />
+        );
+      }
+
+      case 'horizontal-bar': {
+        if (vizData.data?.series) {
+          // Series format
+          const seriesData = Array.isArray(vizData.data.series) ? vizData.data.series : [];
+          const series = seriesData.map(s => ({
+            name: s.name || 'Series',
+            data: Array.isArray(s.data) ? s.data.map(val => parseInt(val) || 0) : []
+          }));
+          const categories = vizData.data.categories || [];
+          
+          return (
+            <Chart
+              type="bar"
+              series={series}
+              options={{
+                ...baseChartOptions,
+                xaxis: { categories },
+                plotOptions: {
+                  bar: {
+                    horizontal: true,
+                    barHeight: '70%',
+                    endingShape: 'rounded'
+                  }
+                }
+              }}
+            />
+          );
+        } else {
+          // Simple data format
+          const dataArray = Array.isArray(vizData.data) ? vizData.data : [];
+          const series = [{
+            name: vizData.title || 'Data',
+            data: dataArray.map(item => parseInt(item.value) || 0)
+          }];
+          const categories = dataArray.map(item => item.label || item.category || 'Unknown');
+          const colors = dataArray.map(item => item.color) || [];
+          
+          return (
+            <Chart
+              type="bar"
+              series={series}
+              options={{
+                ...baseChartOptions,
+                xaxis: { categories },
+                colors,
+                plotOptions: {
+                  bar: {
+                    horizontal: true,
+                    barHeight: '70%',
+                    endingShape: 'rounded'
+                  }
+                }
+              }}
+            />
+          );
+        }
+      }
+
+      case 'radar': {
+        const dataArray = Array.isArray(vizData.data) ? vizData.data : [];
+        const series = [{
+          name: vizData.title || 'Performance',
+          data: dataArray.map(item => parseInt(item.value) || 0)
+        }];
+        const categories = dataArray.map(item => item.label || item.metric || 'Unknown');
+        
+        return (
+          <Chart
+            type="radar"
+            series={series}
+            options={{
+              ...baseChartOptions,
+              xaxis: { categories },
+              yaxis: {
+                show: true,
+                tickAmount: 4
+              }
+            }}
+          />
+        );
+      }
+
+      case 'gauge': {
+        // For gauge charts, we'll use a radial bar chart
+        const value = parseInt(vizData.data?.value || vizData.value || 0);
+        const maxValue = parseInt(vizData.data?.max || vizData.max || 100);
+        const percentage = Math.round((value / maxValue) * 100);
+        
+        return (
+          <Chart
+            type="radialBar"
+            series={[percentage]}
+            options={{
+              ...baseChartOptions,
+              plotOptions: {
+                radialBar: {
+                  hollow: {
+                    size: '70%',
+                  },
+                  dataLabels: {
+                    name: {
+                      fontSize: '22px',
+                    },
+                    value: {
+                      fontSize: '16px',
+                      formatter: () => `${value}${vizData.unit || ''}`,
+                    },
+                    total: {
+                      show: true,
+                      label: vizData.title || 'Total',
+                      formatter: () => `${value}${vizData.unit || ''}`
+                    }
+                  }
+                }
+              },
+              labels: [vizData.title || 'Gauge'],
+            }}
+          />
+        );
+      }
+
+      default:
+        return (
+          <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', mt: 10 }}>
+            Unsupported chart type: {vizData.type}
+          </Typography>
+        );
+    }
+    } catch (error) {
+      console.error('Error rendering chart:', error, vizData);
+      return (
+        <Typography variant="body2" sx={{ color: 'error.main', textAlign: 'center', mt: 10 }}>
+          Error rendering chart: {error.message || 'Invalid data format'}
+        </Typography>
+      );
     }
   };
-  */
-
-  // Removed automatic loading - tabs are now loaded manually through the Load from Database modal
-  // React.useEffect(() => {
-  //   if (user?._id) {
-  //     loadTabsFromAPI();
-  //   }
-  // }, [user?._id]);
 
   // Watch number of days to dynamically update days array
   const numberOfDays = watch('number_of_days');
@@ -561,8 +970,28 @@ export default function SimulatePage() {
     const day = daysData?.[dayIndex];
     if (!day) return 'empty';
     
-    const requiredFields = ['event_date', 'start_time', 'end_time', 'venue_name', 'venue_capacity', 'primary_sector'];
-    const filledRequired = requiredFields.filter(field => day[field]?.trim()).length;
+    const eventType = watch('event_type');
+    
+    // Define required fields based on event type
+    let requiredFields = ['event_date', 'start_time', 'end_time', 'primary_sector'];
+    
+    if (eventType === 'in-person') {
+      requiredFields.push('venue_name', 'venue_capacity');
+    } else if (eventType === 'virtual') {
+      requiredFields.push('virtual_platform.platform_name', 'virtual_platform.max_participants');
+    } else if (eventType === 'hybrid') {
+      requiredFields.push('venue_name', 'venue_capacity', 'virtual_platform.platform_name', 'virtual_platform.max_participants');
+    }
+    
+    // Check filled required fields (handle nested fields)
+    const filledRequired = requiredFields.filter(field => {
+      if (field.includes('.')) {
+        const [parent, child] = field.split('.');
+        return day[parent]?.[child]?.toString().trim();
+      }
+      return day[field]?.toString().trim();
+    }).length;
+    
     const optionalFields = ['speakers', 'activities', 'additional_info'];
     const filledOptional = optionalFields.filter(field => day[field]?.trim()).length;
     
@@ -578,9 +1007,18 @@ export default function SimulatePage() {
       }
     }
     
-    // Capacity validation
-    if (day.venue_capacity && (isNaN(day.venue_capacity) || parseInt(day.venue_capacity) <= 0)) {
-      hasErrors.push('Invalid capacity');
+    // Capacity validation for venues
+    if (eventType === 'in-person' || eventType === 'hybrid') {
+      if (day.venue_capacity && (isNaN(day.venue_capacity) || parseInt(day.venue_capacity) <= 0)) {
+        hasErrors.push('Invalid venue capacity');
+      }
+    }
+    
+    // Capacity validation for virtual platforms
+    if (eventType === 'virtual' || eventType === 'hybrid') {
+      if (day.virtual_platform?.max_participants && (isNaN(day.virtual_platform.max_participants) || parseInt(day.virtual_platform.max_participants) <= 0)) {
+        hasErrors.push('Invalid virtual capacity');
+      }
     }
     
     // Date validation (check if date is in the past)
@@ -680,7 +1118,7 @@ export default function SimulatePage() {
     const filledFields = fields.filter(field => marketingData?.[field]?.trim()).length;
     
     // Check for influencer partnerships in social media channels
-    const socialMediaChannels = ['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube'];
+    const socialMediaChannels = ['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube', 'reddit'];
     let influencerCount = 0;
     if (socialMediaChannels.includes(selectedMarketingChannel) && marketingData?.influencer_partnerships?.length > 0) {
       influencerCount = marketingData.influencer_partnerships.filter(inf => 
@@ -712,7 +1150,11 @@ export default function SimulatePage() {
       google_ads: 'Google Ads',
       email_campaign: 'Email Campaign',
       whatsapp_campaign: 'WhatsApp Campaign',
-      offline_publicity: 'Offline Publicity'
+      offline_publicity: 'Offline Publicity',
+      reddit: 'Reddit',
+      meetup: 'Meetup',
+      eventbrite: 'Eventbrite',
+      indeed_events: 'Indeed Events'
     };
     return channelNames[channel] || channel;
   };
@@ -727,7 +1169,40 @@ export default function SimulatePage() {
     const filledOptional = optionalFields.filter(field => marketingData[field]?.trim()).length;
     
     // Check influencer partnerships for social media channels
-    const socialMediaChannels = ['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube'];
+    const socialMediaChannels = ['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube', 'reddit'];
+    let influencerBonus = 0;
+    if (socialMediaChannels.includes(channel) && marketingData.influencer_partnerships?.length > 0) {
+      const validInfluencers = marketingData.influencer_partnerships.filter(inf => 
+        inf.name?.trim() && inf.followers_count?.trim()
+      ).length;
+      if (validInfluencers > 0) {
+        influencerBonus = 1; // Boost status if has valid influencers
+      }
+    }
+    
+    // Determine completion status with influencer bonus
+    const totalOptional = filledOptional + influencerBonus;
+    if (filledRequired === requiredFields.length && totalOptional > 1) return 'complete';
+    if (filledRequired === requiredFields.length && totalOptional > 0) return 'basic';
+    if (filledRequired > 0) return 'partial';
+    return 'empty';
+  };
+
+  // Country marketing channel status
+  const getCountryMarketingChannelStatus = (channel, countryCode) => {
+    const countryMarketingArray = getValues('country_marketing') || [];
+    const countryData = countryMarketingArray.find(cm => cm.country_code === countryCode);
+    const marketingData = countryData?.marketing_strategy?.[channel];
+    
+    if (!marketingData) return 'empty';
+    
+    const requiredFields = ['audience', 'placement', 'reach', 'reaction'];
+    const optionalFields = ['budget', 'timeline', 'content_type', 'additional_info'];
+    const filledRequired = requiredFields.filter(field => marketingData[field]?.trim()).length;
+    const filledOptional = optionalFields.filter(field => marketingData[field]?.trim()).length;
+    
+    // Check influencer partnerships for social media channels
+    const socialMediaChannels = ['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube', 'reddit'];
     let influencerBonus = 0;
     if (socialMediaChannels.includes(channel) && marketingData.influencer_partnerships?.length > 0) {
       const validInfluencers = marketingData.influencer_partnerships.filter(inf => 
@@ -784,6 +1259,10 @@ export default function SimulatePage() {
           email_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
           whatsapp_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
           offline_publicity: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          reddit: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          meetup: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
+          eventbrite: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
+          indeed_events: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
         },
       });
     } else {
@@ -890,8 +1369,12 @@ export default function SimulatePage() {
           user_id: user._id, // Include both formats for compatibility
           input_data: {
             event_name: currentData.event_name,
+            event_type: currentData.event_type,
+            event_language: currentData.event_language,
             event_description: currentData.event_description,
             city: currentData.city,
+            target_countries: currentData.target_countries,
+            country_marketing: currentData.country_marketing,
             number_of_days: currentData.number_of_days,
             days: currentData.days,
             marketing_strategy: currentData.marketing_strategy,
@@ -1005,6 +1488,47 @@ export default function SimulatePage() {
     }
     
     toast.success(`Location selected: ${locationData.city}`);
+  };
+
+  // Handle countries selection for virtual/hybrid events
+  const handleCountriesChange = (selectedCountryCodes) => {
+    // Create country marketing data for selected countries
+    const newCountryMarketing = selectedCountryCodes.map(countryCode => {
+      const country = COUNTRIES_LIST.find(c => c.code === countryCode);
+      
+      // Check if we already have data for this country
+      const existingData = countryMarketingData.find(cm => cm.country_code === countryCode);
+      
+      return existingData || {
+        country_code: countryCode,
+        country_name: country?.name || '',
+        marketing_strategy: {
+          facebook: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          instagram: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          linkedin: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          x_twitter: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          youtube: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          google_ads: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          email_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          whatsapp_campaign: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          offline_publicity: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          reddit: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '', influencer_partnerships: [] },
+          meetup: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
+          eventbrite: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
+          indeed_events: { audience: '', placement: '', reach: '', reaction: '', budget: '', timeline: '', content_type: '', additional_info: '' },
+        }
+      };
+    });
+    
+    setCountryMarketingData(newCountryMarketing);
+    setSelectedCountries(selectedCountryCodes);
+    
+    // Update form value
+    setValue('country_marketing', newCountryMarketing);
+    
+    if (selectedCountryCodes.length > 0) {
+      toast.success(`Selected ${selectedCountryCodes.length} countries for virtual event marketing`);
+    }
   };
 
   // Load from Database handlers
@@ -1122,6 +1646,8 @@ export default function SimulatePage() {
     }
   };
 
+  // Test Data Loading Function with Enhanced Virtual Data
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -1211,311 +1737,70 @@ export default function SimulatePage() {
     }
   };
 
-  const handleLoadTestData = () => {
-    // Mock test data
-    const testData = {
-      event_name: 'Global AI & Innovation Summit 2025',
-      event_description: 'A comprehensive 3-day conference bringing together AI researchers, tech entrepreneurs, and industry leaders to explore cutting-edge developments in artificial intelligence, machine learning, and digital transformation. Features hands-on workshops, networking sessions, and startup showcases.',
-      city: 'San Francisco',
-      number_of_days: 3,
-      days: [
-        {
-          event_date: '2025-10-15',
-          start_time: '09:00',
-          end_time: '18:00',
-          venue_name: 'Moscone Center West Hall',
-          venue_capacity: '5000',
-          primary_sector: 'Artificial Intelligence & Machine Learning',
-          speakers: `Dr. Sarah Chen - Director of AI Research, Stanford University
-Marcus Rodriguez - Chief AI Officer, Google DeepMind  
-Prof. Elena Volkov - Machine Learning Pioneer, MIT
-James Park - Founder & CEO, OpenAI
-Dr. Raj Patel - VP of AI Ethics, Microsoft`,
-          activities: `9:00 AM - Registration & Welcome Coffee
-9:30 AM - Opening Keynote: "The Future of AGI"
-10:30 AM - AI Ethics Panel Discussion
-12:00 PM - Networking Lunch & Tech Expo
-2:00 PM - Machine Learning Workshop
-4:00 PM - Startup Pitch Competition
-5:30 PM - Welcome Reception & Networking`,
-          additional_info: `• Business professional dress code recommended
-• All meals and refreshments provided
-• Live streaming available for virtual attendees
-• Simultaneous translation in Spanish and Mandarin
-• Parking available at Moscone Garage ($25/day)`
-        },
-        {
-          event_date: '2025-10-16',
-          start_time: '08:30',
-          end_time: '19:00',
-          venue_name: 'Moscone Center South Hall',
-          venue_capacity: '3500',
-          primary_sector: 'Digital Transformation & Enterprise AI',
-          speakers: `Lisa Wang - CTO, Salesforce
-David Kumar - Head of AI Strategy, IBM
-Dr. Michelle Foster - Digital Innovation Leader, Accenture
-Alex Thompson - VP Engineering, NVIDIA
-Maria Santos - AI Product Manager, Meta`,
-          activities: `8:30 AM - Continental Breakfast & Networking
-9:00 AM - Enterprise AI Implementation Keynote
-10:00 AM - Industry Use Cases Panel
-11:30 AM - Hands-on AI Development Workshop
-1:00 PM - Networking Lunch & Solution Showcase
-3:00 PM - Technical Deep-dive Sessions
-5:00 PM - Innovation Awards Ceremony
-6:30 PM - Evening Gala Dinner`,
-          additional_info: `• Laptops required for hands-on workshops
-• Technical skill level: Intermediate to Advanced
-• GitHub account needed for coding sessions
-• Awards ceremony features industry recognition
-• Formal attire for evening gala`
-        },
-        {
-          event_date: '2025-10-17',
-          start_time: '09:00',
-          end_time: '16:30',
-          venue_name: 'San Francisco Convention Center',
-          venue_capacity: '2000',
-          primary_sector: 'AI Startups & Future Technologies',
-          speakers: `Robert Chang - Managing Partner, Andreessen Horowitz
-Dr. Amanda Liu - Quantum Computing Researcher, IBM Research
-Carlos Mendez - AI Startup Accelerator Director, Y Combinator
-Jennifer Kim - Venture Capitalist, Sequoia Capital
-Prof. Michael Zhang - Robotics & AI, UC Berkeley`,
-          activities: `9:00 AM - Startup Breakfast & Demo Setup
-9:30 AM - Future Tech Trends Keynote
-10:30 AM - Investor-Entrepreneur Panel
-12:00 PM - Startup Demo Showcase (20 companies)
-2:00 PM - Funding & Investment Workshop
-3:30 PM - Closing Keynote: "AI in 2030"
-4:15 PM - Final Networking & Wrap-up`,
-          additional_info: `• Startup Demo Day featuring 20 selected companies
-• Investor meetings available by appointment
-• Business cards strongly recommended
-• Final networking focused on partnerships
-• Event app available for continued connections`
-        }
-      ],
-      marketing_strategy: {
-        facebook: {
-          audience: "Tech professionals aged 25-45, AI researchers, startup founders, and decision-makers in technology companies",
-          placement: "Facebook ads targeting tech professionals, Event page promotion in AI/ML groups, Sponsored posts in technology communities, Partner company shares",
-          reach: "150,000 impressions, 8,000 engagements, 500 event page visits",
-          reaction: "3% CTR, 200 registrations, 1,200 shares and comments",
-          budget: "$3,500",
-          timeline: "6 weeks before event launch, intensive 2 weeks prior",
-          content_type: "Event announcement videos, Speaker spotlight posts, Countdown graphics, Live Q&A sessions with speakers",
-          additional_info: "Partner with tech companies for employee sharing, utilize AI/ML Facebook groups with 50K+ members",
-          influencer_partnerships: [
-            {
-              name: "TechGuru Mike",
-              followers_count: "250,000",
-              expected_reach: "75,000 impressions",
-              expected_reaction: "3,000 engagements, 150 registrations"
-            },
-            {
-              name: "AI Insights Sarah",
-              followers_count: "180,000",
-              expected_reach: "54,000 impressions", 
-              expected_reaction: "2,200 engagements, 110 registrations"
-            }
-          ]
-        },
-        instagram: {
-          audience: "Young tech professionals, AI enthusiasts, startup community, visual learners aged 22-40",
-          placement: "Instagram Stories ads, Influencer partnerships with tech personalities, AI/tech hashtag campaigns, Visual event teasers",
-          reach: "100,000 impressions, 5,000 story views, 2,000 profile visits",
-          reaction: "4% engagement rate, 300 story interactions, 150 DMs",
-          budget: "$2,500",
-          timeline: "4 weeks campaign with daily posts 2 weeks before",
-          content_type: "Visual speaker cards, Behind-the-scenes venue prep, IGTV speaker interviews, Stories polls and Q&As",
-          additional_info: "Collaborate with tech influencers, create branded hashtag #AIInnovationSF2025",
-          influencer_partnerships: [
-            {
-              name: "CodeWithEmily",
-              followers_count: "320,000",
-              expected_reach: "80,000 story views",
-              expected_reaction: "5,000 engagements, 200 registrations"
-            },
-            {
-              name: "StartupLifeAlex",
-              followers_count: "150,000",
-              expected_reach: "45,000 post reach",
-              expected_reaction: "3,500 engagements, 140 registrations"
-            },
-            {
-              name: "TechReelsJenna",
-              followers_count: "280,000",
-              expected_reach: "70,000 reel views",
-              expected_reaction: "4,200 engagements, 180 registrations"
-            }
-          ]
-        },
-        linkedin: {
-          audience: "Senior tech professionals, C-level executives, industry leaders, enterprise decision-makers, career-focused individuals",
-          placement: "LinkedIn sponsored content, Professional network posts, Industry leader endorsements, LinkedIn Events promotion, Company page updates",
-          reach: "200,000 impressions, 10,000 clicks, 3,000 professional connections",
-          reaction: "2.5% CTR, 400 professional registrations, 50 company team registrations",
-          budget: "$4,000",
-          timeline: "8 weeks professional campaign, executive outreach 3 weeks prior",
-          content_type: "Professional articles about AI trends, Thought leadership posts, Speaker professional achievements, Industry insights",
-          additional_info: "Target Fortune 500 tech companies, leverage speaker professional networks, create LinkedIn Event page",
-          influencer_partnerships: [
-            {
-              name: "Dr. Robert Chen (CTO)",
-              followers_count: "95,000",
-              expected_reach: "28,500 professional impressions",
-              expected_reaction: "1,400 engagements, 85 registrations"
-            },
-            {
-              name: "Lisa Martinez (AI Director)",
-              followers_count: "120,000",
-              expected_reach: "36,000 professional reach",
-              expected_reaction: "1,800 engagements, 110 registrations"
-            }
-          ]
-        },
-        x_twitter: {
-          audience: "Tech community, AI researchers, startup ecosystem, tech journalists, early adopters aged 25-50",
-          placement: "Twitter promoted tweets, Tech hashtag campaigns (#AIConf2025 #TechSummitSF), Live tweeting strategy, Speaker quote cards",
-          reach: "80,000 impressions, 3,000 retweets, 1,500 replies",
-          reaction: "5% engagement rate, 250 registrations via Twitter, 500 hashtag uses",
-          budget: "$1,500",
-          timeline: "Continuous 6-week campaign, live-tweeting during event",
-          content_type: "Tweet threads about AI trends, Speaker quote graphics, Real-time event updates, Polls and tech discussions",
-          additional_info: "Engage with tech Twitter community, partner with tech journalists for coverage, create event Twitter moment",
-          influencer_partnerships: [
-            {
-              name: "@TechThreadGuru",
-              followers_count: "180,000",
-              expected_reach: "54,000 impressions",
-              expected_reaction: "2,700 engagements, 135 registrations"
-            },
-            {
-              name: "@AINewsNow",
-              followers_count: "220,000",
-              expected_reach: "66,000 impressions",
-              expected_reaction: "3,300 engagements, 165 registrations"
-            }
-          ]
-        },
-        youtube: {
-          audience: "Tech tutorial viewers, AI/ML learners, startup enthusiasts, professional development seekers",
-          placement: "Pre-roll ads on tech channels, Speaker interview teasers, Event highlight videos, Educational content tie-ins",
-          reach: "50,000 video views, 2,000 subscribers, 500 comments",
-          reaction: "6% view-through rate, 100 registrations from YouTube, 300 channel subscriptions",
-          budget: "$2,000",
-          timeline: "4 weeks of video content, speaker interviews 3 weeks before",
-          content_type: "Speaker introduction videos, Event preview trailers, AI tutorial tie-ins, Behind-the-scenes venue setup",
-          additional_info: "Create dedicated event playlist, collaborate with tech YouTubers, post-event content strategy",
-          influencer_partnerships: [
-            {
-              name: "TechExplainedTV",
-              followers_count: "450,000",
-              expected_reach: "135,000 video views",
-              expected_reaction: "8,100 engagements, 270 registrations"
-            },
-            {
-              name: "CodeWithMike",
-              followers_count: "280,000",
-              expected_reach: "84,000 video views",
-              expected_reaction: "5,000 engagements, 168 registrations"
-            },
-            {
-              name: "AITutorialsDaily",
-              followers_count: "350,000",
-              expected_reach: "105,000 video views",
-              expected_reaction: "6,300 engagements, 210 registrations"
-            }
-          ]
-        },
-        google_ads: {
-          audience: "Tech professionals, AI/ML enthusiasts, startup founders, conference attendees",
-          placement: "Google search ads, Display ads on tech websites, YouTube ads",
-          reach: "100,000 impressions, 5,000 clicks, 300 conversions",
-          reaction: "3% CTR, 150 registrations from Google Ads",
-          budget: "$3,000",
-          timeline: "4 weeks of ad campaigns, ramping up 2 weeks before the event",
-          content_type: "Search ads targeting AI keywords, Display banners showcasing event highlights, Video ads featuring speaker testimonials",
-          additional_info: "Utilize remarketing strategies for website visitors, A/B test ad creatives for optimization"
-        },
-        email_campaign: {
-          audience: "Tech professionals, newsletter subscribers, past event attendees, AI/ML community members aged 25-50",
-          placement: "Newsletter campaigns, Targeted email lists, Automated drip campaigns, Speaker introduction emails, Registration reminder sequences",
-          reach: "15,000 emails sent, 10,275 opened, 4,245 clicked, 750 conversions",
-          reaction: "68.5% open rate, 28.3% click rate, 18.7% conversion rate, 420 registrations",
-          budget: "$1,200",
-          timeline: "6-week email sequence: Welcome → Speaker spotlights → Early bird → Agenda reveal → Final call → Day-of updates",
-          content_type: "HTML newsletters with event details, Personalized speaker invitations, Interactive countdown timers, Early bird promotion emails, Event agenda highlights",
-          additional_info: "A/B test subject lines, Segment by industry and experience level, Include calendar invites and venue directions"
-        },
-        whatsapp_campaign: {
-          audience: "Tech community members, professional networks, AI enthusiasts, startup founders, personal contacts aged 22-45",
-          placement: "WhatsApp groups (8 industry-specific), Personal invites, Community channels, Status updates, Direct messaging campaigns",
-          reach: "1,200 group members, 420 active participants, 850 messages sent, 575 responses",
-          reaction: "35.2% engagement rate, 67.8% message response rate, 15.0% conversion rate, 180 registrations",
-          budget: "$700",
-          timeline: "6-week community building: Group creation → Member invites → Daily engagement → Event announcements → Live updates",
-          content_type: "Event announcements, Speaker introduction videos, Interactive polls, Voice messages from speakers, Behind-the-scenes content",
-          additional_info: "Create 8 groups max 150 members each, Assign 2-3 moderators per group, Cross-promote with email signatures"
-        },
-        offline_publicity: {
-          audience: "Local tech community, university students, co-working space members, conference center visitors",
-          placement: "Tech conference flyers, University bulletin boards (Stanford, UC Berkeley), Co-working space posters, SF tech hub displays",
-          reach: "25,000 physical impressions, 1,000 flyers distributed, 50 partner locations",
-          reaction: "2% conversion rate from physical materials, 50 walk-in inquiries, 100 QR code scans",
-          budget: "$1,000",
-          timeline: "3 weeks of poster/flyer distribution, concentrated 1 week before",
-          content_type: "Professional event flyers with QR codes, Branded banners for partner locations, Direct mail to tech companies",
-          additional_info: "Partner with local tech meetups, place materials in Moscone Center area, SF tech district visibility"
-        }
-      }
-    };
-
-    // Set form values
-    setValue('event_name', testData.event_name);
-    setValue('event_description', testData.event_description);
-    setValue('city', testData.city);
-    setValue('number_of_days', testData.number_of_days);
-    setValue('days', testData.days);
-    setValue('marketing_strategy', testData.marketing_strategy);
-
-    // Mock location data for San Francisco
-    const mockLocationData = {
-      city: 'San Francisco',
-      state: 'California',
-      population: '884,363',
-      coordinates: [37.7749, -122.4194],
-      suggestedVenues: ['Moscone Center West Hall', 'Moscone Center South Hall', 'San Francisco Convention Center']
-    };
-
-    // Update tab with mock location data
-    const updatedTabs = tabs.map((tab, index) =>
-      index === activeTab ? { ...tab, locationData: mockLocationData } : tab
-    );
-    setTabs(updatedTabs);
-
-    toast.success('Test data loaded successfully!');
-  };
-
 const onSubmit = async (formData) => {
   try {
+    console.log('🚀 Form submission initiated with data:', formData);
+    
+    // First, try Zod validation and log any errors
+    // try {
+    //   console.log('🔍 Running Zod validation...');
+    //   const validatedData = TabFormSchema.parse(formData);
+    //   console.log('✅ Zod validation passed:', validatedData);
+    // } catch (zodError) {
+    //   console.error('❌ ZOD VALIDATION FAILED:');
+    //   console.error('Full Zod Error Object:', zodError);
+      
+    //   if (zodError.errors) {
+    //     console.error('📋 Detailed Zod Errors:');
+    //     zodError.errors.forEach((error, index) => {
+    //       console.error(`Error ${index + 1}:`, {
+    //         path: error.path,
+    //         message: error.message,
+    //         code: error.code,
+    //         expected: error.expected,
+    //         received: error.received,
+    //         validation: error.validation
+    //       });
+    //     });
+        
+    //     // Also show user-friendly error messages
+    //     console.error('📝 User-friendly error messages:');
+    //     zodError.errors.forEach((error, index) => {
+    //       const fieldPath = error.path.join('.');
+    //       console.error(`${index + 1}. Field "${fieldPath}": ${error.message}`);
+    //     });
+    //   }
+      
+    //   // Show Zod validation errors to user
+    //   toast.error('Form validation failed - check console for details');
+    //   zodError.errors?.forEach((error, index) => {
+    //     setTimeout(() => {
+    //       const fieldPath = error.path.join('.');
+    //       toast.error(`${fieldPath}: ${error.message}`, {
+    //         autoHideDuration: 5000 + (index * 500)
+    //       });
+    //     }, index * 300);
+    //   });
+      
+    //   return; // Stop submission if Zod validation fails
+    // }
+    console.log('ℹ️ Skipping Zod validation for now, proceeding to manual validation');
     // Manual validation with detailed error messages
     const errors = [];
     
     // Basic field validation
-    if (!formData.event_name?.trim()) {
-      errors.push('Event name is required');
-    }
-    if (!formData.event_description?.trim()) {
-      errors.push('Event description is required');
-    }
-    if (!formData.city?.trim()) {
-      errors.push('City selection is required');
-    }
-    if (!formData.number_of_days || formData.number_of_days < 1) {
-      errors.push('Number of days must be at least 1');
-    }
+    // if (!formData.event_name?.trim()) {
+    //   errors.push('Event name is required');
+    // }
+    // if (!formData.event_description?.trim()) {
+    //   errors.push('Event description is required');
+    // }
+    // if (!formData.city?.trim()) {
+    //   errors.push('City selection is required');
+    // }
+    // if (!formData.number_of_days || formData.number_of_days < 1) {
+    //   errors.push('Number of days must be at least 1');
+    // }
     
     // Days validation
     if (!formData.days || formData.days.length === 0) {
@@ -1551,9 +1836,9 @@ const onSubmit = async (formData) => {
         }
         
         // Capacity validation for days that have capacity filled
-        if (day.venue_capacity && (isNaN(day.venue_capacity) || parseInt(day.venue_capacity) <= 0)) {
-          errors.push(`Day ${index + 1}: Venue capacity must be a positive number`);
-        }
+        // if (day.venue_capacity && (isNaN(day.venue_capacity) || parseInt(day.venue_capacity) <= 0)) {
+        //   errors.push(`Day ${index + 1}: Venue capacity must be a positive number`);
+        // }
       });
       
       // Add specific error messages for empty days
@@ -1568,18 +1853,20 @@ const onSubmit = async (formData) => {
       }
       
       // Add specific error messages for incomplete days
-      incompleteDays.forEach(({ dayNumber, missing }) => {
-        errors.push(`Day ${dayNumber} missing: ${missing.join(', ')}`);
-      });
+      // incompleteDays.forEach(({ dayNumber, missing }) => {
+      //   errors.push(`Day ${dayNumber} missing: ${missing.join(', ')}`);
+      // });
     }
     
     // Location data validation
-    if (!tabs[activeTab].locationData) {
-      errors.push('Please select a location on the map');
-    }
+    // if (!tabs[activeTab].locationData) {
+    //   errors.push('Please select a location on the map');
+    // }
     
     // If there are validation errors, show them and return
     if (errors.length > 0) {
+      console.error('❌ FORM VALIDATION FAILED:');
+      console.error('Validation Errors:', errors);
       errors.forEach((error, index) => {
         setTimeout(() => {
           // Different styling for different types of errors
@@ -1642,12 +1929,19 @@ const onSubmit = async (formData) => {
       index === activeTab ? { ...tab, loading: true } : tab
     );
     setTabs(updatedTabs);
+    
+    // Reset hybrid result tab when starting new analysis
+    setHybridResultTab(0);
 
     // Prepare the payload for POST request
     const payload = {
       event_name: formData.event_name,
+      event_type: formData.event_type,
+      event_language: formData.event_language,
       event_description: formData.event_description,
       city: formData.city,
+      target_countries: formData.target_countries,
+      country_marketing: formData.country_marketing,
       number_of_days: formData.number_of_days,
       // Include location data if available
       ...(tabs[activeTab].locationData && {
@@ -1811,7 +2105,11 @@ const onSubmit = async (formData) => {
       google_ads: "e.g., Google search ads for AI keywords, Display ads on tech websites, YouTube pre-roll ads, Retargeting campaigns",
       email_campaign: "e.g., Newsletter announcements, Targeted email lists, Drip campaigns, Speaker introductions via email, Registration reminders",
       whatsapp_campaign: "e.g., WhatsApp groups, Personal invites, Community channels, Status updates, Direct messaging to contacts",
-      offline_publicity: "e.g., Tech conference flyers, University bulletin boards, Co-working space posters, Industry magazine ads, Radio sponsorships"
+      offline_publicity: "e.g., Tech conference flyers, University bulletin boards, Co-working space posters, Industry magazine ads, Radio sponsorships",
+      reddit: "e.g., Reddit ads in relevant subreddits, AMA sessions, Sponsored posts, Community engagement through comments",
+      meetup: "e.g., Local meetup groups, Event sponsorships, Community partnerships, Cross-promotion with other events",
+      eventbrite: "e.g., Event listing on Eventbrite, Paid promotions, Featured events, Community outreach",
+      indeed_events: "e.g., Job fairs, Industry meetups, Sponsored listings, Community engagement"
     };
     return placeholders[channel] || "Describe your placement and distribution strategy...";
   };
@@ -1826,7 +2124,11 @@ const onSubmit = async (formData) => {
       google_ads: "e.g., Google search ads for AI keywords, Display ads on tech websites, YouTube pre-roll ads, Retargeting campaigns",
       email_campaign: "e.g., HTML newsletters with event details, Personalized invitations, Speaker interviews, Early bird promotions, Event countdown series",
       whatsapp_campaign: "e.g., Event announcements, Speaker introduction videos, Interactive polls, Voice messages from speakers, Event reminders",
-      offline_publicity: "e.g., Professional flyers with QR codes, Branded banners, Magazine advertisements, Radio spot scripts, Direct mail campaigns"
+      offline_publicity: "e.g., Professional flyers with QR codes, Branded banners, Magazine advertisements, Radio spot scripts, Direct mail campaigns",
+      reddit: "e.g., Informative posts, AMA sessions, Engaging comments, Visual content, Polls and discussions",
+      meetup: "e.g., Event descriptions, Speaker bios, Community posts, Visual teasers, Follow-up content",
+      eventbrite: "e.g., Compelling event descriptions, Speaker highlights, Visual banners, Early bird announcements, Reminder emails",
+      indeed_events: "e.g., Event summaries, Speaker introductions, Industry relevance posts, Visual ads, Follow-up content"
     };
     return placeholders[channel] || "Describe your content strategy...";
   };
@@ -1974,7 +2276,664 @@ const onSubmit = async (formData) => {
     );
   };
 
-  const currentTab = tabs[activeTab];  return (
+  // Function to render analysis content for both single and multiple analyses
+  const renderAnalysisContent = (data) => {
+    return (
+      <>
+        {/* Tool Utilization Summary */}
+        {data.tool_utilization_summary && (
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.neutral' }}>
+              <Typography variant="h6" sx={{ mb: 3, color: 'primary.main' }}>
+                🔧 Analysis Overview
+              </Typography>
+              <Grid container spacing={2}>
+                {Object.entries(data.tool_utilization_summary).map(([key, value], index) => (
+                  <Grid size={{ xs: 12, md: 6 }} key={index}>
+                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.paper' }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.primary', fontWeight: 'bold' }}>
+                        {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                        {value}
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                ))}
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Main Statistics Cards */}
+        <Grid size={12}>
+          <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+            <Typography variant="h6" sx={{ mb: 3, color: 'secondary.main' }}>
+              📈 Key Metrics
+            </Typography>
+            <Grid container spacing={3}>
+              {data.registration_expected && (
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Paper 
+                    variant="outlined" 
+                    sx={{ 
+                      p: 3, 
+                      textAlign: 'center',
+                      bgcolor: 'info.lighter',
+                      borderColor: 'info.main'
+                    }}
+                  >
+                    <Typography variant="h4" sx={{ color: 'info.darker', fontWeight: 'bold' }}>
+                      {typeof data.registration_expected === 'number' 
+                        ? data.registration_expected.toLocaleString() 
+                        : data.registration_expected}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'info.darker', mt: 1 }}>
+                      Expected Registrations
+                    </Typography>
+                  </Paper>
+                </Grid>
+              )}
+              {data.attendance_expected && (
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Paper 
+                    variant="outlined" 
+                    sx={{ 
+                      p: 3, 
+                      textAlign: 'center',
+                      bgcolor: 'success.lighter',
+                      borderColor: 'success.main'
+                    }}
+                  >
+                    <Typography variant="h4" sx={{ color: 'success.darker', fontWeight: 'bold' }}>
+                      {typeof data.attendance_expected === 'number' 
+                        ? data.attendance_expected.toLocaleString() 
+                        : data.attendance_expected}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'success.darker', mt: 1 }}>
+                      Expected Attendance
+                    </Typography>
+                  </Paper>
+                </Grid>
+              )}
+              {data.confidence_level && (
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Paper 
+                    variant="outlined" 
+                    sx={{ 
+                      p: 3, 
+                      textAlign: 'center',
+                      bgcolor: 'warning.lighter',
+                      borderColor: 'warning.main'
+                    }}
+                  >
+                    <Typography variant="h4" sx={{ color: 'warning.darker', fontWeight: 'bold' }}>
+                      {data.confidence_level}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'warning.darker', mt: 1 }}>
+                      Confidence Level
+                    </Typography>
+                  </Paper>
+                </Grid>
+              )}
+              {(data.registration_expected && data.attendance_expected) && (
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Paper 
+                    variant="outlined" 
+                    sx={{ 
+                      p: 3, 
+                      textAlign: 'center',
+                      bgcolor: 'error.lighter',
+                      borderColor: 'error.main'
+                    }}
+                  >
+                    <Typography variant="h4" sx={{ color: 'error.darker', fontWeight: 'bold' }}>
+                      {Math.round((data.attendance_expected / data.registration_expected) * 100)}%
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'error.darker', mt: 1 }}>
+                      Conversion Rate
+                    </Typography>
+                  </Paper>
+                </Grid>
+              )}
+            </Grid>
+          </Paper>
+        </Grid>
+
+        {/* Event-specific Analysis Sections */}
+        {/* Venue Analysis (in-person) */}
+        {data.venue_analysis && (
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+              <Typography variant="h6" sx={{ mb: 3, color: 'primary.main' }}>
+                🏢 Venue Analysis
+              </Typography>
+              <Grid container spacing={2}>
+                {Object.entries(data.venue_analysis).map(([key, value], index) => (
+                  <Grid size={{ xs: 12, md: 6 }} key={index}>
+                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.primary', fontWeight: 'bold' }}>
+                        {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                        {value}
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                ))}
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Global Reach Analysis (virtual) */}
+        {data.global_reach_analysis && (
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+              <Typography variant="h6" sx={{ mb: 3, color: 'info.main' }}>
+                🌍 Global Reach Analysis
+              </Typography>
+              <Grid container spacing={2}>
+                {Object.entries(data.global_reach_analysis).map(([key, value], index) => (
+                  <Grid size={{ xs: 12, md: 6 }} key={index}>
+                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.primary', fontWeight: 'bold' }}>
+                        {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                        {value}
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                ))}
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Hybrid Optimization Analysis (hybrid) */}
+        {data.hybrid_optimization_analysis && (
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+              <Typography variant="h6" sx={{ mb: 3, color: 'secondary.main' }}>
+                🔄 Hybrid Optimization Analysis
+              </Typography>
+              <Grid container spacing={2}>
+                {Object.entries(data.hybrid_optimization_analysis).map(([key, value], index) => (
+                  <Grid size={{ xs: 12, md: 6 }} key={index}>
+                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.primary', fontWeight: 'bold' }}>
+                        {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                        {value}
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                ))}
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Key Insights */}
+        {data.key_insights && (
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+              <Typography variant="h6" sx={{ mb: 3, color: 'secondary.main' }}>
+                💡 Key Insights
+              </Typography>
+              <Grid container spacing={2}>
+                {data.key_insights.map((insight, index) => (
+                  <Grid size={{ xs: 12, md: 6 }} key={index}>
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 2, 
+                        bgcolor: 'info.lighter',
+                        borderColor: 'info.light',
+                        borderLeft: '4px solid',
+                        borderLeftColor: 'info.main'
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ color: 'info.darker' }}>
+                        <strong>Insight {index + 1}:</strong> {insight}
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                ))}
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Data Visualizations */}
+        {data.data_visualizations && (
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+              <Typography variant="h6" sx={{ mb: 3, color: 'primary.main' }}>
+                📈 Data Visualizations & Analytics
+              </Typography>
+              <Grid container spacing={3}>
+                {/* Registration Trend */}
+                {data.data_visualizations.registration_trend && (
+                  <Grid size={{ xs: 12, lg: 6 }}>
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 3, 
+                        bgcolor: 'info.lighter',
+                        borderColor: 'info.main'
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ mb: 2, color: 'info.darker', textAlign: 'center' }}>
+                        📈 {data.data_visualizations.registration_trend.title}
+                      </Typography>
+                      <Box sx={{ bgcolor: 'white', p: 2, borderRadius: 1, minHeight: 250 }}>
+                        {renderChart(data.data_visualizations.registration_trend)}
+                      </Box>
+                    </Paper>
+                  </Grid>
+                )}
+
+                {/* Other visualizations would be rendered similarly */}
+                {Object.entries(data.data_visualizations)
+                  .filter(([key]) => key !== 'registration_trend')
+                  .map(([key, viz], index) => (
+                    <Grid size={{ xs: 12, lg: 6 }} key={index}>
+                      <Paper 
+                        variant="outlined" 
+                        sx={{ 
+                          p: 3, 
+                          bgcolor: 'grey.50',
+                          borderColor: 'grey.300'
+                        }}
+                      >
+                        <Typography variant="h6" sx={{ mb: 2, color: 'text.primary', textAlign: 'center' }}>
+                          📊 {viz.title || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </Typography>
+                        <Box sx={{ bgcolor: 'white', p: 2, borderRadius: 1, minHeight: 250 }}>
+                          {renderChart(viz)}
+                        </Box>
+                      </Paper>
+                    </Grid>
+                  ))}
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Marketing Effectiveness */}
+        {(data.local_marketing_effectiveness || data.international_marketing_effectiveness || data.integrated_marketing_effectiveness) && (
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+              <Typography variant="h6" sx={{ mb: 3, color: 'info.main' }}>
+                📊 Marketing Effectiveness Analysis
+              </Typography>
+              
+              <Grid container spacing={3}>
+                {/* Local Marketing Effectiveness */}
+                {data.local_marketing_effectiveness && (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 3, 
+                        bgcolor: 'primary.lighter',
+                        borderColor: 'primary.main'
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ mb: 2, color: 'primary.darker' }}>
+                        🏠 Local Marketing Effectiveness
+                      </Typography>
+                      {Object.entries(data.local_marketing_effectiveness).map(([key, value], index) => (
+                        <Box key={index} sx={{ mb: 2 }}>
+                          <Typography variant="subtitle2" sx={{ mb: 1, color: 'primary.darker', fontWeight: 'bold' }}>
+                            {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'primary.dark' }}>
+                            {value}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Paper>
+                  </Grid>
+                )}
+
+                {/* International Marketing Effectiveness */}
+                {data.international_marketing_effectiveness && (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 3, 
+                        bgcolor: 'info.lighter',
+                        borderColor: 'info.main'
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ mb: 2, color: 'info.darker' }}>
+                        🌍 International Marketing Effectiveness
+                      </Typography>
+                      {Object.entries(data.international_marketing_effectiveness).map(([key, value], index) => (
+                        <Box key={index} sx={{ mb: 2 }}>
+                          <Typography variant="subtitle2" sx={{ mb: 1, color: 'info.darker', fontWeight: 'bold' }}>
+                            {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'info.dark' }}>
+                            {value}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Paper>
+                  </Grid>
+                )}
+
+                {/* Integrated Marketing Effectiveness (Hybrid) */}
+                {data.integrated_marketing_effectiveness && (
+                  <Grid size={{ xs: 12 }}>
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 3, 
+                        bgcolor: 'secondary.lighter',
+                        borderColor: 'secondary.main'
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ mb: 2, color: 'secondary.darker' }}>
+                        🔄 Integrated Marketing Effectiveness
+                      </Typography>
+                      {Object.entries(data.integrated_marketing_effectiveness).map(([key, value], index) => (
+                        <Box key={index} sx={{ mb: 2 }}>
+                          <Typography variant="subtitle2" sx={{ mb: 1, color: 'secondary.darker', fontWeight: 'bold' }}>
+                            {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'secondary.dark' }}>
+                            {value}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Paper>
+                  </Grid>
+                )}
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Recommendations */}
+        {data.recommendations && (
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+              <Typography variant="h6" sx={{ mb: 3, color: 'warning.main' }}>
+                🎯 Strategic Recommendations
+              </Typography>
+              
+              <Grid container spacing={3}>
+                {/* Optimization Strategies */}
+                {data.recommendations.optimization_strategies && (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 3, 
+                        bgcolor: 'success.lighter',
+                        borderColor: 'success.main'
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ mb: 2, color: 'success.darker' }}>
+                        ✅ Optimization Strategies
+                      </Typography>
+                      <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                        {data.recommendations.optimization_strategies.map((strategy, index) => (
+                          <Typography component="li" variant="body2" key={index} sx={{ mb: 1, color: 'success.darker' }}>
+                            {strategy}
+                          </Typography>
+                        ))}
+                      </Box>
+                    </Paper>
+                  </Grid>
+                )}
+
+                {/* Risk Mitigation */}
+                {data.recommendations.risk_mitigation && (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 3, 
+                        bgcolor: 'error.lighter',
+                        borderColor: 'error.main'
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ mb: 2, color: 'error.darker' }}>
+                        ⚠️ Risk Mitigation
+                      </Typography>
+                      <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                        {data.recommendations.risk_mitigation.map((risk, index) => (
+                          <Typography component="li" variant="body2" key={index} sx={{ mb: 1, color: 'error.darker' }}>
+                            {risk}
+                          </Typography>
+                        ))}
+                      </Box>
+                    </Paper>
+                  </Grid>
+                )}
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Actionable Metrics */}
+        {data.actionable_metrics && (
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+              <Typography variant="h6" sx={{ mb: 3, color: 'primary.main' }}>
+                📊 Actionable Metrics
+              </Typography>
+              <Grid container spacing={3}>
+                {/* Conversion Rates */}
+                {data.actionable_metrics.conversion_rates && (
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 3, 
+                        bgcolor: 'secondary.lighter',
+                        borderColor: 'secondary.main'
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ mb: 2, color: 'secondary.darker', textAlign: 'center' }}>
+                        🔄 Conversion Rates
+                      </Typography>
+                      {Object.entries(data.actionable_metrics.conversion_rates).map(([key, value], index) => (
+                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" sx={{ color: 'secondary.darker', textTransform: 'capitalize' }}>
+                            {key.replace(/_/g, ' ')}:
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'secondary.darker' }}>
+                            {value}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Paper>
+                  </Grid>
+                )}
+
+                {/* Revenue Projections */}
+                {data.actionable_metrics.revenue_projections && (
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 3, 
+                        bgcolor: 'success.lighter',
+                        borderColor: 'success.main'
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ mb: 2, color: 'success.darker', textAlign: 'center' }}>
+                        💰 Revenue Projections
+                      </Typography>
+                      {Object.entries(data.actionable_metrics.revenue_projections).map(([key, value], index) => (
+                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="body2" sx={{ color: 'success.darker', textTransform: 'capitalize' }}>
+                            {key.replace(/_/g, ' ')}:
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'success.darker' }}>
+                            {value}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Paper>
+                  </Grid>
+                )}
+
+                {/* Additional metrics like engagement_metrics, capacity_utilization etc. */}
+                {Object.entries(data.actionable_metrics)
+                  .filter(([key]) => !['conversion_rates', 'revenue_projections'].includes(key))
+                  .map(([key, value], index) => (
+                    <Grid size={{ xs: 12, md: 4 }} key={index}>
+                      <Paper 
+                        variant="outlined" 
+                        sx={{ 
+                          p: 3, 
+                          bgcolor: 'info.lighter',
+                          borderColor: 'info.main'
+                        }}
+                      >
+                        <Typography variant="h6" sx={{ mb: 2, color: 'info.darker', textAlign: 'center' }}>
+                          📈 {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </Typography>
+                        {typeof value === 'object' ? (
+                          Object.entries(value).map(([subKey, subValue], subIndex) => (
+                            <Box key={subIndex} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                              <Typography variant="body2" sx={{ color: 'info.darker', textTransform: 'capitalize' }}>
+                                {subKey.replace(/_/g, ' ')}:
+                              </Typography>
+                              <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'info.darker' }}>
+                                {subValue}
+                              </Typography>
+                            </Box>
+                          ))
+                        ) : (
+                          <Typography variant="body2" sx={{ color: 'info.darker', textAlign: 'center' }}>
+                            {value}
+                          </Typography>
+                        )}
+                      </Paper>
+                    </Grid>
+                  ))}
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Success Metrics */}
+        {data.success_metrics && (
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+              <Typography variant="h6" sx={{ mb: 3, color: 'success.main' }}>
+                🎯 Success Metrics
+              </Typography>
+              <Grid container spacing={2}>
+                {Object.entries(data.success_metrics).map(([key, value], index) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 2, 
+                        bgcolor: 'success.lighter',
+                        borderColor: 'success.light'
+                      }}
+                    >
+                      <Typography variant="subtitle2" sx={{ mb: 1, color: 'success.darker', textTransform: 'capitalize' }}>
+                        {key.replace(/_/g, ' ')}
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'success.darker' }}>
+                        {typeof value === 'object' ? (
+                          <Box>
+                            {Object.entries(value).map(([subKey, subValue], subIndex) => (
+                              <Box key={subIndex} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                <Typography variant="body2" sx={{ color: 'success.darker', textTransform: 'capitalize' }}>
+                                  {subKey.replace(/_/g, ' ')}:
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'success.darker' }}>
+                                  {subValue}
+                                </Typography>
+                              </Box>
+                            ))}
+                          </Box>
+                        ) : (
+                          value
+                        )}
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                ))}
+              </Grid>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Add the other new sections (Timeline Analysis, ROI Analysis, Cost Breakdown) if they exist in the data */}
+        {data.timeline_analysis && (
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+              <Typography variant="h6" sx={{ mb: 3, color: 'info.main' }}>
+                ⏰ Timeline Analysis
+              </Typography>
+              {/* Timeline analysis content */}
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                Timeline analysis content would be displayed here
+              </Typography>
+            </Paper>
+          </Grid>
+        )}
+
+        {data.roi_analysis && (
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+              <Typography variant="h6" sx={{ mb: 3, color: 'warning.main' }}>
+                💰 ROI Analysis
+              </Typography>
+              {/* ROI analysis content */}
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                ROI analysis content would be displayed here
+              </Typography>
+            </Paper>
+          </Grid>
+        )}
+
+        {data.cost_breakdown && (
+          <Grid size={12}>
+            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+              <Typography variant="h6" sx={{ mb: 3, color: 'error.main' }}>
+                💳 Cost Breakdown
+              </Typography>
+              {/* Cost breakdown content */}
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                Cost breakdown content would be displayed here
+              </Typography>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Data Summary */}
+        <Grid size={12}>
+          <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
+            <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary' }}>
+              <strong>Analysis Generated:</strong> {new Date().toLocaleString()} | 
+              <strong> Confidence Score:</strong> {data.confidence_level || 'N/A'} |
+              <strong> Data Points Analyzed:</strong> {data.data_visualizations ? Object.keys(data.data_visualizations).length : 0}
+            </Typography>
+          </Paper>
+        </Grid>
+      </>
+    );
+  };
+
+  const currentTab = tabs[activeTab];
+  
+  return (
     <DashboardContent>
       <CustomBreadcrumbs
         heading="Dynamic Tabs Simulator"
@@ -1986,15 +2945,7 @@ const onSubmit = async (formData) => {
         sx={{ mb: 3 }}
       />
 
-      {/* User Status Indicator */}
-      {user?._id && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          <Typography variant="body2">
-            Logged in as: <strong>{user.full_name || user.email || user.name || `User ${user._id}`}</strong>
-            {' '}- Your tabs will be saved to your account
-          </Typography>
-        </Alert>
-      )}
+      
       
       {!user?._id && (
         <Alert severity="warning" sx={{ mb: 2 }}>
@@ -2041,16 +2992,7 @@ const onSubmit = async (formData) => {
             ))}
           </Tabs>
           
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant="outlined"
-              startIcon={<Iconify icon="eva:play-circle-outline" />}
-              onClick={handleLoadTestData}
-              color="success"
-            >
-              Test
-            </Button>
-            
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
               startIcon={<Iconify icon="mingcute:add-line" />}
@@ -2080,6 +3022,78 @@ const onSubmit = async (formData) => {
               </Grid>
               
               <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="event_type"
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <FormControl fullWidth error={!!error}>
+                      <InputLabel>Event Type</InputLabel>
+                      <Select
+                        {...field}
+                        label="Event Type"
+                      >
+                        <MenuItem value="in-person">
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Iconify icon="mdi:map-marker" />
+                            In-Person Event
+                          </Box>
+                        </MenuItem>
+                        <MenuItem value="virtual">
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Iconify icon="mdi:monitor" />
+                            Virtual Event
+                          </Box>
+                        </MenuItem>
+                        <MenuItem value="hybrid">
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Iconify icon="mdi:map-marker-plus" />
+                            Hybrid Event
+                          </Box>
+                        </MenuItem>
+                      </Select>
+                      {error && (
+                        <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                          {error.message}
+                        </Typography>
+                      )}
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+              
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Controller
+                  name="event_language"
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <FormControl fullWidth error={!!error}>
+                      <InputLabel>Event Language</InputLabel>
+                      <Select
+                        {...field}
+                        label="Event Language"
+                      >
+                        {LANGUAGES_LIST.map((language) => (
+                          <MenuItem key={language.code} value={language.code}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography variant="body2">
+                                <img src={language.flag} alt={language.code} style={{ width: 16, height: 12, marginRight: 8 }} />
+                                {language.name}
+                              </Typography>
+                            </Box>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {error && (
+                        <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                          {error.message}
+                        </Typography>
+                      )}
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+              
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Number of Days"
                   type="number"
@@ -2100,20 +3114,88 @@ const onSubmit = async (formData) => {
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <EventLocationPicker
-                  onLocationSelect={handleLocationSelect}
-                  initialLocation={currentTab.locationData}
-                />
-              </Grid>
+              {/* Location fields - only for in-person and hybrid events */}
+              {(watch('event_type') === 'in-person' || watch('event_type') === 'hybrid') && (
+                <>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <EventLocationPicker
+                      onLocationSelect={handleLocationSelect}
+                      initialLocation={currentTab.locationData}
+                    />
+                  </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Field.Text 
-                  name="city" 
-                  label="City" 
-                  placeholder="e.g., San Francisco"
-                />
-              </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Field.Text 
+                      name="city" 
+                      label="City" 
+                      placeholder="e.g., San Francisco"
+                    />
+                  </Grid>
+                </>
+              )}
+
+              {/* Country selection - only for virtual and hybrid events */}
+              {(watch('event_type') === 'virtual' || watch('event_type') === 'hybrid') && (
+                <Grid size={12}>
+                  <Controller
+                    name="target_countries"
+                    control={methods.control}
+                    render={({ field, fieldState: { error } }) => (
+                      <Autocomplete
+                        {...field}
+                        multiple
+                        options={COUNTRIES_LIST.map(country => country.code)}
+                        getOptionLabel={(option) => {
+                          const country = COUNTRIES_LIST.find(c => c.code === option);
+                          return country ? country.name : option;
+                        }}
+                        renderOption={(props, option) => {
+                          const country = COUNTRIES_LIST.find(c => c.code === option);
+                          return (
+                            <Box component="li" {...props}>
+                              <Typography variant="body2">
+                                <img src={country?.flag} alt={country?.code} style={{ width: 16, height: 12, marginRight: 8 }} /> {country?.name}
+                              </Typography>
+                            </Box>
+                          );
+                        }}
+                        renderTags={(selected, getTagProps) =>
+                          selected.map((option, index) => {
+                            const country = COUNTRIES_LIST.find(c => c.code === option);
+                            return (
+                              <Chip
+                                {...getTagProps({ index })}
+                                key={option}
+                                label={
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <img src={country?.flag} alt={country?.code} style={{ width: 16, height: 12 }} />
+                                    {country?.name}
+                                  </Box>
+                                }
+                                size="small"
+                              />
+                            );
+                          })
+                        }
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Target Countries"
+                            placeholder="Select countries for your virtual event"
+                            error={!!error}
+                            helperText={error?.message || "Choose countries where you want to promote your virtual event"}
+                          />
+                        )}
+                        onChange={(_, value) => {
+                          field.onChange(value);
+                          // Update country marketing data when countries change
+                          handleCountriesChange(value);
+                        }}
+                      />
+                    )}
+                  />
+                </Grid>
+              )}
             
               
               {/* Dynamic Day Fields */}
@@ -2258,19 +3340,21 @@ const onSubmit = async (formData) => {
                 </Grid>
               </Grid>
               
-              {/* Marketing Strategy Section */}
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
-                  Marketing Strategy
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Click on each marketing channel to configure audience targeting and campaign details.
-                </Typography>
-              </Grid>
-              
-              <Grid size={{ xs: 12, sm: 12 }}>
-                <Grid container spacing={2}>
-                  {['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube', 'google_ads', 'email_campaign', 'whatsapp_campaign', 'offline_publicity'].map((channel) => {
+              {/* Marketing Strategy Section - In-Person Events */}
+              {watch('event_type') === 'in-person' && (
+                <>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+                      Marketing Strategy
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Click on each marketing channel to configure audience targeting and campaign details.
+                    </Typography>
+                  </Grid>
+                  
+                  <Grid size={{ xs: 12, sm: 12 }}>
+                    <Grid container spacing={2}>
+                      {['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube', 'reddit', 'meetup', 'eventbrite', 'indeed_events', 'google_ads', 'email_campaign', 'whatsapp_campaign', 'offline_publicity'].map((channel) => {
                     const status = getMarketingChannelStatus(channel);
                     const channelName = getChannelDisplayName(channel);
                     
@@ -2297,7 +3381,11 @@ const onSubmit = async (formData) => {
                       'google_ads': 'logos:google-ads',
                       'email_campaign': 'logos:google-gmail',
                       'whatsapp_campaign': 'logos:whatsapp-icon',
-                      'offline_publicity': 'material-symbols:campaign-outline'
+                      'offline_publicity': 'material-symbols:campaign-outline',
+                      'reddit': 'logos:reddit-icon',
+                      'meetup': 'cib:meetup',
+                      'eventbrite': 'logos:eventbrite-icon',
+                      'indeed_events': 'simple-icons:indeed',
                     };
                     
                     return (
@@ -2351,9 +3439,168 @@ const onSubmit = async (formData) => {
                   })}
                 </Grid>
               </Grid>
+                </>
+              )}
+
+              {/* Country Marketing Strategy Section - Virtual/Hybrid Events */}
+              {(watch('event_type') === 'virtual' || watch('event_type') === 'hybrid') && selectedCountries.length > 0 && (
+                <>
+                  <Grid size={12}>
+                    <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+                      Country-Specific Marketing Strategy
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Complete marketing strategy for each target country. Each country has the full range of marketing channels.
+                    </Typography>
+                  </Grid>
+                  
+                  <Grid size={12}>
+                    <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+                      <Tabs 
+                        value={activeCountryTab} 
+                        onChange={(e, newValue) => setActiveCountryTab(newValue)}
+                        variant="scrollable"
+                        scrollButtons="auto"
+                      >
+                        {selectedCountries.map((countryCode, index) => {
+                          const country = COUNTRIES_LIST.find(c => c.code === countryCode);
+                          return (
+                            <Tab 
+                              key={countryCode}
+                              label={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Typography variant="body2">
+                                    <img src={country?.flag} alt={country?.code} style={{ width: 16, height: 12, marginRight: 8 }} />
+                                    {country?.name}
+                                  </Typography>
+                                  <Chip 
+                                    label={LANGUAGES_LIST.find(l => l.code === watch('event_language'))?.name || 'Language not set'} 
+                                    size="small" 
+                                    variant="outlined"
+                                    sx={{ fontSize: '0.7rem' }}
+                                  />
+                                </Box>
+                              }
+                            />
+                          );
+                        })}
+                      </Tabs>
+                    </Box>
+
+                    {selectedCountries.map((countryCode, index) => {
+                      const country = COUNTRIES_LIST.find(c => c.code === countryCode);
+                      return (
+                        <Box key={countryCode} hidden={activeCountryTab !== index}>
+                          <Grid container spacing={2}>
+                            <Grid size={12}>
+                              <Typography variant="h6" sx={{ mb: 2, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <img src={country?.flag} alt={country?.code} style={{ width: 16, height: 12 }} />
+                                Marketing Strategy for {country?.name} ({LANGUAGES_LIST.find(l => l.code === watch('event_language'))?.name || 'Language not set'})
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                Click on each marketing channel to configure audience targeting and campaign details for {country?.name}.
+                              </Typography>
+                            </Grid>
+                            
+                            {/* Full marketing channels grid - same as in-person events */}
+                            {['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube', 'reddit', 'meetup', 'eventbrite', 'indeed_events', 'google_ads', 'email_campaign', 'whatsapp_campaign', 'offline_publicity'].map((channel) => {
+                              const status = getCountryMarketingChannelStatus(channel, countryCode);
+                              const channelName = getChannelDisplayName(channel);
+                              
+                              const statusColors = {
+                                'empty': { bgcolor: 'grey.100', color: 'grey.600', border: '1px dashed grey.300' },
+                                'partial': { bgcolor: 'warning.lighter', color: 'warning.darker', border: '1px solid orange.300' },
+                                'basic': { bgcolor: 'info.lighter', color: 'info.darker', border: '1px solid info.300' },
+                                'complete': { bgcolor: 'success.lighter', color: 'success.darker', border: '1px solid success.300' }
+                              };
+                              
+                              const statusIcons = {
+                                'empty': 'material-symbols:campaign-outline',
+                                'partial': 'material-symbols:schedule',
+                                'basic': 'material-symbols:check-circle-outline', 
+                                'complete': 'material-symbols:task-alt'
+                              };
+                              
+                              const channelIcons = {
+                                'facebook': 'devicon:facebook',
+                                'instagram': 'skill-icons:instagram',
+                                'linkedin': 'skill-icons:linkedin',
+                                'x_twitter': 'devicon:twitter',
+                                'youtube': 'logos:youtube-icon',
+                                'google_ads': 'logos:google-ads',
+                                'email_campaign': 'logos:google-gmail',
+                                'whatsapp_campaign': 'logos:whatsapp-icon',
+                                'offline_publicity': 'material-symbols:campaign-outline',
+                                'reddit': 'logos:reddit-icon',
+                                'meetup': 'cib:meetup',
+                                'eventbrite': 'logos:eventbrite-icon',
+                                'indeed_events': 'simple-icons:indeed',
+                              };
+                              
+                              return (
+                                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={channel}>
+                                  <Paper 
+                                    sx={{ 
+                                      p: 2, 
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      '&:hover': { 
+                                        transform: 'translateY(-2px)', 
+                                        boxShadow: 3
+                                      },
+                                      ...statusColors[status]
+                                    }}
+                                    onClick={() => {
+                                      setSelectedCountryForMarketing({ countryCode, channel });
+                                      setCountryMarketingModalOpen(true);
+                                    }}
+                                  >
+                                    <Stack spacing={1} alignItems="center">
+                                      <Iconify 
+                                        icon={channelIcons[channel]} 
+                                        width={32} 
+                                        sx={{ 
+                                          color: statusColors[status].color,
+                                        }}
+                                      />
+                                      <Typography variant="h6" sx={{ color: statusColors[status].color, fontSize: '0.9rem' }}>
+                                        {channelName}
+                                      </Typography>
+                                      <Iconify 
+                                        icon={statusIcons[status]} 
+                                        width={20} 
+                                        sx={{ 
+                                          color: statusColors[status].color,
+                                          opacity: 0.7
+                                        }}
+                                      />
+                                      <Typography variant="caption" sx={{ 
+                                        textAlign: 'center', 
+                                        color: statusColors[status].color,
+                                        textTransform: 'capitalize',
+                                        fontWeight: 'medium'
+                                      }}>
+                                        {status === 'empty' ? 'Not configured' :
+                                         status === 'partial' ? 'In progress' :
+                                         status === 'basic' ? 'Basic setup' : 'Complete'}
+                                      </Typography>
+                                    </Stack>
+                                  </Paper>
+                                </Grid>
+                              );
+                            })}
+                          </Grid>
+                        </Box>
+                      );
+                    })}
+                  </Grid>
+                </>
+              )}
               
               <Grid size={12}>
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                  
+                  
                   <Button
                     variant="outlined"
                     onClick={handleLoadFromDatabase}
@@ -2445,31 +3692,153 @@ const onSubmit = async (formData) => {
               
               {currentTab.result.status === 'success' && currentTab.result.data && (
                 <Box>
-                  <Grid container spacing={3}>
-                    {/* Main Analysis Section */}
-                    <Grid size={12}>
-                      <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.neutral' }}>
-                        <Typography variant="h6" sx={{ mb: 3, color: 'primary.main' }}>
-                          📊 Event Analysis & Comprehensive Predictions
-                        </Typography>
-                        
-                        {/* Analysis Text */}
-                        <Box sx={{ mb: 3 }}>
-                          <Typography variant="body1" sx={{ 
-                            lineHeight: 1.7, 
-                            mb: 2,
-                            p: 2,
-                            bgcolor: 'background.paper',
-                            borderRadius: 1,
-                            border: '1px solid',
-                            borderColor: 'divider'
-                          }}>
-                            {currentTab.result.data.analysis}
-                          </Typography>
-                        </Box>
+                  {(() => {
+                    const hybridComponents = getHybridComponents(currentTab.result.data);
+                    
+                    if (hybridComponents) {
+                      // Hybrid event with tabbed interface
+                      return (
+                        <Box>
+                          {/* Tabs for hybrid components */}
+                          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+                            <Tabs 
+                              value={hybridResultTab} 
+                              onChange={(event, newValue) => setHybridResultTab(newValue)}
+                              aria-label="hybrid event analysis tabs"
+                              variant="fullWidth"
+                            >
+                              {hybridComponents.map((component, index) => (
+                                <Tab 
+                                  key={index}
+                                  label={
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                      {component.type === 'synthesis' && '🔄'}
+                                      {component.type === 'in-person' && '🏢'}
+                                      {component.type === 'virtual' && '🌐'}
+                                      {component.label}
+                                    </Box>
+                                  }
+                                  id={`hybrid-tab-${index}`}
+                                  aria-controls={`hybrid-tabpanel-${index}`}
+                                />
+                              ))}
+                            </Tabs>
+                          </Box>
 
-                        {/* Main Statistics Cards */}
-                        <Grid container spacing={3} sx={{ mb: 3 }}>
+                          {/* Tab panels */}
+                          {hybridComponents.map((component, index) => (
+                            <TabPanel key={index} value={hybridResultTab} index={index}>
+                              <Grid container spacing={3}>
+                                {/* Component Type Header */}
+                                <Grid size={12}>
+                                  <Paper 
+                                    variant="outlined" 
+                                    sx={{ 
+                                      p: 3, 
+                                      bgcolor: component.type === 'synthesis' 
+                                        ? 'warning.lighter' 
+                                        : component.type === 'in-person' 
+                                          ? 'primary.lighter' 
+                                          : 'secondary.lighter'
+                                    }}
+                                  >
+                                    <Typography 
+                                      variant="h5" 
+                                      sx={{ 
+                                        mb: 2, 
+                                        color: component.type === 'synthesis' 
+                                          ? 'warning.darker' 
+                                          : component.type === 'in-person' 
+                                            ? 'primary.darker' 
+                                            : 'secondary.darker',
+                                        textAlign: 'center' 
+                                      }}
+                                    >
+                                      {component.type === 'synthesis' && '🔄 Hybrid Event Synthesis'}
+                                      {component.type === 'in-person' && '🏢 In-Person Component Analysis'}
+                                      {component.type === 'virtual' && '🌐 Virtual Component Analysis'}
+                                    </Typography>
+                                    <Typography 
+                                      variant="body1" 
+                                      sx={{ 
+                                        color: component.type === 'synthesis' 
+                                          ? 'warning.dark' 
+                                          : component.type === 'in-person' 
+                                            ? 'primary.dark' 
+                                            : 'secondary.dark',
+                                        textAlign: 'center' 
+                                      }}
+                                    >
+                                      {component.type === 'synthesis' && 'Comprehensive analysis combining both in-person and virtual components'}
+                                      {component.type === 'in-person' && 'Detailed analysis focusing on the in-person event component'}
+                                      {component.type === 'virtual' && 'Detailed analysis focusing on the virtual event component'}
+                                    </Typography>
+                                  </Paper>
+                                </Grid>
+                                
+                                {/* Render analysis content */}
+                                {renderAnalysisContent(component.data)}
+                              </Grid>
+                            </TabPanel>
+                          ))}
+                        </Box>
+                      );
+                    } else {
+                      // Single analysis (in-person or virtual events)
+                      return (
+                        <Grid container spacing={3}>
+                          {/* Event Analysis Type Header */}
+                          <Grid size={12}>
+                            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'primary.lighter' }}>
+                              <Typography variant="h5" sx={{ mb: 2, color: 'primary.darker', textAlign: 'center' }}>
+                                📊 {currentTab.result.data.event_analysis_type?.toUpperCase() || 'UNKNOWN'} Event Analysis Results
+                              </Typography>
+                              <Typography variant="body1" sx={{ color: 'primary.dark', textAlign: 'center' }}>
+                                Comprehensive analysis and predictions for your {currentTab.result.data.event_analysis_type || 'event'}
+                              </Typography>
+                            </Paper>
+                          </Grid>
+                          
+                          {/* Render analysis content using the single data object */}
+                          {renderAnalysisContent(currentTab.result.data)}
+                        </Grid>
+                      );
+                    }
+                  })()}
+
+                    {/* Tool Utilization Summary */}
+                    {currentTab.result.data.tool_utilization_summary && (
+                      <Grid size={12}>
+                        <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.neutral' }}>
+                          <Typography variant="h6" sx={{ mb: 3, color: 'primary.main' }}>
+                            🔧 Analysis Overview
+                          </Typography>
+                          <Grid container spacing={2}>
+                            {Object.entries(currentTab.result.data.tool_utilization_summary).map(([key, value], index) => (
+                              <Grid size={{ xs: 12, md: 6 }} key={index}>
+                                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.paper' }}>
+                                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.primary', fontWeight: 'bold' }}>
+                                    {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                                    {value}
+                                  </Typography>
+                                </Paper>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        </Paper>
+                      </Grid>
+                    )}
+
+                    {/* Main Statistics Cards */}
+                    <Grid size={12}>
+                      <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+                        <Typography variant="h6" sx={{ mb: 3, color: 'secondary.main' }}>
+                          📈 Key Metrics
+                        </Typography>
+                        <Grid container spacing={3}>
+                          {/* Expected Registrations */}
                           <Grid size={{ xs: 12, md: 3 }}>
                             <Paper 
                               variant="outlined" 
@@ -2485,7 +3854,9 @@ const onSubmit = async (formData) => {
                                 fontWeight: 'bold',
                                 mb: 1 
                               }}>
-                                {currentTab.result.data.registration_expected?.toLocaleString() || 'N/A'}
+                                {typeof currentTab.result.data.registration_expected === 'object' 
+                                  ? currentTab.result.data.registration_expected.total?.toLocaleString() || 'N/A'
+                                  : currentTab.result.data.registration_expected?.toLocaleString() || 'N/A'}
                               </Typography>
                               <Typography variant="h6" sx={{ 
                                 color: 'info.darker',
@@ -2494,11 +3865,22 @@ const onSubmit = async (formData) => {
                                 Expected Registrations
                               </Typography>
                               <Typography variant="body2" sx={{ color: 'info.dark' }}>
-                                Projected total registrations
+                                {currentTab.result.data.event_analysis_type === 'hybrid' ? 'Total across both formats' : 'Projected total registrations'}
                               </Typography>
+                              {currentTab.result.data.event_analysis_type === 'hybrid' && currentTab.result.data.registration_expected.in_person && (
+                                <Box sx={{ mt: 1, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
+                                  <Typography variant="caption" sx={{ display: 'block' }}>
+                                    In-Person: {currentTab.result.data.registration_expected.in_person.toLocaleString()}
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ display: 'block' }}>
+                                    Virtual: {currentTab.result.data.registration_expected.virtual.toLocaleString()}
+                                  </Typography>
+                                </Box>
+                              )}
                             </Paper>
                           </Grid>
 
+                          {/* Expected Attendance */}
                           <Grid size={{ xs: 12, md: 3 }}>
                             <Paper 
                               variant="outlined" 
@@ -2514,7 +3896,9 @@ const onSubmit = async (formData) => {
                                 fontWeight: 'bold',
                                 mb: 1 
                               }}>
-                                {currentTab.result.data.attendance_expected?.toLocaleString() || 'N/A'}
+                                {typeof currentTab.result.data.attendance_expected === 'object' 
+                                  ? currentTab.result.data.attendance_expected.total?.toLocaleString() || 'N/A'
+                                  : currentTab.result.data.attendance_expected?.toLocaleString() || 'N/A'}
                               </Typography>
                               <Typography variant="h6" sx={{ 
                                 color: 'success.darker',
@@ -2523,11 +3907,22 @@ const onSubmit = async (formData) => {
                                 Expected Attendance
                               </Typography>
                               <Typography variant="body2" sx={{ color: 'success.dark' }}>
-                                Predicted actual attendees
+                                {currentTab.result.data.event_analysis_type === 'hybrid' ? 'Total across both formats' : 'Predicted actual attendees'}
                               </Typography>
+                              {currentTab.result.data.event_analysis_type === 'hybrid' && currentTab.result.data.attendance_expected.in_person && (
+                                <Box sx={{ mt: 1, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
+                                  <Typography variant="caption" sx={{ display: 'block' }}>
+                                    In-Person: {currentTab.result.data.attendance_expected.in_person.toLocaleString()}
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ display: 'block' }}>
+                                    Virtual: {currentTab.result.data.attendance_expected.virtual.toLocaleString()}
+                                  </Typography>
+                                </Box>
+                              )}
                             </Paper>
                           </Grid>
 
+                          {/* Confidence Level */}
                           <Grid size={{ xs: 12, md: 3 }}>
                             <Paper 
                               variant="outlined" 
@@ -2543,7 +3938,7 @@ const onSubmit = async (formData) => {
                                 fontWeight: 'bold',
                                 mb: 1 
                               }}>
-                                {currentTab.result.data.confidence_level || 'N/A'}%
+                                {currentTab.result.data.confidence_level?.toUpperCase() || 'N/A'}
                               </Typography>
                               <Typography variant="h6" sx={{ 
                                 color: 'warning.darker',
@@ -2552,11 +3947,12 @@ const onSubmit = async (formData) => {
                                 Confidence Level
                               </Typography>
                               <Typography variant="body2" sx={{ color: 'warning.dark' }}>
-                                Prediction accuracy score
+                                Analysis reliability assessment
                               </Typography>
                             </Paper>
                           </Grid>
 
+                          {/* Attendance Rate */}
                           <Grid size={{ xs: 12, md: 3 }}>
                             <Paper 
                               variant="outlined" 
@@ -2572,8 +3968,16 @@ const onSubmit = async (formData) => {
                                 fontWeight: 'bold',
                                 mb: 1 
                               }}>
-                                {currentTab.result.data.attendance_expected && currentTab.result.data.registration_expected ? 
-                                  Math.round((currentTab.result.data.attendance_expected / currentTab.result.data.registration_expected) * 100) : 'N/A'}%
+                                {(() => {
+                                  const attendance = typeof currentTab.result.data.attendance_expected === 'object' 
+                                    ? currentTab.result.data.attendance_expected.total 
+                                    : currentTab.result.data.attendance_expected;
+                                  const registration = typeof currentTab.result.data.registration_expected === 'object' 
+                                    ? currentTab.result.data.registration_expected.total 
+                                    : currentTab.result.data.registration_expected;
+                                  return attendance && registration ? 
+                                    Math.round((attendance / registration) * 100) + '%' : 'N/A';
+                                })()}
                               </Typography>
                               <Typography variant="h6" sx={{ 
                                 color: 'secondary.darker',
@@ -2589,6 +3993,158 @@ const onSubmit = async (formData) => {
                         </Grid>
                       </Paper>
                     </Grid>
+
+                    {/* Event-Type Specific Analysis Sections */}
+                    
+                    {/* In-Person Specific: Venue Analysis */}
+                    {currentTab.result.data.event_analysis_type === 'in-person' && currentTab.result.data.venue_analysis && (
+                      <Grid size={12}>
+                        <Paper variant="outlined" sx={{ p: 3, bgcolor: 'blue.50' }}>
+                          <Typography variant="h6" sx={{ mb: 3, color: 'blue.dark' }}>
+                            🏢 Venue Analysis
+                          </Typography>
+                          <Grid container spacing={2}>
+                            {Object.entries(currentTab.result.data.venue_analysis).map(([key, value], index) => (
+                              <Grid size={{ xs: 12, md: 6 }} key={index}>
+                                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
+                                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'blue.dark', fontWeight: 'bold' }}>
+                                    {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                                    {value}
+                                  </Typography>
+                                </Paper>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        </Paper>
+                      </Grid>
+                    )}
+
+                    {/* In-Person Specific: Weather Impact Analysis */}
+                    {currentTab.result.data.event_analysis_type === 'in-person' && currentTab.result.data.weather_impact_analysis && (
+                      <Grid size={12}>
+                        <Paper variant="outlined" sx={{ p: 3, bgcolor: 'orange.50' }}>
+                          <Typography variant="h6" sx={{ mb: 3, color: 'orange.dark' }}>
+                            🌤️ Weather Impact Analysis
+                          </Typography>
+                          <Grid container spacing={2}>
+                            {Object.entries(currentTab.result.data.weather_impact_analysis).map(([key, value], index) => (
+                              <Grid size={{ xs: 12, md: 6 }} key={index}>
+                                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
+                                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'orange.dark', fontWeight: 'bold' }}>
+                                    {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                                    {value}
+                                  </Typography>
+                                </Paper>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        </Paper>
+                      </Grid>
+                    )}
+
+                    {/* Virtual/Hybrid Specific: Global Reach Analysis */}
+                    {(currentTab.result.data.event_analysis_type === 'virtual' || currentTab.result.data.event_analysis_type === 'hybrid') && currentTab.result.data.global_reach_analysis && (
+                      <Grid size={12}>
+                        <Paper variant="outlined" sx={{ p: 3, bgcolor: 'green.50' }}>
+                          <Typography variant="h6" sx={{ mb: 3, color: 'green.dark' }}>
+                            🌍 Global Reach Analysis
+                          </Typography>
+                          <Grid container spacing={2}>
+                            {Object.entries(currentTab.result.data.global_reach_analysis).map(([key, value], index) => (
+                              <Grid size={{ xs: 12, md: 6 }} key={index}>
+                                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
+                                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'green.dark', fontWeight: 'bold' }}>
+                                    {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                                    {value}
+                                  </Typography>
+                                </Paper>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        </Paper>
+                      </Grid>
+                    )}
+
+                    {/* Virtual Specific: Timezone Optimization */}
+                    {currentTab.result.data.event_analysis_type === 'virtual' && currentTab.result.data.timezone_optimization && (
+                      <Grid size={12}>
+                        <Paper variant="outlined" sx={{ p: 3, bgcolor: 'purple.50' }}>
+                          <Typography variant="h6" sx={{ mb: 3, color: 'purple.dark' }}>
+                            ⏰ Timezone Optimization
+                          </Typography>
+                          <Grid container spacing={2}>
+                            {Object.entries(currentTab.result.data.timezone_optimization).map(([key, value], index) => (
+                              <Grid size={{ xs: 12, md: 6 }} key={index}>
+                                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
+                                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'purple.dark', fontWeight: 'bold' }}>
+                                    {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                                    {value}
+                                  </Typography>
+                                </Paper>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        </Paper>
+                      </Grid>
+                    )}
+
+                    {/* Hybrid Specific: Hybrid Optimization Analysis */}
+                    {currentTab.result.data.event_analysis_type === 'hybrid' && currentTab.result.data.hybrid_optimization_analysis && (
+                      <Grid size={12}>
+                        <Paper variant="outlined" sx={{ p: 3, bgcolor: 'indigo.50' }}>
+                          <Typography variant="h6" sx={{ mb: 3, color: 'indigo.dark' }}>
+                            🔄 Hybrid Optimization Analysis
+                          </Typography>
+                          <Grid container spacing={2}>
+                            {Object.entries(currentTab.result.data.hybrid_optimization_analysis).map(([key, value], index) => (
+                              <Grid size={{ xs: 12, md: 6 }} key={index}>
+                                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
+                                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'indigo.dark', fontWeight: 'bold' }}>
+                                    {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                                    {value}
+                                  </Typography>
+                                </Paper>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        </Paper>
+                      </Grid>
+                    )}
+
+                    {/* Hybrid Specific: Audience Segmentation Strategy */}
+                    {currentTab.result.data.event_analysis_type === 'hybrid' && currentTab.result.data.audience_segmentation_strategy && (
+                      <Grid size={12}>
+                        <Paper variant="outlined" sx={{ p: 3, bgcolor: 'teal.50' }}>
+                          <Typography variant="h6" sx={{ mb: 3, color: 'teal.dark' }}>
+                            👥 Audience Segmentation Strategy
+                          </Typography>
+                          <Grid container spacing={2}>
+                            {Object.entries(currentTab.result.data.audience_segmentation_strategy).map(([key, value], index) => (
+                              <Grid size={{ xs: 12, md: 6 }} key={index}>
+                                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
+                                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'teal.dark', fontWeight: 'bold' }}>
+                                    {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                                    {value}
+                                  </Typography>
+                                </Paper>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        </Paper>
+                      </Grid>
+                    )}
 
                     {/* Key Insights */}
                     {currentTab.result.data.key_insights && (
@@ -2631,28 +4187,26 @@ const onSubmit = async (formData) => {
                           
                           <Grid container spacing={3}>
                             {/* Audience Segmentation */}
-                            {currentTab.result.data.data_visualizations.audience_segmentation && (
+                            {currentTab.result.data.data_visualizations?.audience_segmentation && (
                               <Grid size={{ xs: 12, md: 6 }}>
                                 <Paper variant="outlined" sx={{ p: 3, bgcolor: 'grey.50' }}>
                                   <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
-                                    🎯 {currentTab.result.data.data_visualizations.audience_segmentation.title}
+                                    👥 {currentTab.result.data.data_visualizations.audience_segmentation.title}
                                   </Typography>
-                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                    {currentTab.result.data.data_visualizations.audience_segmentation.data.map((item, index) => (
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                    {currentTab.result.data.data_visualizations.audience_segmentation.data?.map((item, index) => (
                                       <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                        <Box 
-                                          sx={{ 
-                                            width: 16, 
-                                            height: 16, 
-                                            bgcolor: item.color, 
-                                            borderRadius: '50%' 
-                                          }}
-                                        />
+                                        <Box sx={{ 
+                                          width: 16, 
+                                          height: 16, 
+                                          bgcolor: item.color, 
+                                          borderRadius: '50%' 
+                                        }} />
                                         <Typography variant="body2" sx={{ flexGrow: 1 }}>
-                                          {item.label}
+                                          {item.label}:
                                         </Typography>
                                         <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                          {item.value}%
+                                          {item.value}
                                         </Typography>
                                       </Box>
                                     ))}
@@ -2661,28 +4215,36 @@ const onSubmit = async (formData) => {
                               </Grid>
                             )}
 
-                            {/* Registration Timeline */}
-                            {currentTab.result.data.data_visualizations.registration_trend && (
+                            {/* Registration Trend */}
+                            {currentTab.result.data.data_visualizations?.registration_trend && (
                               <Grid size={{ xs: 12, md: 6 }}>
                                 <Paper variant="outlined" sx={{ p: 3, bgcolor: 'grey.50' }}>
                                   <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
                                     📈 {currentTab.result.data.data_visualizations.registration_trend.title}
                                   </Typography>
                                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                    {currentTab.result.data.data_visualizations.registration_trend.data.categories.map((week, index) => (
+                                    {currentTab.result.data.data_visualizations.registration_trend.data?.categories?.map((period, index) => (
                                       <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                        <Typography variant="body2" sx={{ minWidth: 60 }}>
-                                          {week}:
+                                        <Typography variant="body2" sx={{ minWidth: 80 }}>
+                                          {period}:
                                         </Typography>
-                                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                          <Typography variant="body2" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
-                                            {currentTab.result.data.data_visualizations.registration_trend.data.series[0].data[index]}
-                                          </Typography>
-                                          {currentTab.result.data.data_visualizations.registration_trend.data?.series[1]?.data[index] && (
-                                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                              / {currentTab.result.data.data_visualizations.registration_trend.data.series[1].data[index]} (conservative)
-                                            </Typography>
-                                          )}
+                                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexGrow: 1 }}>
+                                          {currentTab.result.data.data_visualizations.registration_trend.data.series?.map((series, seriesIndex) => (
+                                            <Box key={seriesIndex} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                              <Box sx={{ 
+                                                width: 8, 
+                                                height: 8, 
+                                                bgcolor: series.color, 
+                                                borderRadius: '50%' 
+                                              }} />
+                                              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                                {series.data[index]}
+                                              </Typography>
+                                              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                ({series.name})
+                                              </Typography>
+                                            </Box>
+                                          ))}
                                         </Box>
                                       </Box>
                                     ))}
@@ -2692,17 +4254,17 @@ const onSubmit = async (formData) => {
                             )}
 
                             {/* Geographic Distribution */}
-                            {currentTab.result.data.data_visualizations.geographic_distribution && (
+                            {currentTab.result.data.data_visualizations?.geographic_distribution && (
                               <Grid size={{ xs: 12, md: 6 }}>
                                 <Paper variant="outlined" sx={{ p: 3, bgcolor: 'grey.50' }}>
                                   <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
                                     🌎 {currentTab.result.data.data_visualizations.geographic_distribution.title}
                                   </Typography>
                                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                    {currentTab.result.data.data_visualizations.geographic_distribution.data.categories.map((region, index) => (
+                                    {currentTab.result.data.data_visualizations.geographic_distribution.data?.locations?.map((location, index) => (
                                       <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                         <Typography variant="body2" sx={{ minWidth: 100 }}>
-                                          {region}:
+                                          {location.country}:
                                         </Typography>
                                         <Box sx={{ 
                                           flexGrow: 1, 
@@ -2713,14 +4275,52 @@ const onSubmit = async (formData) => {
                                           overflow: 'hidden'
                                         }}>
                                           <Box sx={{ 
-                                            bgcolor: '#2e7d32', 
+                                            bgcolor: location.color, 
                                             height: '100%', 
-                                            width: `${(currentTab.result.data.data_visualizations.geographic_distribution.data.series[0].data[index] / 650) * 100}%`,
+                                            width: `${Math.min((location.value / 500) * 100, 100)}%`,
                                             borderRadius: 1 
                                           }} />
                                         </Box>
                                         <Typography variant="body2" sx={{ fontWeight: 'bold', minWidth: 50 }}>
-                                          {currentTab.result.data.data_visualizations.geographic_distribution.data.series[0].data[index]}
+                                          {location.value}
+                                        </Typography>
+                                      </Box>
+                                    ))}
+                                  </Box>
+                                </Paper>
+                              </Grid>
+                            )}
+
+                            {/* Conversion Funnel */}
+                            {currentTab.result.data.data_visualizations?.conversion_funnel && (
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <Paper variant="outlined" sx={{ p: 3, bgcolor: 'grey.50' }}>
+                                  <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
+                                    🎯 {currentTab.result.data.data_visualizations.conversion_funnel.title}
+                                  </Typography>
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                    {currentTab.result.data.data_visualizations.conversion_funnel.data?.map((stage, index) => (
+                                      <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Typography variant="body2" sx={{ minWidth: 120 }}>
+                                          {stage.stage}:
+                                        </Typography>
+                                        <Box sx={{ 
+                                          flexGrow: 1, 
+                                          bgcolor: 'grey.200', 
+                                          borderRadius: 1, 
+                                          height: 12, 
+                                          position: 'relative',
+                                          overflow: 'hidden'
+                                        }}>
+                                          <Box sx={{ 
+                                            bgcolor: stage.color, 
+                                            height: '100%', 
+                                            width: `${100 - (index * 15)}%`,
+                                            borderRadius: 1 
+                                          }} />
+                                        </Box>
+                                        <Typography variant="body2" sx={{ fontWeight: 'bold', minWidth: 60 }}>
+                                          {stage.value}
                                         </Typography>
                                       </Box>
                                     ))}
@@ -2730,39 +4330,35 @@ const onSubmit = async (formData) => {
                             )}
 
                             {/* Daily Attendance Forecast */}
-                            {currentTab.result.data.data_visualizations.daily_attendance_forecast && (
+                            {currentTab.result.data.data_visualizations?.daily_attendance_forecast && (
                               <Grid size={{ xs: 12, md: 6 }}>
                                 <Paper variant="outlined" sx={{ p: 3, bgcolor: 'grey.50' }}>
                                   <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
                                     📅 {currentTab.result.data.data_visualizations.daily_attendance_forecast.title}
                                   </Typography>
                                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                    {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.categories.map((day, index) => (
+                                    {currentTab.result.data.data_visualizations.daily_attendance_forecast.data?.categories?.map((day, index) => (
                                       <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                        <Typography variant="body2" sx={{ minWidth: 50 }}>
+                                        <Typography variant="body2" sx={{ minWidth: 80 }}>
                                           {day}:
                                         </Typography>
                                         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexGrow: 1 }}>
-                                          <Typography variant="body2" sx={{ color: '#1976d2', fontWeight: 'bold', minWidth: 60 }}>
-                                            {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[0].data[index]} attendees
-                                          </Typography>
-                                          {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1]?.data[index] && (
-                                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                              (Capacity: {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1].data[index] })
-                                            </Typography>
-                                          )}
-                                          {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1]?.data[index] && (
-                                            <Typography variant="caption" sx={{ 
-                                              color: 'success.main', 
-                                              fontWeight: 'bold',
-                                              bgcolor: 'success.lighter',
-                                              px: 1,
-                                              borderRadius: 1
-                                            }}>
-                                              {Math.round((currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[0].data[index] / 
-                                              currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series[1].data[index]) * 100)}% utilized
-                                            </Typography>
-                                          )}
+                                          {currentTab.result.data.data_visualizations.daily_attendance_forecast.data.series?.map((series, seriesIndex) => (
+                                            <Box key={seriesIndex} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                              <Box sx={{ 
+                                                width: 8, 
+                                                height: 8, 
+                                                bgcolor: series.color, 
+                                                borderRadius: '50%' 
+                                              }} />
+                                              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                                {series.data[index]}
+                                              </Typography>
+                                              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                ({series.name})
+                                              </Typography>
+                                            </Box>
+                                          ))}
                                         </Box>
                                       </Box>
                                     ))}
@@ -2771,763 +4367,309 @@ const onSubmit = async (formData) => {
                               </Grid>
                             )}
 
-                            {/* Enhanced Marketing Channel Effectiveness */}
-                            {currentTab.result.data.data_visualizations.marketing_effectiveness && (
+                            {/* Industry Breakdown */}
+                            {currentTab.result.data.data_visualizations?.industry_breakdown && (
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <Paper variant="outlined" sx={{ p: 3, bgcolor: 'grey.50' }}>
+                                  <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
+                                    🏢 {currentTab.result.data.data_visualizations.industry_breakdown.title}
+                                  </Typography>
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                    {currentTab.result.data.data_visualizations.industry_breakdown.data?.map((item, index) => (
+                                      <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Box sx={{ 
+                                          width: 16, 
+                                          height: 16, 
+                                          bgcolor: item.color, 
+                                          borderRadius: '50%' 
+                                        }} />
+                                        <Typography variant="body2" sx={{ flexGrow: 1 }}>
+                                          {item.label}:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                          {item.value}
+                                        </Typography>
+                                      </Box>
+                                    ))}
+                                  </Box>
+                                </Paper>
+                              </Grid>
+                            )}
+
+                            {/* Marketing Effectiveness */}
+                            {currentTab.result.data.data_visualizations?.marketing_effectiveness && (
                               <Grid size={{ xs: 12, md: 12 }}>
                                 <Paper variant="outlined" sx={{ p: 3, bgcolor: 'grey.50' }}>
                                   <Typography variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
-                                    📊 Enhanced Marketing Channel Performance
+                                    📊 {currentTab.result.data.data_visualizations.marketing_effectiveness.title}
                                   </Typography>
-                                  
-                                  <Grid container spacing={2}>
-                                    {currentTab.result.data.data_visualizations.marketing_effectiveness.data.categories.map((channel, index) => {
-                                      const totalRegistrations = currentTab.result.data.data_visualizations.marketing_effectiveness.data.series.reduce((sum, series) => sum + series.data[index], 0);
-                                      const maxTotal = Math.max(...currentTab.result.data.data_visualizations.marketing_effectiveness.data.categories.map((_, i) => 
-                                        currentTab.result.data.data_visualizations.marketing_effectiveness.data.series.reduce((sum, series) => sum + series.data[i], 0)
-                                      ));
-                                      
-                                      return (
-                                        <Grid size={{ xs: 12, md: 6, lg: 4 }} key={index}>
-                                          <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
-                                            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', textAlign: 'center' }}>
-                                              {channel}
-                                            </Typography>
-                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                              {currentTab.result.data.data_visualizations.marketing_effectiveness.data.series.map((series, seriesIndex) => (
-                                                <Box key={seriesIndex} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                  <Box sx={{ 
-                                                    width: 12, 
-                                                    height: 12, 
-                                                    bgcolor: series.color, 
-                                                    borderRadius: 1 
-                                                  }} />
-                                                  <Typography variant="caption" sx={{ minWidth: 80, fontSize: '0.7rem' }}>
-                                                    {series.name.replace(' (Week ', ' (W').replace(')', ')')}:
-                                                  </Typography>
-                                                  <Typography variant="caption" sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}>
-                                                    {series.data[index]}
-                                                  </Typography>
-                                                </Box>
-                                              ))}
-                                              <Box sx={{ mt: 1, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
-                                                <Typography variant="body2" sx={{ fontWeight: 'bold', textAlign: 'center' }}>
-                                                  Total: {totalRegistrations}
-                                                </Typography>
-                                                <Box sx={{ 
-                                                  mt: 1, 
-                                                  height: 6, 
-                                                  bgcolor: 'grey.200', 
-                                                  borderRadius: 3,
-                                                  overflow: 'hidden'
-                                                }}>
-                                                  <Box sx={{ 
-                                                    height: '100%', 
-                                                    bgcolor: 'primary.main', 
-                                                    width: `${(totalRegistrations / maxTotal) * 100}%`,
-                                                    borderRadius: 3
-                                                  }} />
-                                                </Box>
-                                              </Box>
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                    {currentTab.result.data.data_visualizations.marketing_effectiveness.data?.categories?.map((channel, index) => (
+                                      <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Typography variant="body2" sx={{ minWidth: 120 }}>
+                                          {channel}:
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexGrow: 1 }}>
+                                          {currentTab.result.data.data_visualizations.marketing_effectiveness.data.series?.map((series, seriesIndex) => (
+                                            <Box key={seriesIndex} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                              <Box sx={{ 
+                                                width: 8, 
+                                                height: 8, 
+                                                bgcolor: series.color, 
+                                                borderRadius: '50%' 
+                                              }} />
+                                              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                                {series.data[index]}
+                                              </Typography>
+                                              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                ({series.name})
+                                              </Typography>
                                             </Box>
-                                          </Paper>
-                                        </Grid>
-                                      );
-                                    })}
+                                          ))}
+                                        </Box>
+                                      </Box>
+                                    ))}
+                                  </Box>
+                                </Paper>
+                              </Grid>
+                            )}
+
+                            {/* Format-Specific Marketing Effectiveness */}
+                            {currentTab.result.data.local_marketing_effectiveness && (
+                              <Grid size={{ xs: 12, md: 12 }}>
+                                <Paper variant="outlined" sx={{ p: 3, bgcolor: 'success.lighter' }}>
+                                  <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', color: 'success.main' }}>
+                                    📍 Local Marketing Effectiveness
+                                  </Typography>
+                                  <Grid container spacing={2}>
+                                    <Grid size={{ xs: 12, md: 6 }}>
+                                      <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
+                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                          📰 Offline Publicity
+                                        </Typography>
+                                        <Typography variant="body2">
+                                          {currentTab.result.data.local_marketing_effectiveness.offline_publicity}
+                                        </Typography>
+                                      </Paper>
+                                    </Grid>
+                                    <Grid size={{ xs: 12, md: 6 }}>
+                                      <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
+                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                          🤝 Meetup Community Building
+                                        </Typography>
+                                        <Typography variant="body2">
+                                          {currentTab.result.data.local_marketing_effectiveness.meetup_community_building}
+                                        </Typography>
+                                      </Paper>
+                                    </Grid>
+                                    <Grid size={{ xs: 12, md: 6 }}>
+                                      <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
+                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                          🌐 Geographic Digital Targeting
+                                        </Typography>
+                                        <Typography variant="body2">
+                                          {currentTab.result.data.local_marketing_effectiveness.geographic_digital_targeting}
+                                        </Typography>
+                                      </Paper>
+                                    </Grid>
+                                    <Grid size={{ xs: 12, md: 6 }}>
+                                      <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
+                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                          🤝 Regional Influencer Impact
+                                        </Typography>
+                                        <Typography variant="body2">
+                                          {currentTab.result.data.local_marketing_effectiveness.regional_influencer_impact}
+                                        </Typography>
+                                      </Paper>
+                                    </Grid>
                                   </Grid>
                                 </Paper>
                               </Grid>
                             )}
 
-                            {/* Influencer Marketing ROI Analysis */}
-                            <Grid size={{ xs: 12, md: 12 }}>
-                              <Paper variant="outlined" sx={{ p: 3, bgcolor: 'purple.50' }}>
-                                <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', color: 'purple.main' }}>
-                                  🤝 Influencer Marketing Analysis
-                                </Typography>
-                                
-                                <Grid container spacing={3}>
-                                  {/* Influencer Reach Distribution */}
-                                  <Grid size={{ xs: 12, md: 6 }}>
-                                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
-                                      <Typography variant="subtitle1" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold' }}>
-                                        📈 Total Influencer Reach by Platform
-                                      </Typography>
-                                      
-                                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                          <Box sx={{ width: 16, height: 16, bgcolor: '#1877F2', borderRadius: '50%' }} />
-                                          <Typography variant="body2" sx={{ flexGrow: 1 }}>Facebook</Typography>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>430K followers</Typography>
-                                          <Typography variant="caption" sx={{ color: 'success.main' }}>260 registrations</Typography>
-                                        </Box>
-                                        
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                          <Box sx={{ width: 16, height: 16, bgcolor: '#E4405F', borderRadius: '50%' }} />
-                                          <Typography variant="body2" sx={{ flexGrow: 1 }}>Instagram</Typography>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>750K followers</Typography>
-                                          <Typography variant="caption" sx={{ color: 'success.main' }}>520 registrations</Typography>
-                                        </Box>
-                                        
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                          <Box sx={{ width: 16, height: 16, bgcolor: '#0A66C2', borderRadius: '50%' }} />
-                                          <Typography variant="body2" sx={{ flexGrow: 1 }}>LinkedIn</Typography>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>215K followers</Typography>
-                                          <Typography variant="caption" sx={{ color: 'success.main' }}>195 registrations</Typography>
-                                        </Box>
-                                        
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                          <Box sx={{ width: 16, height: 16, bgcolor: '#1DA1F2', borderRadius: '50%' }} />
-                                          <Typography variant="body2" sx={{ flexGrow: 1 }}>X (Twitter)</Typography>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>400K followers</Typography>
-                                          <Typography variant="caption" sx={{ color: 'success.main' }}>300 registrations</Typography>
-                                        </Box>
-                                        
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                          <Box sx={{ width: 16, height: 16, bgcolor: '#FF0000', borderRadius: '50%' }} />
-                                          <Typography variant="body2" sx={{ flexGrow: 1 }}>YouTube</Typography>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>1.08M subscribers</Typography>
-                                          <Typography variant="caption" sx={{ color: 'success.main' }}>648 registrations</Typography>
-                                        </Box>
-                                        
-                                        <Box sx={{ mt: 2, pt: 2, borderTop: '2px solid', borderColor: 'primary.main' }}>
-                                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <Typography variant="h6" sx={{ color: 'primary.main' }}>Total Impact:</Typography>
-                                            <Box sx={{ textAlign: 'right' }}>
-                                              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                                                2.875M reach
-                                              </Typography>
-                                              <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'success.main' }}>
-                                                1,923 registrations
-                                              </Typography>
-                                            </Box>
-                                          </Box>
-                                        </Box>
-                                      </Box>
-                                    </Paper>
-                                  </Grid>
-
-                                  {/* Influencer Engagement Rates */}
-                                  <Grid size={{ xs: 12, md: 6 }}>
-                                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
-                                      <Typography variant="subtitle1" sx={{ mb: 2, textAlign: 'center', fontWeight: 'bold' }}>
-                                        💫 Influencer Engagement Performance
-                                      </Typography>
-                                      
-                                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                        <Box>
-                                          <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold', color: 'primary.main' }}>
-                                            Top Performing Influencers
-                                          </Typography>
-                                          
-                                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, bgcolor: 'success.lighter', borderRadius: 1 }}>
-                                              <Typography variant="caption" sx={{ fontWeight: 'bold' }}>TechExplainedTV (YouTube)</Typography>
-                                              <Typography variant="caption" sx={{ color: 'success.main' }}>270 registrations</Typography>
-                                            </Box>
-                                            
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, bgcolor: 'info.lighter', borderRadius: 1 }}>
-                                              <Typography variant="caption" sx={{ fontWeight: 'bold' }}>CodeWithEmily (Instagram)</Typography>
-                                              <Typography variant="caption" sx={{ color: 'info.main' }}>200 registrations</Typography>
-                                            </Box>
-                                            
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1, bgcolor: 'warning.lighter', borderRadius: 1 }}>
-                                              <Typography variant="caption" sx={{ fontWeight: 'bold' }}>@AINewsNow (Twitter)</Typography>
-                                              <Typography variant="caption" sx={{ color: 'warning.main' }}>165 registrations</Typography>
-                                            </Box>
-                                          </Box>
-                                        </Box>
-                                        
-                                        <Box sx={{ mt: 2 }}>
-                                          <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold', color: 'secondary.main' }}>
-                                            Platform ROI Comparison
-                                          </Typography>
-                                          
-                                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                              <Typography variant="caption" sx={{ minWidth: 70 }}>YouTube:</Typography>
-                                              <Box sx={{ flexGrow: 1, bgcolor: 'grey.200', height: 8, borderRadius: 4 }}>
-                                                <Box sx={{ width: '100%', bgcolor: 'error.main', height: '100%', borderRadius: 4 }} />
-                                              </Box>
-                                              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'error.main' }}>
-                                                60% ROI
-                                              </Typography>
-                                            </Box>
-                                            
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                              <Typography variant="caption" sx={{ minWidth: 70 }}>Instagram:</Typography>
-                                              <Box sx={{ flexGrow: 1, bgcolor: 'grey.200', height: 8, borderRadius: 4 }}>
-                                                <Box sx={{ width: '85%', bgcolor: 'warning.main', height: '100%', borderRadius: 4 }} />
-                                              </Box>
-                                              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'warning.main' }}>
-                                                51% ROI
-                                              </Typography>
-                                            </Box>
-                                            
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                              <Typography variant="caption" sx={{ minWidth: 70 }}>Twitter:</Typography>
-                                              <Box sx={{ flexGrow: 1, bgcolor: 'grey.200', height: 8, borderRadius: 4 }}>
-                                                <Box sx={{ width: '75%', bgcolor: 'info.main', height: '100%', borderRadius: 4 }} />
-                                              </Box>
-                                              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'info.main' }}>
-                                                45% ROI
-                                              </Typography>
-                                            </Box>
-                                            
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                              <Typography variant="caption" sx={{ minWidth: 70 }}>Facebook:</Typography>
-                                              <Box sx={{ flexGrow: 1, bgcolor: 'grey.200', height: 8, borderRadius: 4 }}>
-                                                <Box sx={{ width: '65%', bgcolor: 'primary.main', height: '100%', borderRadius: 4 }} />
-                                              </Box>
-                                              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                                                39% ROI
-                                              </Typography>
-                                            </Box>
-                                            
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                              <Typography variant="caption" sx={{ minWidth: 70 }}>LinkedIn:</Typography>
-                                              <Box sx={{ flexGrow: 1, bgcolor: 'grey.200', height: 8, borderRadius: 4 }}>
-                                                <Box sx={{ width: '55%', bgcolor: 'success.main', height: '100%', borderRadius: 4 }} />
-                                              </Box>
-                                              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'success.main' }}>
-                                                33% ROI
-                                              </Typography>
-                                            </Box>
-                                          </Box>
-                                        </Box>
-                                      </Box>
-                                    </Paper>
-                                  </Grid>
-                                </Grid>
-                              </Paper>
-                            </Grid>
-
-                            {/* Social Media vs Traditional Marketing Comparison */}
-                            <Grid size={{ xs: 12, md: 12 }}>
-                              <Paper variant="outlined" sx={{ p: 3, bgcolor: 'gradient.main' }}>
-                                <Typography variant="h6" sx={{ mb: 3, textAlign: 'center', color: 'primary.main' }}>
-                                  ⚖️ Marketing Channel Performance Comparison
-                                </Typography>
-                                
-                                <Grid container spacing={2}>
-                                  <Grid size={{ xs: 12, md: 6 }}>
-                                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'success.lighter', border: '2px solid success.main' }}>
-                                      <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', color: 'success.darker' }}>
-                                        🌐 Digital Marketing
-                                      </Typography>
-                                      
-                                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                          <Typography variant="body2">Social Media Channels:</Typography>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'success.main' }}>
-                                            1,923 registrations
-                                          </Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                          <Typography variant="body2">Google Ads:</Typography>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'success.main' }}>
-                                            150 registrations
-                                          </Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                          <Typography variant="body2">Email Campaigns:</Typography>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'success.main' }}>
-                                            280 registrations
-                                          </Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                          <Typography variant="body2">WhatsApp Campaigns:</Typography>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'success.main' }}>
-                                            95 registrations
-                                          </Typography>
-                                        </Box>
-                                        <Box sx={{ mt: 1, pt: 1, borderTop: '2px solid', borderColor: 'success.main', display: 'flex', justifyContent: 'space-between' }}>
-                                          <Typography variant="h6" sx={{ color: 'success.darker' }}>Digital Total:</Typography>
-                                          <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'success.main' }}>
-                                            2,448 registrations
-                                          </Typography>
-                                        </Box>
-                                        <Typography variant="caption" sx={{ textAlign: 'center', color: 'success.darker', mt: 1 }}>
-                                          Average Cost per Registration: $4.50 | ROI: 320%
-                                        </Typography>
-                                      </Box>
-                                    </Paper>
-                                  </Grid>
-                                  
-                                  <Grid size={{ xs: 12, md: 6 }}>
-                                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'warning.lighter', border: '2px solid warning.main' }}>
-                                      <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', color: 'warning.darker' }}>
-                                        📰 Traditional Marketing
-                                      </Typography>
-                                      
-                                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                          <Typography variant="body2">Offline Publicity:</Typography>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'warning.main' }}>
-                                            52 registrations
-                                          </Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                          <Typography variant="body2">Print Media:</Typography>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'warning.main' }}>
-                                            18 registrations
-                                          </Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                          <Typography variant="body2">Radio Sponsorship:</Typography>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'warning.main' }}>
-                                            8 registrations
-                                          </Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                          <Typography variant="body2">Direct Mail:</Typography>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'warning.main' }}>
-                                            12 registrations
-                                          </Typography>
-                                        </Box>
-                                        <Box sx={{ mt: 1, pt: 1, borderTop: '2px solid', borderColor: 'warning.main', display: 'flex', justifyContent: 'space-between' }}>
-                                          <Typography variant="h6" sx={{ color: 'warning.darker' }}>Traditional Total:</Typography>
-                                          <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'warning.main' }}>
-                                            90 registrations
-                                          </Typography>
-                                        </Box>
-                                        <Typography variant="caption" sx={{ textAlign: 'center', color: 'warning.darker', mt: 1 }}>
-                                          Average Cost per Registration: $22.50 | ROI: 85%
-                                        </Typography>
-                                      </Box>
-                                    </Paper>
-                                  </Grid>
-                                </Grid>
-                                
-                                <Box sx={{ mt: 3, p: 2, bgcolor: 'primary.lighter', borderRadius: 2 }}>
-                                  <Typography variant="h5" sx={{ textAlign: 'center', color: 'primary.main', mb: 1 }}>
-                                    📊 Overall Marketing Performance
+                            {/* International Marketing Effectiveness (Virtual Events) */}
+                            {currentTab.result.data.international_marketing_effectiveness && (
+                              <Grid size={{ xs: 12, md: 12 }}>
+                                <Paper variant="outlined" sx={{ p: 3, bgcolor: 'info.lighter' }}>
+                                  <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', color: 'info.main' }}>
+                                    🌍 International Marketing Effectiveness
                                   </Typography>
-                                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 4 }}>
-                                    <Box sx={{ textAlign: 'center' }}>
-                                      <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                                        2,538
+                                  <Grid container spacing={2}>
+                                    <Grid size={{ xs: 12, md: 6 }}>
+                                      <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
+                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                          🌐 Global Digital Marketing
+                                        </Typography>
+                                        <Typography variant="body2">
+                                          {currentTab.result.data.international_marketing_effectiveness.global_digital_marketing}
+                                        </Typography>
+                                      </Paper>
+                                    </Grid>
+                                    <Grid size={{ xs: 12, md: 6 }}>
+                                      <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
+                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                          🎯 Regional Marketing Adaptation
+                                        </Typography>
+                                        <Typography variant="body2">
+                                          {currentTab.result.data.international_marketing_effectiveness.regional_marketing_adaptation}
+                                        </Typography>
+                                      </Paper>
+                                    </Grid>
+                                    <Grid size={{ xs: 12, md: 12 }}>
+                                      <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
+                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                          🤝 International Influencer Impact
+                                        </Typography>
+                                        <Typography variant="body2">
+                                          {currentTab.result.data.international_marketing_effectiveness.international_influencer_impact}
+                                        </Typography>
+                                      </Paper>
+                                    </Grid>
+                                  </Grid>
+                                </Paper>
+                              </Grid>
+                            )}
+
+                            {/* Integrated Marketing Effectiveness (Hybrid Events) */}
+                            {currentTab.result.data.integrated_marketing_effectiveness && (
+                              <Grid size={{ xs: 12, md: 12 }}>
+                                <Paper variant="outlined" sx={{ p: 3, bgcolor: 'warning.lighter' }}>
+                                  <Typography variant="h6" sx={{ mb: 2, textAlign: 'center', color: 'warning.main' }}>
+                                    🔄 Integrated Marketing Effectiveness
+                                  </Typography>
+                                  <Grid container spacing={2}>
+                                    <Grid size={{ xs: 12, md: 6 }}>
+                                      <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
+                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                          🎯 Cross-Channel Marketing Strategy
+                                        </Typography>
+                                        <Typography variant="body2">
+                                          {currentTab.result.data.integrated_marketing_effectiveness.cross_channel_marketing_strategy}
+                                        </Typography>
+                                      </Paper>
+                                    </Grid>
+                                    <Grid size={{ xs: 12, md: 6 }}>
+                                      <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
+                                        <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                          🔄 Hybrid Marketing Optimization
+                                        </Typography>
+                                        <Typography variant="body2">
+                                          {currentTab.result.data.integrated_marketing_effectiveness.hybrid_marketing_optimization}
+                                        </Typography>
+                                      </Paper>
+                                    </Grid>
+                                  </Grid>
+                                </Paper>
+                              </Grid>
+                            )}
+                          </Grid>
+                        </Paper>
+                      </Grid>
+                    )}
+
+                    {/* Marketing Effectiveness Display */}
+                    {(currentTab.result.data.local_marketing_effectiveness || 
+                      currentTab.result.data.international_marketing_effectiveness || 
+                      currentTab.result.data.integrated_marketing_effectiveness) && (
+                      <Grid size={12}>
+                        <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+                          <Typography variant="h6" sx={{ mb: 3, color: 'primary.main' }}>
+                            📊 Marketing Effectiveness Analysis
+                          </Typography>
+                          
+                          <Grid container spacing={3}>
+                            {currentTab.result.data.local_marketing_effectiveness && (
+                              <Grid size={{ xs: 12, md: 4 }}>
+                                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'success.lighter' }}>
+                                  <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', color: 'success.main' }}>
+                                    🏠 Local Marketing Effectiveness
+                                  </Typography>
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                    {currentTab.result.data.local_marketing_effectiveness.offline_publicity && (
+                                      <Typography variant="body2">
+                                        <strong>Offline Publicity:</strong> {currentTab.result.data.local_marketing_effectiveness.offline_publicity}
                                       </Typography>
-                                      <Typography variant="body1" sx={{ color: 'primary.darker' }}>
-                                        Total Registrations
+                                    )}
+                                    {currentTab.result.data.local_marketing_effectiveness.meetup_community_building && (
+                                      <Typography variant="body2">
+                                        <strong>Meetup Community:</strong> {currentTab.result.data.local_marketing_effectiveness.meetup_community_building}
                                       </Typography>
-                                    </Box>
-                                    <Box sx={{ textAlign: 'center' }}>
-                                      <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'success.main' }}>
-                                        96.4%
+                                    )}
+                                    {currentTab.result.data.local_marketing_effectiveness.geographic_digital_targeting && (
+                                      <Typography variant="body2">
+                                        <strong>Geographic Targeting:</strong> {currentTab.result.data.local_marketing_effectiveness.geographic_digital_targeting}
                                       </Typography>
-                                      <Typography variant="body1" sx={{ color: 'primary.darker' }}>
-                                        Digital Conversion
+                                    )}
+                                    {currentTab.result.data.local_marketing_effectiveness.regional_influencer_impact && (
+                                      <Typography variant="body2">
+                                        <strong>Regional Influencer:</strong> {currentTab.result.data.local_marketing_effectiveness.regional_influencer_impact}
                                       </Typography>
-                                    </Box>
-                                    <Box sx={{ textAlign: 'center' }}>
-                                      <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'error.main' }}>
-                                        $6.75
-                                      </Typography>
-                                      <Typography variant="body1" sx={{ color: 'primary.darker' }}>
-                                        Avg Cost/Registration
-                                      </Typography>
-                                    </Box>
+                                    )}
                                   </Box>
-                                </Box>
-                              </Paper>
-                            </Grid>
-
-                            {/* Marketing Timeline & Campaign Effectiveness */}
-                            <Grid size={{ xs: 12, md: 12 }}>
-                              <Paper variant="outlined" sx={{ p: 3, bgcolor: 'secondary.lighter' }}>
-                                <Typography variant="h6" sx={{ mb: 3, textAlign: 'center', color: 'secondary.main' }}>
-                                  📅 Marketing Campaign Timeline Analysis
-                                </Typography>
-                                
-                                <Grid container spacing={3}>
-                                  <Grid size={{ xs: 12, md: 8 }}>
-                                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
-                                      <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', textAlign: 'center' }}>
-                                        📈 Weekly Registration Trends by Channel
-                                      </Typography>
-                                      
-                                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                        {['Week 1', 'Week 2', 'Week 3', 'Week 4'].map((week, weekIndex) => (
-                                          <Box key={week} sx={{ p: 2, bgcolor: weekIndex % 2 === 0 ? 'grey.50' : 'white', borderRadius: 1 }}>
-                                            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: 'primary.main' }}>
-                                              {week}
-                                            </Typography>
-                                            
-                                            <Grid container spacing={1}>
-                                              <Grid size={{ xs: 6, md: 3 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                  <Box sx={{ width: 8, height: 8, bgcolor: '#1877F2', borderRadius: '50%' }} />
-                                                  <Typography variant="caption">Facebook: {[65, 72, 68, 55][weekIndex]}</Typography>
-                                                </Box>
-                                              </Grid>
-                                              <Grid size={{ xs: 6, md: 3 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                  <Box sx={{ width: 8, height: 8, bgcolor: '#E4405F', borderRadius: '50%' }} />
-                                                  <Typography variant="caption">Instagram: {[130, 145, 135, 110][weekIndex]}</Typography>
-                                                </Box>
-                                              </Grid>
-                                              <Grid size={{ xs: 6, md: 3 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                  <Box sx={{ width: 8, height: 8, bgcolor: '#1DA1F2', borderRadius: '50%' }} />
-                                                  <Typography variant="caption">Twitter: {[75, 82, 78, 65][weekIndex]}</Typography>
-                                                </Box>
-                                              </Grid>
-                                              <Grid size={{ xs: 6, md: 3 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                  <Box sx={{ width: 8, height: 8, bgcolor: '#FF0000', borderRadius: '50%' }} />
-                                                  <Typography variant="caption">YouTube: {[162, 180, 171, 135][weekIndex]}</Typography>
-                                                </Box>
-                                              </Grid>
-                                            </Grid>
-                                            
-                                            <Box sx={{ mt: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                                Week Total: {[432, 479, 452, 365][weekIndex]}
-                                              </Typography>
-                                              <Typography variant="caption" sx={{ 
-                                                color: weekIndex === 1 ? 'success.main' : weekIndex === 3 ? 'error.main' : 'primary.main' 
-                                              }}>
-                                                {weekIndex === 1 ? '+10.9%' : weekIndex === 3 ? '-19.2%' : weekIndex === 2 ? '-5.6%' : 'baseline'}
-                                              </Typography>
-                                            </Box>
-                                          </Box>
-                                        ))}
-                                      </Box>
-                                    </Paper>
-                                  </Grid>
-                                  
-                                  <Grid size={{ xs: 12, md: 4 }}>
-                                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
-                                      <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', textAlign: 'center' }}>
-                                        🎯 Campaign Success Metrics
-                                      </Typography>
-                                      
-                                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                        <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 1 }}>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'success.main', mb: 1 }}>
-                                            Best Performing Week
-                                          </Typography>
-                                          <Typography variant="h5" sx={{ color: 'success.main' }}>Week 2</Typography>
-                                          <Typography variant="caption">479 registrations (+10.9%)</Typography>
-                                        </Box>
-                                        
-                                        <Box sx={{ p: 2, bgcolor: 'info.lighter', borderRadius: 1 }}>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'info.main', mb: 1 }}>
-                                            Most Consistent Channel
-                                          </Typography>
-                                          <Typography variant="h6" sx={{ color: 'info.main' }}>Instagram</Typography>
-                                          <Typography variant="caption">±7% variance across weeks</Typography>
-                                        </Box>
-                                        
-                                        <Box sx={{ p: 2, bgcolor: 'warning.lighter', borderRadius: 1 }}>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'warning.main', mb: 1 }}>
-                                            Growth Opportunity
-                                          </Typography>
-                                          <Typography variant="h6" sx={{ color: 'warning.main' }}>Facebook</Typography>
-                                          <Typography variant="caption">Showed decline in Week 4</Typography>
-                                        </Box>
-                                        
-                                        <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 1 }}>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'error.main', mb: 1 }}>
-                                            Peak Engagement Day
-                                          </Typography>
-                                          <Typography variant="h6" sx={{ color: 'error.main' }}>Wednesday</Typography>
-                                          <Typography variant="caption">35% higher than average</Typography>
-                                        </Box>
-                                      </Box>
-                                    </Paper>
-                                  </Grid>
-                                </Grid>
-                              </Paper>
-                            </Grid>
-
-                            {/* Advanced Influencer Analytics */}
-                            <Grid size={{ xs: 12, md: 12 }}>
-                              <Paper variant="outlined" sx={{ p: 3, bgcolor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-                                <Typography variant="h6" sx={{ mb: 3, textAlign: 'center', color: 'black' }}>
-                                  🌟 Advanced Influencer Performance Analytics
-                                </Typography>
-                                
-                                <Grid container spacing={3}>
-                                  <Grid size={{ xs: 12, md: 6 }}>
-                                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
-                                      <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', textAlign: 'center' }}>
-                                        💎 Influencer Tier Performance
-                                      </Typography>
-                                      
-                                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                        <Box sx={{ p: 2, bgcolor: 'gold', color: 'white', borderRadius: 2 }}>
-                                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                                            🥇 Mega Influencers (1M+ followers)
-                                          </Typography>
-                                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <Box>
-                                              <Typography variant="body2">Count: 3 influencers</Typography>
-                                              <Typography variant="body2">Total Reach: 1.8M</Typography>
-                                            </Box>
-                                            <Box sx={{ textAlign: 'right' }}>
-                                              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>540</Typography>
-                                              <Typography variant="caption">registrations</Typography>
-                                            </Box>
-                                          </Box>
-                                        </Box>
-                                        
-                                        <Box sx={{ p: 2, bgcolor: 'silver', color: 'white', borderRadius: 2 }}>
-                                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                                            🥈 Macro Influencers (100K-1M followers)
-                                          </Typography>
-                                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <Box>
-                                              <Typography variant="body2">Count: 5 influencers</Typography>
-                                              <Typography variant="body2">Total Reach: 875K</Typography>
-                                            </Box>
-                                            <Box sx={{ textAlign: 'right' }}>
-                                              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>945</Typography>
-                                              <Typography variant="caption">registrations</Typography>
-                                            </Box>
-                                          </Box>
-                                        </Box>
-                                        
-                                        <Box sx={{ p: 2, bgcolor: '#CD7F32', color: 'white', borderRadius: 2 }}>
-                                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                                            🥉 Micro Influencers (10K-100K followers)
-                                          </Typography>
-                                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <Box>
-                                              <Typography variant="body2">Count: 4 influencers</Typography>
-                                              <Typography variant="body2">Total Reach: 200K</Typography>
-                                            </Box>
-                                            <Box sx={{ textAlign: 'right' }}>
-                                              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>438</Typography>
-                                              <Typography variant="caption">registrations</Typography>
-                                            </Box>
-                                          </Box>
-                                        </Box>
-                                      </Box>
-                                    </Paper>
-                                  </Grid>
-                                  
-                                  <Grid size={{ xs: 12, md: 6 }}>
-                                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
-                                      <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', textAlign: 'center' }}>
-                                        📊 Engagement Rate vs Conversion Analysis
-                                      </Typography>
-                                      
-                                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                        {[
-                                          { name: 'TechExplainedTV', platform: 'YouTube', engagement: 4.2, conversion: 2.1, registrations: 270 },
-                                          { name: 'CodeWithEmily', platform: 'Instagram', engagement: 6.8, conversion: 1.8, registrations: 200 },
-                                          { name: 'AINewsNow', platform: 'Twitter', engagement: 3.1, conversion: 2.4, registrations: 165 },
-                                          { name: 'TechInnovator', platform: 'LinkedIn', engagement: 2.9, conversion: 3.2, registrations: 125 },
-                                          { name: 'DataScienceDaily', platform: 'Instagram', engagement: 5.4, conversion: 1.6, registrations: 180 }
-                                        ].map((influencer, index) => (
-                                          <Box key={index} sx={{ 
-                                            p: 2, 
-                                            border: '1px solid', 
-                                            borderColor: 'divider', 
-                                            borderRadius: 1,
-                                            bgcolor: index % 2 === 0 ? 'grey.50' : 'white'
-                                          }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                              <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                                                {influencer.name}
-                                              </Typography>
-                                              <Typography variant="caption" sx={{ 
-                                                px: 1, 
-                                                py: 0.5, 
-                                                bgcolor: influencer.platform === 'YouTube' ? '#FF0000' : 
-                                                         influencer.platform === 'Instagram' ? '#E4405F' :
-                                                         influencer.platform === 'Twitter' ? '#1DA1F2' : '#0A66C2',
-                                                color: 'white',
-                                                borderRadius: 1
-                                              }}>
-                                                {influencer.platform}
-                                              </Typography>
-                                            </Box>
-                                            
-                                            <Box sx={{ display: 'flex', gap: 3, mb: 1 }}>
-                                              <Box sx={{ flex: 1 }}>
-                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                                  Engagement Rate
-                                                </Typography>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                  <Box sx={{ 
-                                                    width: '100%', 
-                                                    height: 6, 
-                                                    bgcolor: 'grey.200', 
-                                                    borderRadius: 3 
-                                                  }}>
-                                                    <Box sx={{ 
-                                                      width: `${(influencer.engagement / 7) * 100}%`, 
-                                                      height: '100%', 
-                                                      bgcolor: 'primary.main', 
-                                                      borderRadius: 3 
-                                                    }} />
-                                                  </Box>
-                                                  <Typography variant="caption" sx={{ minWidth: 35 }}>
-                                                    {influencer.engagement}%
-                                                  </Typography>
-                                                </Box>
-                                              </Box>
-                                              
-                                              <Box sx={{ flex: 1 }}>
-                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                                  Conversion Rate
-                                                </Typography>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                  <Box sx={{ 
-                                                    width: '100%', 
-                                                    height: 6, 
-                                                    bgcolor: 'grey.200', 
-                                                    borderRadius: 3 
-                                                  }}>
-                                                    <Box sx={{ 
-                                                      width: `${(influencer.conversion / 4) * 100}%`, 
-                                                      height: '100%', 
-                                                      bgcolor: 'success.main', 
-                                                      borderRadius: 3 
-                                                    }} />
-                                                  </Box>
-                                                  <Typography variant="caption" sx={{ minWidth: 35 }}>
-                                                    {influencer.conversion}%
-                                                  </Typography>
-                                                </Box>
-                                              </Box>
-                                            </Box>
-                                            
-                                            <Typography variant="body2" sx={{ fontWeight: 'bold', textAlign: 'center' }}>
-                                              {influencer.registrations} registrations
-                                            </Typography>
-                                          </Box>
-                                        ))}
-                                      </Box>
-                                    </Paper>
-                                  </Grid>
-                                </Grid>
-                              </Paper>
-                            </Grid>
-
-                            {/* Marketing Budget Allocation & ROI Heatmap */}
-                            <Grid size={{ xs: 12, md: 12 }}>
-                              <Paper variant="outlined" sx={{ p: 3, bgcolor: 'info.lighter' }}>
-                                <Typography variant="h6" sx={{ mb: 3, textAlign: 'center', color: 'info.main' }}>
-                                  💰 Marketing Budget Allocation & ROI Heatmap
-                                </Typography>
-                                
-                                <Grid container spacing={3}>
-                                  <Grid size={{ xs: 12, md: 8 }}>
-                                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
-                                      <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', textAlign: 'center' }}>
-                                        🎯 Channel Performance Heatmap
-                                      </Typography>
-                                      
-                                      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 1, mb: 2 }}>
-                                        {[
-                                          { channel: 'YouTube', budget: '$8,000', roi: 60, registrations: 648 },
-                                          { channel: 'Instagram', budget: '$6,500', roi: 51, registrations: 520 },
-                                          { channel: 'Twitter', budget: '$4,200', roi: 45, registrations: 300 },
-                                          { channel: 'Facebook', budget: '$5,000', roi: 39, registrations: 260 },
-                                          { channel: 'LinkedIn', budget: '$3,800', roi: 33, registrations: 195 },
-                                          { channel: 'Offline', budget: '$2,800', roi: 12, registrations: 52 }
-                                        ].map((item, index) => (
-                                          <Box key={index} sx={{ 
-                                            p: 2, 
-                                            bgcolor: item.roi > 50 ? 'success.main' : 
-                                                    item.roi > 35 ? 'warning.main' : 
-                                                    item.roi > 20 ? 'info.main' : 'error.main',
-                                            color: 'white',
-                                            borderRadius: 1,
-                                            textAlign: 'center',
-                                            opacity: item.roi > 50 ? 1 : item.roi > 35 ? 0.8 : item.roi > 20 ? 0.6 : 0.4
-                                          }}>
-                                            <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>
-                                              {item.channel}
-                                            </Typography>
-                                            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                                              {item.roi}%
-                                            </Typography>
-                                            <Typography variant="caption" sx={{ display: 'block', fontSize: '0.6rem' }}>
-                                              {item.budget}
-                                            </Typography>
-                                            <Typography variant="caption" sx={{ display: 'block', fontSize: '0.6rem' }}>
-                                              {item.registrations} reg
-                                            </Typography>
-                                          </Box>
-                                        ))}
-                                      </Box>
-                                      
-                                      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 2 }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                          <Box sx={{ width: 16, height: 16, bgcolor: 'success.main', borderRadius: 1 }} />
-                                          <Typography variant="caption">Excellent ROI (50%+)</Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                          <Box sx={{ width: 16, height: 16, bgcolor: 'warning.main', borderRadius: 1, opacity: 0.8 }} />
-                                          <Typography variant="caption">Good ROI (35-50%)</Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                          <Box sx={{ width: 16, height: 16, bgcolor: 'info.main', borderRadius: 1, opacity: 0.6 }} />
-                                          <Typography variant="caption">Fair ROI (20-35%)</Typography>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                          <Box sx={{ width: 16, height: 16, bgcolor: 'error.main', borderRadius: 1, opacity: 0.4 }} />
-                                          <Typography variant="caption">Poor ROI (less than 20%)</Typography>
-                                        </Box>
-                                      </Box>
-                                    </Paper>
-                                  </Grid>
-                                  
-                                  <Grid size={{ xs: 12, md: 4 }}>
-                                    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'white' }}>
-                                      <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', textAlign: 'center' }}>
-                                        💡 Budget Optimization Recommendations
-                                      </Typography>
-                                      
-                                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                        <Box sx={{ p: 2, bgcolor: 'success.lighter', borderLeft: '4px solid', borderColor: 'success.main' }}>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'success.main', mb: 1 }}>
-                                            ✅ Scale Up Investment
-                                          </Typography>
-                                          <Typography variant="caption">
-                                            Increase YouTube budget by 25% - highest ROI at 60%
-                                          </Typography>
-                                        </Box>
-                                        
-                                        <Box sx={{ p: 2, bgcolor: 'warning.lighter', borderLeft: '4px solid', borderColor: 'warning.main' }}>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'warning.main', mb: 1 }}>
-                                            ⚡ Optimize Strategy
-                                          </Typography>
-                                          <Typography variant="caption">
-                                            LinkedIn shows potential - test premium targeting
-                                          </Typography>
-                                        </Box>
-                                        
-                                        <Box sx={{ p: 2, bgcolor: 'error.lighter', borderLeft: '4px solid', borderColor: 'error.main' }}>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'error.main', mb: 1 }}>
-                                            ❌ Reduce Allocation
-                                          </Typography>
-                                          <Typography variant="caption">
-                                            Reallocate offline budget to digital channels
-                                          </Typography>
-                                        </Box>
-                                        
-                                        <Box sx={{ mt: 2, p: 2, bgcolor: 'primary.lighter', borderRadius: 1 }}>
-                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main', textAlign: 'center' }}>
-                                            Projected Improvement
-                                          </Typography>
-                                          <Typography variant="h5" sx={{ color: 'primary.main', textAlign: 'center', mt: 1 }}>
-                                            +18% ROI
-                                          </Typography>
-                                          <Typography variant="caption" sx={{ display: 'block', textAlign: 'center' }}>
-                                            With recommended changes
-                                          </Typography>
-                                        </Box>
-                                      </Box>
-                                    </Paper>
-                                  </Grid>
-                                </Grid>
-                              </Paper>
-                            </Grid>
+                                </Paper>
+                              </Grid>
+                            )}
+                            
+                            {currentTab.result.data.international_marketing_effectiveness && (
+                              <Grid size={{ xs: 12, md: 4 }}>
+                                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'info.lighter' }}>
+                                  <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', color: 'info.main' }}>
+                                    🌍 International Marketing Effectiveness
+                                  </Typography>
+                                  {typeof currentTab.result.data.international_marketing_effectiveness === 'string' ? (
+                                    <Typography variant="body2">
+                                      {currentTab.result.data.international_marketing_effectiveness}
+                                    </Typography>
+                                  ) : (
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                      {currentTab.result.data.international_marketing_effectiveness.digital_channel_performance && (
+                                        <Typography variant="body2">
+                                          <strong>Digital Channels:</strong> {currentTab.result.data.international_marketing_effectiveness.digital_channel_performance}
+                                        </Typography>
+                                      )}
+                                      {currentTab.result.data.international_marketing_effectiveness.social_media_global_reach && (
+                                        <Typography variant="body2">
+                                          <strong>Social Media Reach:</strong> {currentTab.result.data.international_marketing_effectiveness.social_media_global_reach}
+                                        </Typography>
+                                      )}
+                                      {currentTab.result.data.international_marketing_effectiveness.country_specific_strategies && (
+                                        <Typography variant="body2">
+                                          <strong>Country Strategies:</strong> {currentTab.result.data.international_marketing_effectiveness.country_specific_strategies}
+                                        </Typography>
+                                      )}
+                                      {currentTab.result.data.international_marketing_effectiveness.international_influencer_impact && (
+                                        <Typography variant="body2">
+                                          <strong>Influencer Impact:</strong> {currentTab.result.data.international_marketing_effectiveness.international_influencer_impact}
+                                        </Typography>
+                                      )}
+                                    </Box>
+                                  )}
+                                </Paper>
+                              </Grid>
+                            )}
+                            
+                            {currentTab.result.data.integrated_marketing_effectiveness && (
+                              <Grid size={{ xs: 12, md: 4 }}>
+                                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'warning.lighter' }}>
+                                  <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', color: 'warning.main' }}>
+                                    🔄 Integrated Marketing Effectiveness
+                                  </Typography>
+                                  {typeof currentTab.result.data.integrated_marketing_effectiveness === 'string' ? (
+                                    <Typography variant="body2">
+                                      {currentTab.result.data.integrated_marketing_effectiveness}
+                                    </Typography>
+                                  ) : (
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                      {Object.entries(currentTab.result.data.integrated_marketing_effectiveness).map(([key, value]) => (
+                                        <Typography key={key} variant="body2">
+                                          <strong>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> {value}
+                                        </Typography>
+                                      ))}
+                                    </Box>
+                                  )}
+                                </Paper>
+                              </Grid>
+                            )}
                           </Grid>
                         </Paper>
                       </Grid>
@@ -3607,7 +4749,7 @@ const onSubmit = async (formData) => {
                           <Grid container spacing={3}>
                             {/* Conversion Rates */}
                             {currentTab.result.data.actionable_metrics.conversion_rates && (
-                              <Grid size={{ xs: 12, md: 4 }}>
+                              <Grid size={{ xs: 12, md: currentTab.result.data.event_analysis_type === 'hybrid' ? 12 : 4 }}>
                                 <Paper 
                                   variant="outlined" 
                                   sx={{ 
@@ -3619,23 +4761,59 @@ const onSubmit = async (formData) => {
                                   <Typography variant="h6" sx={{ mb: 2, color: 'primary.darker', textAlign: 'center' }}>
                                     🎯 Conversion Rates
                                   </Typography>
-                                  {Object.entries(currentTab.result.data.actionable_metrics.conversion_rates).map(([key, value], index) => (
-                                    <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                      <Typography variant="body2" sx={{ color: 'primary.darker', textTransform: 'capitalize' }}>
-                                        {key.replace(/_/g, ' ')}:
-                                      </Typography>
-                                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.darker' }}>
-                                        {value}
-                                      </Typography>
-                                    </Box>
-                                  ))}
+                                  
+                                  {/* Handle different conversion rate structures */}
+                                  {currentTab.result.data.event_analysis_type === 'hybrid' ? (
+                                    // Hybrid event conversion rates with format breakdown
+                                    Object.entries(currentTab.result.data.actionable_metrics.conversion_rates).map(([stage, values], index) => (
+                                      <Box key={index} sx={{ mb: 2 }}>
+                                        <Typography variant="subtitle2" sx={{ color: 'primary.darker', fontWeight: 'bold', mb: 1 }}>
+                                          {stage.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                        </Typography>
+                                        <Grid container spacing={1}>
+                                          {typeof values === 'object' && values !== null ? (
+                                            Object.entries(values).map(([format, rate], formatIndex) => (
+                                              <Grid size={{ xs: 4 }} key={formatIndex}>
+                                                <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'white', borderRadius: 1 }}>
+                                                  <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
+                                                    {format.replace(/_/g, ' ')}
+                                                  </Typography>
+                                                  <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                                                    {rate}
+                                                  </Typography>
+                                                </Box>
+                                              </Grid>
+                                            ))
+                                          ) : (
+                                            <Grid size={{ xs: 12 }}>
+                                              <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.darker' }}>
+                                                {values}
+                                              </Typography>
+                                            </Grid>
+                                          )}
+                                        </Grid>
+                                      </Box>
+                                    ))
+                                  ) : (
+                                    // Standard conversion rates for in-person/virtual
+                                    Object.entries(currentTab.result.data.actionable_metrics.conversion_rates).map(([key, value], index) => (
+                                      <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                        <Typography variant="body2" sx={{ color: 'primary.darker', textTransform: 'capitalize' }}>
+                                          {key.replace(/_/g, ' ')}:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.darker' }}>
+                                          {value}
+                                        </Typography>
+                                      </Box>
+                                    ))
+                                  )}
                                 </Paper>
                               </Grid>
                             )}
 
                             {/* Revenue Projections */}
                             {currentTab.result.data.actionable_metrics.revenue_projections && (
-                              <Grid size={{ xs: 12, md: 4 }}>
+                              <Grid size={{ xs: 12, md: currentTab.result.data.event_analysis_type === 'hybrid' ? 6 : 4 }}>
                                 <Paper 
                                   variant="outlined" 
                                   sx={{ 
@@ -3647,22 +4825,74 @@ const onSubmit = async (formData) => {
                                   <Typography variant="h6" sx={{ mb: 2, color: 'success.darker', textAlign: 'center' }}>
                                     💰 Revenue Projections
                                   </Typography>
-                                  {Object.entries(currentTab.result.data.actionable_metrics.revenue_projections).map(([key, value], index) => (
-                                    <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                      <Typography variant="body2" sx={{ color: 'success.darker', textTransform: 'capitalize' }}>
-                                        {key.replace(/_/g, ' ')}:
+                                  
+                                  {/* Handle hybrid vs standard revenue structure */}
+                                  {currentTab.result.data.event_analysis_type === 'hybrid' && currentTab.result.data.actionable_metrics.revenue_projections.revenue_breakdown ? (
+                                    <Box>
+                                      {/* Total Revenue */}
+                                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, p: 1, bgcolor: 'success.main', borderRadius: 1 }}>
+                                        <Typography variant="body2" sx={{ color: 'white', fontWeight: 'bold' }}>
+                                          Total Revenue:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'white' }}>
+                                          {currentTab.result.data.actionable_metrics.revenue_projections.total_revenue}
+                                        </Typography>
+                                      </Box>
+                                      
+                                      {/* Revenue Breakdown */}
+                                      <Typography variant="subtitle2" sx={{ mb: 1, color: 'success.darker' }}>
+                                        Revenue Breakdown:
                                       </Typography>
-                                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'success.darker' }}>
-                                        {value}
-                                      </Typography>
+                                      {Object.entries(currentTab.result.data.actionable_metrics.revenue_projections.revenue_breakdown).map(([key, value], index) => (
+                                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, pl: 2 }}>
+                                          <Typography variant="body2" sx={{ color: 'success.darker', textTransform: 'capitalize' }}>
+                                            {key.replace(/_/g, ' ')}:
+                                          </Typography>
+                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'success.darker' }}>
+                                            {value}
+                                          </Typography>
+                                        </Box>
+                                      ))}
+                                      
+                                      {/* Break Even Analysis */}
+                                      {currentTab.result.data.actionable_metrics.revenue_projections.break_even_analysis && (
+                                        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'success.light' }}>
+                                          <Typography variant="subtitle2" sx={{ mb: 1, color: 'success.darker' }}>
+                                            Break Even Analysis:
+                                          </Typography>
+                                          {Object.entries(currentTab.result.data.actionable_metrics.revenue_projections.break_even_analysis).map(([key, value], index) => (
+                                            <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, pl: 2 }}>
+                                              <Typography variant="body2" sx={{ color: 'success.darker', textTransform: 'capitalize' }}>
+                                                {key.replace(/_/g, ' ')}:
+                                              </Typography>
+                                              <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'success.darker' }}>
+                                                {value}
+                                              </Typography>
+                                            </Box>
+                                          ))}
+                                        </Box>
+                                      )}
                                     </Box>
-                                  ))}
+                                  ) : (
+                                    // Standard revenue projections
+                                    Object.entries(currentTab.result.data.actionable_metrics.revenue_projections).map(([key, value], index) => (
+                                      <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                        <Typography variant="body2" sx={{ color: 'success.darker', textTransform: 'capitalize' }}>
+                                          {key.replace(/_/g, ' ')}:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'success.darker' }}>
+                                          {value}
+                                        </Typography>
+                                      </Box>
+                                    ))
+                                  )}
                                 </Paper>
                               </Grid>
                             )}
 
-                            {/* Capacity Utilization */}
-                            {currentTab.result.data.actionable_metrics.capacity_utilization && (
+                            {/* Format-specific metrics */}
+                            {/* Capacity Utilization (in-person) */}
+                            {currentTab.result.data.event_analysis_type === 'in-person' && currentTab.result.data.actionable_metrics.capacity_utilization && (
                               <Grid size={{ xs: 12, md: 4 }}>
                                 <Paper 
                                   variant="outlined" 
@@ -3688,22 +4918,653 @@ const onSubmit = async (formData) => {
                                 </Paper>
                               </Grid>
                             )}
+
+                            {/* Engagement Metrics (virtual) */}
+                            {currentTab.result.data.event_analysis_type === 'virtual' && currentTab.result.data.actionable_metrics.engagement_metrics && (
+                              <Grid size={{ xs: 12, md: 4 }}>
+                                <Paper 
+                                  variant="outlined" 
+                                  sx={{ 
+                                    p: 3, 
+                                    bgcolor: 'info.lighter',
+                                    borderColor: 'info.main'
+                                  }}
+                                >
+                                  <Typography variant="h6" sx={{ mb: 2, color: 'info.darker', textAlign: 'center' }}>
+                                    🎮 Engagement Metrics
+                                  </Typography>
+                                  {Object.entries(currentTab.result.data.actionable_metrics.engagement_metrics).map(([key, value], index) => (
+                                    <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                      <Typography variant="body2" sx={{ color: 'info.darker', textTransform: 'capitalize' }}>
+                                        {key.replace(/_/g, ' ')}:
+                                      </Typography>
+                                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'info.darker' }}>
+                                        {value}
+                                      </Typography>
+                                    </Box>
+                                  ))}
+                                </Paper>
+                              </Grid>
+                            )}
+
+                            {/* Format Distribution (hybrid) */}
+                            {currentTab.result.data.event_analysis_type === 'hybrid' && currentTab.result.data.actionable_metrics.format_distribution && (
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <Paper 
+                                  variant="outlined" 
+                                  sx={{ 
+                                    p: 3, 
+                                    bgcolor: 'purple.lighter',
+                                    borderColor: 'purple.main'
+                                  }}
+                                >
+                                  <Typography variant="h6" sx={{ mb: 2, color: 'purple.darker', textAlign: 'center' }}>
+                                    🔄 Format Distribution
+                                  </Typography>
+                                  
+                                  {/* Capacity Utilization */}
+                                  {currentTab.result.data.actionable_metrics.format_distribution.capacity_utilization && (
+                                    <Box sx={{ mb: 2 }}>
+                                      <Typography variant="subtitle2" sx={{ mb: 1, color: 'purple.darker' }}>
+                                        Capacity Utilization:
+                                      </Typography>
+                                      {Object.entries(currentTab.result.data.actionable_metrics.format_distribution.capacity_utilization).map(([key, value], index) => (
+                                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, pl: 2 }}>
+                                          <Typography variant="body2" sx={{ color: 'purple.darker', textTransform: 'capitalize' }}>
+                                            {key.replace(/_/g, ' ')}:
+                                          </Typography>
+                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'purple.darker' }}>
+                                            {value}
+                                          </Typography>
+                                        </Box>
+                                      ))}
+                                    </Box>
+                                  )}
+                                  
+                                  {/* Format Preference Split */}
+                                  {currentTab.result.data.actionable_metrics.format_distribution.format_preference_split && (
+                                    <Box sx={{ mb: 2 }}>
+                                      <Typography variant="subtitle2" sx={{ mb: 1, color: 'purple.darker' }}>
+                                        Format Preferences:
+                                      </Typography>
+                                      {Object.entries(currentTab.result.data.actionable_metrics.format_distribution.format_preference_split).map(([key, value], index) => (
+                                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, pl: 2 }}>
+                                          <Typography variant="body2" sx={{ color: 'purple.darker', textTransform: 'capitalize' }}>
+                                            {key.replace(/_/g, ' ')}:
+                                          </Typography>
+                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'purple.darker' }}>
+                                            {value}
+                                          </Typography>
+                                        </Box>
+                                      ))}
+                                    </Box>
+                                  )}
+                                  
+                                  {/* Engagement Comparison */}
+                                  {currentTab.result.data.actionable_metrics.format_distribution.engagement_comparison && (
+                                    <Box>
+                                      <Typography variant="subtitle2" sx={{ mb: 1, color: 'purple.darker' }}>
+                                        Engagement Rates:
+                                      </Typography>
+                                      {Object.entries(currentTab.result.data.actionable_metrics.format_distribution.engagement_comparison).map(([key, value], index) => (
+                                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, pl: 2 }}>
+                                          <Typography variant="body2" sx={{ color: 'purple.darker', textTransform: 'capitalize' }}>
+                                            {key.replace(/_/g, ' ')}:
+                                          </Typography>
+                                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'purple.darker' }}>
+                                            {value}
+                                          </Typography>
+                                        </Box>
+                                      ))}
+                                    </Box>
+                                  )}
+                                </Paper>
+                              </Grid>
+                            )}
                           </Grid>
                         </Paper>
                       </Grid>
                     )}
 
-                    {/* Data Summary */}
-                    <Grid size={12}>
-                      <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
-                        <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary' }}>
-                          <strong>Analysis Generated:</strong> {new Date().toLocaleString()} | 
-                          <strong> Confidence Score:</strong> {currentTab.result.data.confidence_level || 'N/A'}% |
-                          <strong> Data Points Analyzed:</strong> {currentTab.result.data.data_visualizations ? Object.keys(currentTab.result.data.data_visualizations).length : 0}
-                        </Typography>
-                      </Paper>
-                    </Grid>
-                  </Grid>
+                    {/* Success Metrics */}
+                    {currentTab.result.data.success_metrics && (
+                      <Grid size={12}>
+                        <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+                          <Typography variant="h6" sx={{ mb: 3, color: 'success.main' }}>
+                            🎯 Success Metrics
+                          </Typography>
+                          <Grid container spacing={2}>
+                            {Object.entries(currentTab.result.data.success_metrics).map(([key, value], index) => (
+                              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+                                <Paper 
+                                  variant="outlined" 
+                                  sx={{ 
+                                    p: 2, 
+                                    bgcolor: 'success.lighter',
+                                    borderColor: 'success.light'
+                                  }}
+                                >
+                                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'success.darker', textTransform: 'capitalize' }}>
+                                    {key.replace(/_/g, ' ')}
+                                  </Typography>
+                                  <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'success.darker' }}>
+                                    {typeof value === 'object' ? (
+                                      <Box>
+                                        {Object.entries(value).map(([subKey, subValue], subIndex) => (
+                                          <Box key={subIndex} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                            <Typography variant="body2" sx={{ color: 'success.darker', textTransform: 'capitalize' }}>
+                                              {subKey.replace(/_/g, ' ')}:
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'success.darker' }}>
+                                              {subValue}
+                                            </Typography>
+                                          </Box>
+                                        ))}
+                                      </Box>
+                                    ) : (
+                                      value
+                                    )}
+                                  </Typography>
+                                </Paper>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        </Paper>
+                      </Grid>
+                    )}
+
+                    {/* Timeline Analysis */}
+                    {currentTab.result.data.timeline_analysis && (
+                      <Grid size={12}>
+                        <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+                          <Typography variant="h6" sx={{ mb: 3, color: 'info.main' }}>
+                            ⏰ Timeline Analysis
+                          </Typography>
+                          <Grid container spacing={3}>
+                            {/* Timeline Overview */}
+                            {currentTab.result.data.timeline_analysis.timeline_overview && (
+                              <Grid size={12}>
+                                <Paper 
+                                  variant="outlined" 
+                                  sx={{ 
+                                    p: 3, 
+                                    bgcolor: 'info.lighter',
+                                    borderColor: 'info.main'
+                                  }}
+                                >
+                                  <Typography variant="h6" sx={{ mb: 2, color: 'info.darker' }}>
+                                    📅 Timeline Overview
+                                  </Typography>
+                                  {typeof currentTab.result.data.timeline_analysis.timeline_overview === 'object' ? (
+                                    <Grid container spacing={2}>
+                                      {Object.entries(currentTab.result.data.timeline_analysis.timeline_overview).map(([key, value], index) => (
+                                        <Grid size={{ xs: 12, md: 6 }} key={index}>
+                                          <Box sx={{ p: 2, bgcolor: 'white', borderRadius: 1, border: '1px solid', borderColor: 'info.light' }}>
+                                            <Typography variant="subtitle2" sx={{ mb: 1, color: 'info.darker', textTransform: 'capitalize' }}>
+                                              {key.replace(/_/g, ' ')}
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ color: 'info.darker' }}>
+                                              {Array.isArray(value) ? (
+                                                <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                                                  {value.map((item, itemIndex) => (
+                                                    <Typography component="li" variant="body2" key={itemIndex} sx={{ mb: 0.5 }}>
+                                                      {item}
+                                                    </Typography>
+                                                  ))}
+                                                </Box>
+                                              ) : (
+                                                value
+                                              )}
+                                            </Typography>
+                                          </Box>
+                                        </Grid>
+                                      ))}
+                                    </Grid>
+                                  ) : (
+                                    <Typography variant="body2" sx={{ color: 'info.darker' }}>
+                                      {currentTab.result.data.timeline_analysis.timeline_overview}
+                                    </Typography>
+                                  )}
+                                </Paper>
+                              </Grid>
+                            )}
+
+                            {/* Key Milestones */}
+                            {currentTab.result.data.timeline_analysis.key_milestones && (
+                              <Grid size={12}>
+                                <Paper 
+                                  variant="outlined" 
+                                  sx={{ 
+                                    p: 3, 
+                                    bgcolor: 'primary.lighter',
+                                    borderColor: 'primary.main'
+                                  }}
+                                >
+                                  <Typography variant="h6" sx={{ mb: 2, color: 'primary.darker' }}>
+                                    🎯 Key Milestones
+                                  </Typography>
+                                  {Array.isArray(currentTab.result.data.timeline_analysis.key_milestones) ? (
+                                    <Grid container spacing={2}>
+                                      {currentTab.result.data.timeline_analysis.key_milestones.map((milestone, index) => (
+                                        <Grid size={{ xs: 12, md: 6, lg: 4 }} key={index}>
+                                          <Paper 
+                                            variant="outlined" 
+                                            sx={{ 
+                                              p: 2, 
+                                              bgcolor: 'white',
+                                              borderLeft: '4px solid',
+                                              borderLeftColor: 'primary.main',
+                                              height: '100%'
+                                            }}
+                                          >
+                                            <Typography variant="subtitle2" sx={{ mb: 1, color: 'primary.darker' }}>
+                                              Milestone {index + 1}
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ color: 'primary.darker' }}>
+                                              {typeof milestone === 'object' ? JSON.stringify(milestone, null, 2) : milestone}
+                                            </Typography>
+                                          </Paper>
+                                        </Grid>
+                                      ))}
+                                    </Grid>
+                                  ) : (
+                                    <Typography variant="body2" sx={{ color: 'primary.darker' }}>
+                                      {currentTab.result.data.timeline_analysis.key_milestones}
+                                    </Typography>
+                                  )}
+                                </Paper>
+                              </Grid>
+                            )}
+
+                            {/* Other Timeline Data */}
+                            {Object.entries(currentTab.result.data.timeline_analysis)
+                              .filter(([key]) => !['timeline_overview', 'key_milestones'].includes(key))
+                              .map(([key, value], index) => (
+                                <Grid size={{ xs: 12, md: 6 }} key={index}>
+                                  <Paper 
+                                    variant="outlined" 
+                                    sx={{ 
+                                      p: 2, 
+                                      bgcolor: 'grey.50',
+                                      borderColor: 'grey.300'
+                                    }}
+                                  >
+                                    <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.primary', textTransform: 'capitalize' }}>
+                                      {key.replace(/_/g, ' ')}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                      {typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
+                                    </Typography>
+                                  </Paper>
+                                </Grid>
+                              ))}
+                          </Grid>
+                        </Paper>
+                      </Grid>
+                    )}
+
+                    {/* ROI Analysis */}
+                    {currentTab.result.data.roi_analysis && (
+                      <Grid size={12}>
+                        <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+                          <Typography variant="h6" sx={{ mb: 3, color: 'warning.main' }}>
+                            💰 ROI Analysis
+                          </Typography>
+                          <Grid container spacing={3}>
+                            {/* ROI Metrics */}
+                            {currentTab.result.data.roi_analysis.roi_metrics && (
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <Paper 
+                                  variant="outlined" 
+                                  sx={{ 
+                                    p: 3, 
+                                    bgcolor: 'warning.lighter',
+                                    borderColor: 'warning.main'
+                                  }}
+                                >
+                                  <Typography variant="h6" sx={{ mb: 2, color: 'warning.darker' }}>
+                                    📊 ROI Metrics
+                                  </Typography>
+                                  {typeof currentTab.result.data.roi_analysis.roi_metrics === 'object' ? (
+                                    Object.entries(currentTab.result.data.roi_analysis.roi_metrics).map(([key, value], index) => (
+                                      <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, p: 1, bgcolor: 'white', borderRadius: 1 }}>
+                                        <Typography variant="body2" sx={{ color: 'warning.darker', textTransform: 'capitalize', fontWeight: 'medium' }}>
+                                          {key.replace(/_/g, ' ')}:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'warning.darker' }}>
+                                          {value}
+                                        </Typography>
+                                      </Box>
+                                    ))
+                                  ) : (
+                                    <Typography variant="body2" sx={{ color: 'warning.darker' }}>
+                                      {currentTab.result.data.roi_analysis.roi_metrics}
+                                    </Typography>
+                                  )}
+                                </Paper>
+                              </Grid>
+                            )}
+
+                            {/* Investment Breakdown */}
+                            {currentTab.result.data.roi_analysis.investment_breakdown && (
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <Paper 
+                                  variant="outlined" 
+                                  sx={{ 
+                                    p: 3, 
+                                    bgcolor: 'secondary.lighter',
+                                    borderColor: 'secondary.main'
+                                  }}
+                                >
+                                  <Typography variant="h6" sx={{ mb: 2, color: 'secondary.darker' }}>
+                                    💼 Investment Breakdown
+                                  </Typography>
+                                  {typeof currentTab.result.data.roi_analysis.investment_breakdown === 'object' ? (
+                                    Object.entries(currentTab.result.data.roi_analysis.investment_breakdown).map(([key, value], index) => (
+                                      <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, p: 1, bgcolor: 'white', borderRadius: 1 }}>
+                                        <Typography variant="body2" sx={{ color: 'secondary.darker', textTransform: 'capitalize', fontWeight: 'medium' }}>
+                                          {key.replace(/_/g, ' ')}:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'secondary.darker' }}>
+                                          {value}
+                                        </Typography>
+                                      </Box>
+                                    ))
+                                  ) : (
+                                    <Typography variant="body2" sx={{ color: 'secondary.darker' }}>
+                                      {currentTab.result.data.roi_analysis.investment_breakdown}
+                                    </Typography>
+                                  )}
+                                </Paper>
+                              </Grid>
+                            )}
+
+                            {/* Return Projections */}
+                            {currentTab.result.data.roi_analysis.return_projections && (
+                              <Grid size={12}>
+                                <Paper 
+                                  variant="outlined" 
+                                  sx={{ 
+                                    p: 3, 
+                                    bgcolor: 'success.lighter',
+                                    borderColor: 'success.main'
+                                  }}
+                                >
+                                  <Typography variant="h6" sx={{ mb: 2, color: 'success.darker' }}>
+                                    📈 Return Projections
+                                  </Typography>
+                                  {typeof currentTab.result.data.roi_analysis.return_projections === 'object' ? (
+                                    <Grid container spacing={2}>
+                                      {Object.entries(currentTab.result.data.roi_analysis.return_projections).map(([key, value], index) => (
+                                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+                                          <Paper 
+                                            variant="outlined" 
+                                            sx={{ 
+                                              p: 2, 
+                                              bgcolor: 'white',
+                                              borderLeft: '4px solid',
+                                              borderLeftColor: 'success.main',
+                                              height: '100%'
+                                            }}
+                                          >
+                                            <Typography variant="subtitle2" sx={{ mb: 1, color: 'success.darker', textTransform: 'capitalize' }}>
+                                              {key.replace(/_/g, ' ')}
+                                            </Typography>
+                                            <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'success.darker' }}>
+                                              {value}
+                                            </Typography>
+                                          </Paper>
+                                        </Grid>
+                                      ))}
+                                    </Grid>
+                                  ) : (
+                                    <Typography variant="body2" sx={{ color: 'success.darker' }}>
+                                      {currentTab.result.data.roi_analysis.return_projections}
+                                    </Typography>
+                                  )}
+                                </Paper>
+                              </Grid>
+                            )}
+
+                            {/* Other ROI Data */}
+                            {Object.entries(currentTab.result.data.roi_analysis)
+                              .filter(([key]) => !['roi_metrics', 'investment_breakdown', 'return_projections'].includes(key))
+                              .map(([key, value], index) => (
+                                <Grid size={{ xs: 12, md: 6 }} key={index}>
+                                  <Paper 
+                                    variant="outlined" 
+                                    sx={{ 
+                                      p: 2, 
+                                      bgcolor: 'grey.50',
+                                      borderColor: 'grey.300'
+                                    }}
+                                  >
+                                    <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.primary', textTransform: 'capitalize' }}>
+                                      {key.replace(/_/g, ' ')}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                      {typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
+                                    </Typography>
+                                  </Paper>
+                                </Grid>
+                              ))}
+                          </Grid>
+                        </Paper>
+                      </Grid>
+                    )}
+
+                    {/* Cost Breakdown */}
+                    {currentTab.result.data.cost_breakdown && (
+                      <Grid size={12}>
+                        <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper' }}>
+                          <Typography variant="h6" sx={{ mb: 3, color: 'error.main' }}>
+                            💳 Cost Breakdown
+                          </Typography>
+                          <Grid container spacing={3}>
+                            {/* Direct Costs */}
+                            {currentTab.result.data.cost_breakdown.direct_costs && (
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <Paper 
+                                  variant="outlined" 
+                                  sx={{ 
+                                    p: 3, 
+                                    bgcolor: 'error.lighter',
+                                    borderColor: 'error.main'
+                                  }}
+                                >
+                                  <Typography variant="h6" sx={{ mb: 2, color: 'error.darker' }}>
+                                    💰 Direct Costs
+                                  </Typography>
+                                  {typeof currentTab.result.data.cost_breakdown.direct_costs === 'object' ? (
+                                    Object.entries(currentTab.result.data.cost_breakdown.direct_costs).map(([key, value], index) => (
+                                      <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, p: 1, bgcolor: 'white', borderRadius: 1 }}>
+                                        <Typography variant="body2" sx={{ color: 'error.darker', textTransform: 'capitalize', fontWeight: 'medium' }}>
+                                          {key.replace(/_/g, ' ')}:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'error.darker' }}>
+                                          {value}
+                                        </Typography>
+                                      </Box>
+                                    ))
+                                  ) : (
+                                    <Typography variant="body2" sx={{ color: 'error.darker' }}>
+                                      {currentTab.result.data.cost_breakdown.direct_costs}
+                                    </Typography>
+                                  )}
+                                </Paper>
+                              </Grid>
+                            )}
+
+                            {/* Indirect Costs */}
+                            {currentTab.result.data.cost_breakdown.indirect_costs && (
+                              <Grid size={{ xs: 12, md: 6 }}>
+                                <Paper 
+                                  variant="outlined" 
+                                  sx={{ 
+                                    p: 3, 
+                                    bgcolor: 'warning.lighter',
+                                    borderColor: 'warning.main'
+                                  }}
+                                >
+                                  <Typography variant="h6" sx={{ mb: 2, color: 'warning.darker' }}>
+                                    📋 Indirect Costs
+                                  </Typography>
+                                  {typeof currentTab.result.data.cost_breakdown.indirect_costs === 'object' ? (
+                                    Object.entries(currentTab.result.data.cost_breakdown.indirect_costs).map(([key, value], index) => (
+                                      <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5, p: 1, bgcolor: 'white', borderRadius: 1 }}>
+                                        <Typography variant="body2" sx={{ color: 'warning.darker', textTransform: 'capitalize', fontWeight: 'medium' }}>
+                                          {key.replace(/_/g, ' ')}:
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'warning.darker' }}>
+                                          {value}
+                                        </Typography>
+                                      </Box>
+                                    ))
+                                  ) : (
+                                    <Typography variant="body2" sx={{ color: 'warning.darker' }}>
+                                      {currentTab.result.data.cost_breakdown.indirect_costs}
+                                    </Typography>
+                                  )}
+                                </Paper>
+                              </Grid>
+                            )}
+
+                            {/* Total Cost Summary */}
+                            {currentTab.result.data.cost_breakdown.total_cost && (
+                              <Grid size={12}>
+                                <Paper 
+                                  variant="outlined" 
+                                  sx={{ 
+                                    p: 3, 
+                                    bgcolor: 'primary.lighter',
+                                    borderColor: 'primary.main',
+                                    borderWidth: 2
+                                  }}
+                                >
+                                  <Typography variant="h6" sx={{ mb: 2, color: 'primary.darker', textAlign: 'center' }}>
+                                    💯 Total Cost Summary
+                                  </Typography>
+                                  {typeof currentTab.result.data.cost_breakdown.total_cost === 'object' ? (
+                                    <Grid container spacing={2}>
+                                      {Object.entries(currentTab.result.data.cost_breakdown.total_cost).map(([key, value], index) => (
+                                        <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
+                                          <Paper 
+                                            variant="outlined" 
+                                            sx={{ 
+                                              p: 2, 
+                                              bgcolor: 'white',
+                                              borderLeft: '4px solid',
+                                              borderLeftColor: 'primary.main',
+                                              textAlign: 'center'
+                                            }}
+                                          >
+                                            <Typography variant="subtitle2" sx={{ mb: 1, color: 'primary.darker', textTransform: 'capitalize' }}>
+                                              {key.replace(/_/g, ' ')}
+                                            </Typography>
+                                            <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.darker' }}>
+                                              {value}
+                                            </Typography>
+                                          </Paper>
+                                        </Grid>
+                                      ))}
+                                    </Grid>
+                                  ) : (
+                                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.darker', textAlign: 'center' }}>
+                                      {currentTab.result.data.cost_breakdown.total_cost}
+                                    </Typography>
+                                  )}
+                                </Paper>
+                              </Grid>
+                            )}
+
+                            {/* Cost Categories */}
+                            {currentTab.result.data.cost_breakdown.cost_categories && (
+                              <Grid size={12}>
+                                <Paper 
+                                  variant="outlined" 
+                                  sx={{ 
+                                    p: 3, 
+                                    bgcolor: 'info.lighter',
+                                    borderColor: 'info.main'
+                                  }}
+                                >
+                                  <Typography variant="h6" sx={{ mb: 2, color: 'info.darker' }}>
+                                    📊 Cost Categories
+                                  </Typography>
+                                  {Array.isArray(currentTab.result.data.cost_breakdown.cost_categories) ? (
+                                    <Grid container spacing={2}>
+                                      {currentTab.result.data.cost_breakdown.cost_categories.map((category, index) => (
+                                        <Grid size={{ xs: 12, md: 6, lg: 4 }} key={index}>
+                                          <Paper 
+                                            variant="outlined" 
+                                            sx={{ 
+                                              p: 2, 
+                                              bgcolor: 'white',
+                                              borderLeft: '4px solid',
+                                              borderLeftColor: 'info.main',
+                                              height: '100%'
+                                            }}
+                                          >
+                                            <Typography variant="subtitle2" sx={{ mb: 1, color: 'info.darker' }}>
+                                              Category {index + 1}
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ color: 'info.darker' }}>
+                                              {typeof category === 'object' ? JSON.stringify(category, null, 2) : category}
+                                            </Typography>
+                                          </Paper>
+                                        </Grid>
+                                      ))}
+                                    </Grid>
+                                  ) : typeof currentTab.result.data.cost_breakdown.cost_categories === 'object' ? (
+                                    <Grid container spacing={2}>
+                                      {Object.entries(currentTab.result.data.cost_breakdown.cost_categories).map(([key, value], index) => (
+                                        <Grid size={{ xs: 12, md: 6 }} key={index}>
+                                          <Box sx={{ p: 2, bgcolor: 'white', borderRadius: 1, border: '1px solid', borderColor: 'info.light' }}>
+                                            <Typography variant="subtitle2" sx={{ mb: 1, color: 'info.darker', textTransform: 'capitalize' }}>
+                                              {key.replace(/_/g, ' ')}
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ color: 'info.darker' }}>
+                                              {typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
+                                            </Typography>
+                                          </Box>
+                                        </Grid>
+                                      ))}
+                                    </Grid>
+                                  ) : (
+                                    <Typography variant="body2" sx={{ color: 'info.darker' }}>
+                                      {currentTab.result.data.cost_breakdown.cost_categories}
+                                    </Typography>
+                                  )}
+                                </Paper>
+                              </Grid>
+                            )}
+
+                            {/* Other Cost Data */}
+                            {Object.entries(currentTab.result.data.cost_breakdown)
+                              .filter(([key]) => !['direct_costs', 'indirect_costs', 'total_cost', 'cost_categories'].includes(key))
+                              .map(([key, value], index) => (
+                                <Grid size={{ xs: 12, md: 6 }} key={index}>
+                                  <Paper 
+                                    variant="outlined" 
+                                    sx={{ 
+                                      p: 2, 
+                                      bgcolor: 'grey.50',
+                                      borderColor: 'grey.300'
+                                    }}
+                                  >
+                                    <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.primary', textTransform: 'capitalize' }}>
+                                      {key.replace(/_/g, ' ')}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                      {typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
+                                    </Typography>
+                                  </Paper>
+                                </Grid>
+                              ))}
+                          </Grid>
+                        </Paper>
+                      </Grid>
+                    )}
                 </Box>
               )}
             </Stack>
@@ -3960,6 +5821,281 @@ const onSubmit = async (formData) => {
         </DialogActions>
       </Dialog>
 
+      {/* Country Marketing Configuration Modal - Same as In-Person Marketing Modal */}
+      <Dialog 
+        open={countryMarketingModalOpen} 
+        onClose={() => setCountryMarketingModalOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: { minHeight: '80vh' }
+        }}
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {selectedCountryForMarketing && (
+                <>
+                  <img 
+                    src={COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.flag} 
+                    alt={selectedCountryForMarketing.countryCode} 
+                    style={{ width: 16, height: 12 }} 
+                  />
+                  {getChannelDisplayName(selectedCountryForMarketing.channel)} for {COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}
+                </>
+              )}
+            </Typography>
+            <IconButton onClick={() => setCountryMarketingModalOpen(false)}>
+              <Iconify icon="mingcute:close-line" />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {selectedCountryForMarketing && (
+            <Grid container spacing={3} sx={{ mt: 1 }}>
+              <Grid size={12}>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Configure {getChannelDisplayName(selectedCountryForMarketing.channel)} marketing strategy for{' '}
+                  <strong>{COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}</strong>{' '}
+                  in <strong>{LANGUAGES_LIST.find(l => l.code === watch('event_language'))?.name}</strong>.
+                  Consider local culture, timing, and preferred platforms.
+                </Alert>
+              </Grid>
+
+              {/* Target Audience */}
+              <Grid size={12}>
+                <Typography variant="h6" sx={{ mb: 2, color: 'primary.main' }}>
+                  🎯 Target Audience
+                </Typography>
+              </Grid>
+
+              <Grid size={12}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.audience`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Target Audience"
+                      placeholder={selectedCountryForMarketing.channel === 'offline_publicity' 
+                        ? `e.g., Tech professionals aged 25-45 in ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}, Local business owners, Industry leaders`
+                        : `e.g., Tech professionals in ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}, AI researchers, Startup founders aged 25-45`
+                      }
+                      multiline
+                      rows={3}
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* Placement Strategy */}
+              <Grid size={12}>
+                <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'secondary.main' }}>
+                  📍 Placement & Distribution Strategy
+                </Typography>
+              </Grid>
+
+              <Grid size={12}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.placement`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Placement Strategy"
+                      placeholder={`${getPlacementPlaceholder(selectedCountryForMarketing.channel)} - adapted for ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}`}
+                      multiline
+                      rows={4}
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* Reach & Engagement Goals */}
+              <Grid size={12}>
+                <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'info.main' }}>
+                  📈 Reach & Engagement Goals
+                </Typography>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.reach`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Expected Reach/Impressions"
+                      placeholder={selectedCountryForMarketing.channel === 'offline_publicity' 
+                        ? `e.g., 25,000 people in ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}, 500 flyers distributed`
+                        : `e.g., 50,000 impressions in ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}, 3,000 engagements`
+                      }
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.reaction`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Expected Reaction/Response"
+                      placeholder="e.g., 2% CTR, 150 registrations, High engagement"
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* Budget & Timeline */}
+              <Grid size={12}>
+                <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'warning.main' }}>
+                  💰 Budget & Timeline
+                </Typography>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.budget`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Budget Allocation"
+                      placeholder="e.g., $2,000 USD, €1,500, Local currency equivalent"
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.timeline`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Campaign Timeline"
+                      placeholder="e.g., 4 weeks before event, Consider local holidays"
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* Content Strategy */}
+              <Grid size={12}>
+                <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'success.main' }}>
+                  🎨 Content Strategy
+                </Typography>
+              </Grid>
+
+              <Grid size={12}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.content_type`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Content Type & Format"
+                      placeholder={`${getContentPlaceholder(selectedCountryForMarketing.channel)} - localized for ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name} in ${LANGUAGES_LIST.find(l => l.code === watch('event_language'))?.name}`}
+                      multiline
+                      rows={3}
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* Influencer Partnerships - Only for social media channels */}
+              {['facebook', 'instagram', 'linkedin', 'x_twitter', 'youtube'].includes(selectedCountryForMarketing.channel) && (
+                <>
+                  <Grid size={12}>
+                    <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'purple.main' }}>
+                      🤝 Local Influencer Partnerships
+                    </Typography>
+                  </Grid>
+                  
+                  <Grid size={12}>
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Add local influencers from {COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name} for this {getChannelDisplayName(selectedCountryForMarketing.channel)} campaign
+                      </Typography>
+                      <InfluencerPartnershipsSection 
+                        channelName={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}`}
+                        methods={methods}
+                      />
+                    </Box>
+                  </Grid>
+                </>
+              )}
+
+              {/* Additional Information */}
+              <Grid size={12}>
+                <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'text.secondary' }}>
+                  ℹ️ Additional Strategy Notes
+                </Typography>
+              </Grid>
+              
+              <Grid size={12}>
+                <Controller
+                  name={`country_marketing.${selectedCountries.findIndex(c => c === selectedCountryForMarketing.countryCode)}.marketing_strategy.${selectedCountryForMarketing.channel}.additional_info`}
+                  control={methods.control}
+                  render={({ field, fieldState: { error } }) => (
+                    <TextField
+                      {...field}
+                      label="Additional Information"
+                      multiline
+                      rows={3}
+                      placeholder={`Cultural considerations, local partnerships, timezone optimizations for ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing.countryCode)?.name}...`}
+                      fullWidth
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 2 }}>
+          <Button onClick={() => setCountryMarketingModalOpen(false)} variant="outlined">
+            Close
+          </Button>
+          <Button 
+            variant="contained"
+            onClick={() => {
+              setCountryMarketingModalOpen(false);
+              toast.success(`${getChannelDisplayName(selectedCountryForMarketing?.channel)} marketing strategy saved for ${COUNTRIES_LIST.find(c => c.code === selectedCountryForMarketing?.countryCode)?.name}!`);
+            }}
+            startIcon={<Iconify icon="eva:checkmark-circle-2-outline" />}
+          >
+            Save Marketing Strategy
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Day Configuration Modal */}
       <Dialog 
         open={dayModalOpen} 
@@ -4044,46 +6180,203 @@ const onSubmit = async (formData) => {
                 />
               </Grid>
 
-              {/* Venue Information */}
+              {/* Venue Information - Only for In-Person and Hybrid Events */}
+              {(watch('event_type') === 'in-person' || watch('event_type') === 'hybrid') && (
+                <>
+                  <Grid size={12}>
+                    <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'secondary.main' }}>
+                      🏢 Venue Information
+                    </Typography>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 8 }}>
+                    <Controller
+                      name={`days.${selectedDayIndex}.venue_name`}
+                      control={methods.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <TextField
+                          {...field}
+                          label="Venue Name"
+                          placeholder="e.g., Moscone Center, Convention Hall A"
+                          fullWidth
+                          error={!!error}
+                          helperText={error?.message}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <Controller
+                      name={`days.${selectedDayIndex}.venue_capacity`}
+                      control={methods.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <TextField
+                          {...field}
+                          label="Venue Capacity"
+                          placeholder="e.g., 5000"
+                          type="number"
+                          fullWidth
+                          error={!!error}
+                          helperText={error?.message}
+                        />
+                      )}
+                    />
+                  </Grid>
+                </>
+              )}
+
+              {/* Virtual Platform Information - Only for Virtual and Hybrid Events */}
+              {(watch('event_type') === 'virtual' || watch('event_type') === 'hybrid') && (
+                <>
+                  <Grid size={12}>
+                    <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'info.main' }}>
+                      💻 Virtual Platform Information
+                    </Typography>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Controller
+                      name={`days.${selectedDayIndex}.virtual_platform.platform_name`}
+                      control={methods.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <FormControl fullWidth error={!!error}>
+                          <InputLabel>Platform</InputLabel>
+                          <Select
+                            {...field}
+                            label="Platform"
+                          >
+                            {VIRTUAL_PLATFORMS.map((platform) => (
+                              <MenuItem key={platform.name} value={platform.name}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Iconify icon="mdi:monitor" />
+                                  {platform.name}
+                                  <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                                    (up to {platform.maxParticipants.toLocaleString()})
+                                  </Typography>
+                                </Box>
+                              </MenuItem>
+                            ))}
+                            <MenuItem value="other">
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Iconify icon="mdi:plus" />
+                                Other Platform
+                              </Box>
+                            </MenuItem>
+                          </Select>
+                          {error && (
+                            <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                              {error.message}
+                            </Typography>
+                          )}
+                        </FormControl>
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Controller
+                      name={`days.${selectedDayIndex}.virtual_platform.max_participants`}
+                      control={methods.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <TextField
+                          {...field}
+                          label="Max Participants"
+                          placeholder="e.g., 1000"
+                          type="number"
+                          fullWidth
+                          error={!!error}
+                          helperText={error?.message || "Maximum number of attendees for this session"}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid size={12}>
+                    <Controller
+                      name={`days.${selectedDayIndex}.virtual_platform.platform_link`}
+                      control={methods.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <TextField
+                          {...field}
+                          label="Meeting/Event Link (Optional)"
+                          placeholder="e.g., https://zoom.us/j/123456789 or https://teams.microsoft.com/..."
+                          fullWidth
+                          error={!!error}
+                          helperText={error?.message || "Direct link for attendees to join the virtual event"}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Controller
+                      name={`days.${selectedDayIndex}.virtual_platform.features`}
+                      control={methods.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <Autocomplete
+                          {...field}
+                          multiple
+                          freeSolo
+                          options={[
+                            'Breakout rooms',
+                            'Screen sharing',
+                            'Recording',
+                            'Live streaming',
+                            'Q&A sessions',
+                            'Polls and surveys',
+                            'Chat functionality',
+                            'Networking rooms',
+                            'Virtual backgrounds',
+                            'Whiteboard collaboration'
+                          ]}
+                          value={field.value || []}
+                          onChange={(_, newValue) => field.onChange(newValue)}
+                          renderTags={(value, getTagProps) =>
+                            value.map((option, index) => (
+                              <Chip {...getTagProps({ index })} key={option} label={option} size="small" />
+                            ))
+                          }
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Platform Features"
+                              placeholder="Select or type features"
+                              error={!!error}
+                              helperText={error?.message || "Features available on this platform"}
+                            />
+                          )}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Controller
+                      name={`days.${selectedDayIndex}.virtual_platform.access_requirements`}
+                      control={methods.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <TextField
+                          {...field}
+                          label="Access Requirements (Optional)"
+                          placeholder="e.g., Registration required, Free access, Paid ticket needed"
+                          multiline
+                          rows={2}
+                          fullWidth
+                          error={!!error}
+                          helperText={error?.message || "What attendees need to access this virtual event"}
+                        />
+                      )}
+                    />
+                  </Grid>
+                </>
+              )}
+
+              {/* Event Sector and Activities */}
               <Grid size={12}>
-                <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'secondary.main' }}>
-                  🏢 Venue Information
+                <Typography variant="h6" sx={{ mb: 2, mt: 2, color: 'info.main' }}>
+                  🎯 Event Details
                 </Typography>
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 8 }}>
-                <Controller
-                  name={`days.${selectedDayIndex}.venue_name`}
-                  control={methods.control}
-                  render={({ field, fieldState: { error } }) => (
-                    <TextField
-                      {...field}
-                      label="Venue Name"
-                      placeholder="e.g., Moscone Center, Convention Hall A"
-                      fullWidth
-                      error={!!error}
-                      helperText={error?.message}
-                    />
-                  )}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Controller
-                  name={`days.${selectedDayIndex}.venue_capacity`}
-                  control={methods.control}
-                  render={({ field, fieldState: { error } }) => (
-                    <TextField
-                      {...field}
-                      label="Venue Capacity"
-                      placeholder="e.g., 5000"
-                      type="number"
-                      fullWidth
-                      error={!!error}
-                      helperText={error?.message}
-                    />
-                  )}
-                />
               </Grid>
               
               <Grid size={12}>
@@ -4307,7 +6600,6 @@ const onSubmit = async (formData) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {console.log('Saved Tabs:', savedTabs) /* Debugging line */}
                     {savedTabs?.items?.map((tab) => {
                       const tabId = tab._id || tab.id;
                       const content = tab.content || {};
@@ -4414,3 +6706,4 @@ const onSubmit = async (formData) => {
     </DashboardContent>
   );
 }
+
