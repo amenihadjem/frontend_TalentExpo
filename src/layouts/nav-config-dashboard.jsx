@@ -49,7 +49,7 @@ export const navData = [
       { title: 'Analytics', path: paths.dashboard.root, icon: ICONS.analytics },
       { title: 'TalentAI Agent', path: paths.dashboard.chat, icon: ICONS.chat },
       {
-        title: 'Candidtes',
+        title: 'Candidates',
         path: paths.dashboard.user.root,
         icon: ICONS.user,
         children: [
