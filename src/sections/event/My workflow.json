@@ -1,0 +1,753 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=## Core Mission\nYou are an **Event Analytics AI** specializing in predicting event registration and attendance rates with comprehensive data visualization. Your mission is to provide precise predictions with rich, interactive charts and graphs using the Minimal UI library components.\n\n## DATA\n{{ $('Event Data Input Webhook').item.json.body.toJsonString() }}\n\n## REQUIRED INPUT DATA ANALYSIS\n\nThe user will provide comprehensive event data including:\n- **Event Details**: Name, description, location, dates, venue capacity\n- **Multi-Day Schedule**: Daily agendas, speakers, activities, venue changes\n- **Target Demographics**: Job titles, skills, industries, geographic regions\n- **Marketing Channels**: Social media, email campaigns, WhatsApp campaigns, Google Ads, advertising budget\n- **Historical Data**: Previous similar events performance metrics\n- **Economic Context**: Budget, pricing, local economic conditions\n\n## ENHANCED DATA COLLECTION PROCESS\n\n### 1. **MANDATORY Target Audience Database Analysis**\n- Query the database using event criteria (job titles, skills, industries, regions)\n- Analyze potential attendee pool size and relevance scores\n- Cross-reference with historical attendance patterns\n- Generate audience segmentation data for visualization\n\n### 2. **Comprehensive Market Research**\n- Unemployment rates and economic indicators for target sectors\n- Local economic conditions and purchasing power analysis\n- Competitor event analysis (timing, pricing, target audience overlap)\n- Industry trend analysis and market sentiment\n- Seasonal attendance patterns and regional preferences\n\n### 3. **Environmental & Contextual Factors**\n- Weather forecast impact analysis (indoor/outdoor considerations)\n- Transportation accessibility and local infrastructure\n- Holiday conflicts and local event calendar\n- Venue capacity optimization and accessibility features\n\n### 4. **Advanced Analytics Integration**\n- Historical conversion rate analysis (registration → attendance)\n- Price elasticity impact on different demographic segments\n- Marketing channel effectiveness measurement (including Google Ads CTR and CPC analysis)\n- Social media engagement prediction modeling\n- Geographic distribution analysis of potential attendees\n- Google Ads keyword competition and search volume assessment\n\n## STRATEGIC ANALYSIS FRAMEWORK\n\n### Data Correlation Analysis\n- Cross-reference database results with economic indicators\n- Analyze speaker reputation impact on attendance\n- Evaluate venue location accessibility scores\n- Calculate marketing reach vs. conversion probability\n- Assess Google Ads keyword competitiveness and search trends for event topic\n\n### Risk Assessment Matrix\n- External factors (weather, competing events, economic climate)\n- Internal factors (pricing strategy, venue choice, speaker lineup)\n- Market saturation analysis for the specific industry/topic\n- Timing optimization recommendations\n- Google Ads budget allocation and CPC fluctuation risks\n\n## ENHANCED RESPONSE FORMAT WITH VISUALIZATIONS\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"analysis\": { \"type\": \"string\" },\n    \"data_visualizations\": {\n      \"type\": \"object\",\n      \"additionalProperties\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"type\": { \"type\": \"string\" },\n          \"title\": { \"type\": \"string\" },\n          \"data\": {\n            \"oneOf\": [\n              {\n                \"type\": \"array\",\n                \"items\": {\n                  \"type\": \"object\",\n                  \"properties\": {\n                    \"label\": { \"type\": \"string\" },\n                    \"value\": { \"type\": \"number\" },\n                    \"color\": { \"type\": \"string\" }\n                  },\n                  \"required\": [\"label\", \"value\", \"color\"]\n                }\n              },\n              {\n                \"type\": \"array\",\n                \"items\": {\n                  \"type\": \"object\",\n                  \"properties\": {\n                    \"stage\": { \"type\": \"string\" },\n                    \"value\": { \"type\": \"number\" },\n                    \"color\": { \"type\": \"string\" }\n                  },\n                  \"required\": [\"stage\", \"value\", \"color\"]\n                }\n              },\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"categories\": {\n                    \"type\": \"array\",\n                    \"items\": { \"type\": \"string\" }\n                  },\n                  \"series\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                      \"type\": \"object\",\n                      \"properties\": {\n                        \"name\": { \"type\": \"string\" },\n                        \"data\": {\n                          \"type\": \"array\",\n                          \"items\": { \"type\": \"number\" }\n                        },\n                        \"color\": { \"type\": \"string\" }\n                      },\n                      \"required\": [\"name\", \"data\"]\n                    }\n                  }\n                },\n                \"required\": [\"categories\", \"series\"]\n              }\n            ]\n          },\n          \"chart_config\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"innerRadius\": { \"type\": \"number\" },\n              \"showLabels\": { \"type\": \"boolean\" },\n              \"showLegends\": { \"type\": \"boolean\" }\n            },\n            \"required\": []\n          }\n        },\n        \"required\": [\"type\", \"title\", \"data\"]\n      }\n    },\n    \"key_insights\": {\n      \"type\": \"array\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"recommendations\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"optimization_strategies\": {\n          \"type\": \"array\",\n          \"items\": { \"type\": \"string\" }\n        },\n        \"risk_mitigation\": {\n          \"type\": \"array\",\n          \"items\": { \"type\": \"string\" }\n        }\n      },\n      \"required\": [\"optimization_strategies\", \"risk_mitigation\"]\n    },\n    \"actionable_metrics\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"conversion_rates\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"awareness_to_interest\": { \"type\": \"string\" },\n            \"interest_to_registration\": { \"type\": \"string\" },\n            \"registration_to_attendance\": { \"type\": \"string\" }\n          },\n          \"required\": [\"awareness_to_interest\", \"interest_to_registration\", \"registration_to_attendance\"]\n        },\n        \"revenue_projections\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"total_revenue\": { \"type\": \"string\" },\n            \"average_ticket_price\": { \"type\": \"string\" },\n            \"break_even_attendance\": { \"type\": \"string\" }\n          },\n          \"required\": [\"total_revenue\", \"average_ticket_price\", \"break_even_attendance\"]\n        },\n        \"capacity_utilization\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"day_1\": { \"type\": \"string\" },\n            \"day_2\": { \"type\": \"string\" },\n            \"day_3\": { \"type\": \"string\" }\n          },\n          \"required\": [\"day_1\", \"day_2\", \"day_3\"]\n        }\n      },\n      \"required\": [\"conversion_rates\", \"revenue_projections\", \"capacity_utilization\"]\n    },\n    \"registration_expected\": { \"type\": \"number\" },\n    \"attendance_expected\": { \"type\": \"number\" },\n    \"confidence_level\": { \"type\": \"number\" }\n  },\n  \"required\": [\n    \"analysis\",\n    \"data_visualizations\",\n    \"key_insights\",\n    \"recommendations\",\n    \"actionable_metrics\",\n    \"registration_expected\",\n    \"attendance_expected\",\n    \"confidence_level\"\n  ]\n}\n\n```\n\n## VISUALIZATION IMPLEMENTATION GUIDELINES\n\n### Chart Component Integration\n- Use Minimal UI's `Chart` component with ApexCharts backend\n- Implement `ChartLegends` for all multi-series visualizations\n- Apply consistent color palette from theme configuration\n- Ensure responsive design with proper breakpoints\n\n### Interactive Features\n- Enable tooltip customization with formatted data\n- Implement chart selection for detailed drill-down analysis\n- Add time-based filtering for trend analysis\n- Include export functionality for stakeholder reporting\n\n### Performance Optimization\n- Lazy load chart components to improve initial page load\n- Implement chart loading states using `ChartLoading` component\n- Cache calculated data for smooth interactions\n- Use efficient data structures for large datasets\n\n## ADVANCED ANALYSIS REQUIREMENTS\n\n1. **Database Query Optimization**: Structure queries to maximize relevant audience identification\n2. **Statistical Modeling**: Apply confidence intervals and margin of error calculations  \n3. **Trend Analysis**: Identify patterns from historical event data and market conditions\n4. **Scenario Planning**: Generate optimistic, realistic, and pessimistic forecasts\n5. **ROI Calculation**: Include detailed financial projections and break-even analysis\n\n## CRITICAL SUCCESS FACTORS\n\n- **Data Accuracy**: Verify all external data sources and cross-reference findings\n- **Context Awareness**: Consider all provided event details in analysis\n- **Visual Clarity**: Ensure all charts are easily interpretable and actionable\n- **Comprehensive Coverage**: Address all aspects from marketing to venue logistics\n- **Predictive Value**: Provide specific, measurable predictions with clear confidence levels\n\nRemember: Always provide exact numerical predictions with detailed reasoning, rich visualizations, and actionable recommendations for event optimization.\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        768,
+        -160
+      ],
+      "id": "c08b64d6-f6a6-4af6-bca8-14e69553924c",
+      "name": "Event Analytics AI Agent"
+    },
+    {
+      "parameters": {
+        "description": "**CRITICAL TOOL: Use the tool to think about something. It will not obtain new information or change the database, but just append the thought to the log. Use it when complex reasoning or some cache memory is needed."
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        864,
+        64
+      ],
+      "id": "56607dc9-260e-4e67-ac93-cf99c54bbe03",
+      "name": "Strategic Analysis Tool"
+    },
+    {
+      "parameters": {
+        "cityName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('City', `The city where the event will take place.`, 'string') }}"
+      },
+      "type": "n8n-nodes-base.openWeatherMapTool",
+      "typeVersion": 1,
+      "position": [
+        992,
+        64
+      ],
+      "id": "7b6500f2-6649-4703-9f79-e9f7151974ac",
+      "name": "Weather Forecast Tool",
+      "credentials": {
+        "openWeatherMapApi": {
+          "id": "xbGrqi6NRTFEobWl",
+          "name": "OpenWeatherMap account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', `Search for unemployment rates and economic data for the specified sector/industry in the event location. Include current unemployment statistics, industry trends, and market conditions.`, 'string') }}",
+        "options": {
+          "max_results": 5
+        }
+      },
+      "type": "@tavily/n8n-nodes-tavily.tavilyTool",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        64
+      ],
+      "id": "822dc771-2716-4a09-ac58-da60c47718d3",
+      "name": "Unemployment & Sector Research",
+      "credentials": {
+        "tavilyApi": {
+          "id": "ou2NqvvyqoDmtyRy",
+          "name": "Tavily account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', `Search for competing events, market trends, and industry activities in the specified location and timeframe. Include event calendars, conference schedules, and market analysis.`, 'string') }}",
+        "options": {}
+      },
+      "type": "@tavily/n8n-nodes-tavily.tavilyTool",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        64
+      ],
+      "id": "eb782c2d-51e5-4686-96f9-c26711dd8d7f",
+      "name": "Competitor & Market Analysis",
+      "credentials": {
+        "tavilyApi": {
+          "id": "ou2NqvvyqoDmtyRy",
+          "name": "Tavily account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        1376,
+        64
+      ],
+      "id": "05aaa245-4da0-484e-8798-9fa93f30a44b",
+      "name": "Statistical Calculator"
+    },
+    {
+      "parameters": {
+        "toolDescription": "**CRITICAL TOOL: Target Audience Database Analysis** - This tool accesses a comprehensive database of professionals and individuals. You MUST use this tool to get actual data about potential attendees who match the event criteria. Query the database using the event's target job titles, skills, industries, and geographic regions to get real numbers of potential attendees in your target market. This data is essential for accurate predictions.",
+        "url": "https://api-service.talentexpo.ai/api/opensearch/external/search?query=Scrum",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-auth-token",
+              "value": "={{ $('JWT').item.json.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "jobTitleRoles",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Job_Titles_Filter', `Filter by relevant job title roles for the event sector. Example: Software Engineer,Data Scientist,Product Manager`, 'string') }}"
+            },
+            {
+              "name": "skills",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Skills_Filter', `Filter by skills relevant to the event topic. Example: JavaScript,Python,React,Machine Learning`, 'string') }}"
+            },
+            {
+              "name": "industries",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Industries_Filter', `Filter by industries relevant to the event. Example: Technology,Finance,Healthcare`, 'string') }}"
+            },
+            {
+              "name": "countries",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Countries_Filter', `Filter by target countries. Example: USA,Canada,United Kingdom`, 'string') }}"
+            },
+            {
+              "name": "regions",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Regions_Filter', `Filter by specific regions or states. Example: California,New York,Texas`, 'string') }}"
+            },
+            {
+              "name": "query",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Database_Query', `Full-text search terms related to the event topic and target audience`, 'string') }}"
+            },
+            {
+              "name": "languages",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Languages_Filter', `Filter by languages relevant to the event. Example: English,Spanish,French`, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        1504,
+        64
+      ],
+      "id": "e28b96a8-c3e8-4d8b-8726-2fb6f31557fa",
+      "name": "Target Audience Database",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        736,
+        64
+      ],
+      "id": "945d12d6-3c56-4fee-9906-b7a9572881fd",
+      "name": "GPT-4 Analysis Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "rTTYi7cNBe3lAP5H",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "simulate-event",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -64,
+        -160
+      ],
+      "id": "27cd56e3-a082-4eed-a3c5-7d7aefd41f23",
+      "name": "Event Data Input Webhook",
+      "webhookId": "39146933-99a0-49b5-aa92-6717cb5035ae"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2000,
+        -160
+      ],
+      "id": "fef571db-d750-440a-9315-188b773a58c5",
+      "name": "Prediction Results Output"
+    },
+    {
+      "parameters": {
+        "claims": {
+          "expiresIn": 3600
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.jwt",
+      "typeVersion": 1,
+      "position": [
+        160,
+        -160
+      ],
+      "id": "6bb83ea8-e6c2-41ed-88bc-2fafb638afe8",
+      "name": "JWT",
+      "credentials": {
+        "jwtAuth": {
+          "id": "YTvED8Y1n81HNF94",
+          "name": "JWT Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"analysis\": { \"type\": \"string\" },\n    \"data_visualizations\": {\n      \"type\": \"object\",\n      \"additionalProperties\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"type\": { \"type\": \"string\" },\n          \"title\": { \"type\": \"string\" },\n          \"data\": {\n            \"oneOf\": [\n              {\n                \"type\": \"array\",\n                \"items\": {\n                  \"type\": \"object\",\n                  \"properties\": {\n                    \"label\": { \"type\": \"string\" },\n                    \"value\": { \"type\": \"number\" },\n                    \"color\": { \"type\": \"string\" }\n                  },\n                  \"required\": [\"label\", \"value\", \"color\"]\n                }\n              },\n              {\n                \"type\": \"array\",\n                \"items\": {\n                  \"type\": \"object\",\n                  \"properties\": {\n                    \"stage\": { \"type\": \"string\" },\n                    \"value\": { \"type\": \"number\" },\n                    \"color\": { \"type\": \"string\" }\n                  },\n                  \"required\": [\"stage\", \"value\", \"color\"]\n                }\n              },\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"categories\": {\n                    \"type\": \"array\",\n                    \"items\": { \"type\": \"string\" }\n                  },\n                  \"series\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                      \"type\": \"object\",\n                      \"properties\": {\n                        \"name\": { \"type\": \"string\" },\n                        \"data\": {\n                          \"type\": \"array\",\n                          \"items\": { \"type\": \"number\" }\n                        },\n                        \"color\": { \"type\": \"string\" }\n                      },\n                      \"required\": [\"name\", \"data\"]\n                    }\n                  }\n                },\n                \"required\": [\"categories\", \"series\"]\n              }\n            ]\n          },\n          \"chart_config\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"innerRadius\": { \"type\": \"number\" },\n              \"showLabels\": { \"type\": \"boolean\" },\n              \"showLegends\": { \"type\": \"boolean\" }\n            },\n            \"required\": []\n          }\n        },\n        \"required\": [\"type\", \"title\", \"data\"]\n      }\n    },\n    \"key_insights\": {\n      \"type\": \"array\",\n      \"items\": { \"type\": \"string\" }\n    },\n    \"recommendations\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"optimization_strategies\": {\n          \"type\": \"array\",\n          \"items\": { \"type\": \"string\" }\n        },\n        \"risk_mitigation\": {\n          \"type\": \"array\",\n          \"items\": { \"type\": \"string\" }\n        }\n      },\n      \"required\": [\"optimization_strategies\", \"risk_mitigation\"]\n    },\n    \"actionable_metrics\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"conversion_rates\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"awareness_to_interest\": { \"type\": \"string\" },\n            \"interest_to_registration\": { \"type\": \"string\" },\n            \"registration_to_attendance\": { \"type\": \"string\" }\n          },\n          \"required\": [\"awareness_to_interest\", \"interest_to_registration\", \"registration_to_attendance\"]\n        },\n        \"revenue_projections\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"total_revenue\": { \"type\": \"string\" },\n            \"average_ticket_price\": { \"type\": \"string\" },\n            \"break_even_attendance\": { \"type\": \"string\" }\n          },\n          \"required\": [\"total_revenue\", \"average_ticket_price\", \"break_even_attendance\"]\n        },\n        \"capacity_utilization\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"day_1\": { \"type\": \"string\" },\n            \"day_2\": { \"type\": \"string\" },\n            \"day_3\": { \"type\": \"string\" }\n          },\n          \"required\": [\"day_1\", \"day_2\", \"day_3\"]\n        }\n      },\n      \"required\": [\"conversion_rates\", \"revenue_projections\", \"capacity_utilization\"]\n    },\n    \"registration_expected\": { \"type\": \"number\" },\n    \"attendance_expected\": { \"type\": \"number\" },\n    \"confidence_level\": { \"type\": \"number\" }\n  },\n  \"required\": [\n    \"analysis\",\n    \"data_visualizations\",\n    \"key_insights\",\n    \"recommendations\",\n    \"actionable_metrics\",\n    \"registration_expected\",\n    \"attendance_expected\",\n    \"confidence_level\"\n  ]\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1632,
+        64
+      ],
+      "id": "7dc37202-84af-4fee-9416-b0b63ff423ac",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1728,
+        320
+      ],
+      "id": "5ff0543d-5d36-4cae-a794-44d9cd63f14b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "rTTYi7cNBe3lAP5H",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# Event Analytics Data Validation Agent\n\n## Core Mission\nYou are a **Data Validation and Quality Assurance AI** specializing in reviewing and correcting event analytics predictions. Your mission is to thoroughly analyze the output from the Event Analytics AI, identify inconsistencies, errors, and missing elements, then provide corrected and enhanced data.\n\n## INPUT DATA TO VALIDATE\n{{ $json.output.toJsonString() }}\n\n## VALIDATION FRAMEWORK\n\n### 1. **MATHEMATICAL ACCURACY VERIFICATION**\n- **Attendance Calculations**: Verify that attendance_expected ≤ registration_expected\n- **Percentage Consistency**: Ensure all percentage values in charts sum to 100% where applicable\n- **Conversion Rate Logic**: Check that conversion_rates create a logical funnel progression\n- **Revenue Calculations**: Validate total_revenue = attendance_expected × average_ticket_price\n- **Capacity Utilization**: Verify capacity percentages against venue capacity and expected attendance\n\n### 2. **DATA VISUALIZATION INTEGRITY**\n- **Chart Data Completeness**: Ensure all required chart properties are present and correctly formatted\n- **Color Consistency**: Verify color codes are valid hex values and maintain consistency across charts\n- **Data Series Alignment**: Check that categories and series data arrays have matching lengths\n- **Chart Type Appropriateness**: Validate that chart types match the data being represented\n- **Value Ranges**: Ensure all numerical values are within realistic ranges\n\n### 3. **LOGICAL CONSISTENCY CHECKS**\n- **Timeline Logic**: Verify registration trends show progressive growth patterns\n- **Geographic Distribution**: Ensure regional data aligns with venue location and target demographics\n- **Industry Breakdown**: Validate that industry percentages reflect realistic market segments\n- **Daily Attendance Patterns**: Check that multi-day events show realistic attendance decline\n- **Marketing Channel Effectiveness**: Verify that channel performance aligns with typical industry benchmarks\n\n### 4. **COMPLETENESS ASSESSMENT**\n- **Required Fields**: Ensure all mandatory fields from the original prompt are present\n- **Visualization Completeness**: Verify all 9 required chart types are included with proper data\n- **Recommendation Depth**: Check that optimization strategies and risk mitigation are comprehensive\n- **Actionable Metrics**: Validate that all metric categories are populated with realistic values\n\n### 5. **BUSINESS LOGIC VALIDATION**\n- **Market Realism**: Assess if predictions align with typical industry conversion rates (2-5% for cold outreach, 15-25% for warm leads)\n- **Pricing Reasonableness**: Evaluate if ticket pricing aligns with event type and target audience\n- **Venue Utilization**: Check if capacity utilization percentages are realistic for multi-day events\n- **Marketing Channel Performance**: Validate that channel effectiveness reflects current digital marketing trends\n\n## CORRECTION METHODOLOGY\n\n### Error Classification\n1. **Critical Errors**: Mathematical inconsistencies, missing required data, invalid formats\n2. **Logic Errors**: Unrealistic projections, inconsistent trends, implausible conversions\n3. **Enhancement Opportunities**: Missing insights, incomplete recommendations, data optimization\n\n### Correction Priorities\n1. Fix mathematical errors and data inconsistencies\n2. Correct unrealistic projections and align with industry benchmarks\n3. Complete missing visualization data and ensure proper formatting\n4. Enhance recommendations with more specific, actionable insights\n5. Improve confidence scoring based on data quality assessment\n\n## ENHANCED RESPONSE FORMAT\n\n```json\n{\n  \"analysis\": \"Comprehensive analysis text with key insights and reasoning\",\n  \"registration_expected\": 2500,\n  \"attendance_expected\": 1875,\n  \"confidence_level\": 85,\n  \"data_visualizations\": {\n    \"audience_segmentation\": {\n      \"type\": \"donut_chart\",\n      \"title\": \"Target Audience Distribution\",\n      \"data\": [\n        {\"label\": \"Senior Engineers\", \"value\": 35, \"color\": \"#1976d2\"},\n        {\"label\": \"Product Managers\", \"value\": 25, \"color\": \"#ed6c02\"},\n        {\"label\": \"Data Scientists\", \"value\": 20, \"color\": \"#2e7d32\"},\n        {\"label\": \"Engineering Leaders\", \"value\": 20, \"color\": \"#9c27b0\"}\n      ],\n      \"chart_config\": {\n        \"innerRadius\": 60,\n        \"showLabels\": true,\n        \"showLegends\": true\n      }\n    },\n    \"registration_trend\": {\n      \"type\": \"line_chart\",\n      \"title\": \"Predicted Registration Timeline\",\n      \"data\": {\n        \"categories\": [\"Week 1\", \"Week 2\", \"Week 3\", \"Week 4\", \"Week 5\", \"Week 6\"],\n        \"series\": [{\n          \"name\": \"Expected Registrations\",\n          \"data\": [150, 420, 750, 1200, 1800, 2500],\n          \"color\": \"#1976d2\"\n        }, {\n          \"name\": \"Conservative Estimate\",\n          \"data\": [100, 320, 580, 950, 1400, 1950],\n          \"color\": \"#ed6c02\"\n        }]\n      }\n    },\n    \"geographic_distribution\": {\n      \"type\": \"bar_chart\",\n      \"title\": \"Expected Attendance by Region\",\n      \"data\": {\n        \"categories\": [\"California\", \"New York\", \"Texas\", \"Washington\", \"Massachusetts\", \"Other\"],\n        \"series\": [{\n          \"name\": \"Expected Attendees\",\n          \"data\": [650, 420, 315, 280, 210, 500],\n          \"color\": \"#2e7d32\"\n        }]\n      }\n    },\n    \"conversion_funnel\": {\n      \"type\": \"funnel_chart\",\n      \"title\": \"Registration to Attendance Conversion\",\n      \"data\": [\n        {\"stage\": \"Target Audience\", \"value\": 15000, \"color\": \"#e3f2fd\"},\n        {\"stage\": \"Awareness\", \"value\": 8500, \"color\": \"#bbdefb\"},\n        {\"stage\": \"Interest\", \"value\": 4200, \"color\": \"#90caf9\"},\n        {\"stage\": \"Registration\", \"value\": 2500, \"color\": \"#64b5f6\"},\n        {\"stage\": \"Confirmed Attendance\", \"value\": 2100, \"color\": \"#42a5f5\"},\n        {\"stage\": \"Actual Attendance\", \"value\": 1875, \"color\": \"#2196f3\"}\n      ]\n    },\n    \"daily_attendance_forecast\": {\n      \"type\": \"multi_bar_chart\",\n      \"title\": \"Daily Attendance Breakdown\",\n      \"data\": {\n        \"categories\": [\"Day 1\", \"Day 2\", \"Day 3\"],\n        \"series\": [{\n          \"name\": \"Expected Attendance\",\n          \"data\": [1875, 1650, 1425],\n          \"color\": \"#1976d2\"\n        }, {\n          \"name\": \"Venue Capacity\",\n          \"data\": [5000, 3500, 2000],\n          \"color\": \"#ed6c02\"\n        }]\n      }\n    },\n    \"industry_breakdown\": {\n      \"type\": \"pie_chart\",\n      \"title\": \"Attendees by Industry Sector\",\n      \"data\": [\n        {\"label\": \"Technology\", \"value\": 45, \"color\": \"#1976d2\"},\n        {\"label\": \"Finance\", \"value\": 20, \"color\": \"#ed6c02\"},\n        {\"label\": \"Healthcare\", \"value\": 15, \"color\": \"#2e7d32\"},\n        {\"label\": \"Education\", \"value\": 12, \"color\": \"#9c27b0\"},\n        {\"label\": \"Other\", \"value\": 8, \"color\": \"#f57c00\"}\n      ]\n    },\n    \"confidence_indicators\": {\n      \"type\": \"radar_chart\",\n      \"title\": \"Prediction Confidence Factors\",\n      \"data\": {\n        \"categories\": [\"Historical Data\", \"Market Research\", \"Economic Indicators\", \"Competitor Analysis\", \"Weather Impact\", \"Venue Accessibility\"],\n        \"series\": [{\n          \"name\": \"Confidence Score\",\n          \"data\": [90, 85, 75, 80, 95, 88],\n          \"color\": \"#1976d2\"\n        }]\n      }\n    },\n    \"risk_assessment\": {\n      \"type\": \"heatmap\",\n      \"title\": \"Risk Factors Impact Matrix\",\n      \"data\": {\n        \"categories\": [\"Economic Downturn\", \"Competing Events\", \"Weather Issues\", \"Speaker Cancellation\", \"Venue Problems\"],\n        \"series\": [\n          {\"name\": \"Probability\", \"data\": [30, 45, 20, 15, 10]},\n          {\"name\": \"Impact\", \"data\": [80, 60, 40, 70, 85]}\n        ]\n      }\n    },\n    \"marketing_effectiveness\": {\n      \"type\": \"stacked_bar_chart\",\n      \"title\": \"Expected Registrations by Marketing Channel\",\n      \"data\": {\n        \"categories\": [\"Social Media\", \"Email Campaigns\", \"WhatsApp Campaigns\", \"Google Ads\", \"Professional Networks\", \"Partner Referrals\", \"Direct Search\"],\n        \"series\": [\n          {\"name\": \"Early Bird (Week 1-2)\", \"data\": [200, 150, 180, 220, 180, 120, 100], \"color\": \"#1976d2\"},\n          {\"name\": \"Regular (Week 3-4)\", \"data\": [350, 280, 250, 320, 220, 180, 150], \"color\": \"#ed6c02\"},\n          {\"name\": \"Last Minute (Week 5-6)\", \"data\": [180, 120, 110, 140, 100, 80, 70], \"color\": \"#2e7d32\"}\n        ]\n      }\n    }\n  },\n  \"key_insights\": [\n    \"Strong alignment between database audience and event topic increases confidence\",\n    \"San Francisco location provides optimal accessibility for tech professionals\",\n    \"Multi-day format may cause 15-20% attendance drop-off between days\",\n    \"Premium speaker lineup significantly boosts registration conversion rates\"\n  ],\n  \"recommendations\": {\n    \"optimization_strategies\": [\n      \"Focus marketing on California and NY regions for highest ROI\",\n      \"Implement early bird pricing to capture 40% of registrations in first 3 weeks\",\n      \"Create day-specific value propositions to maintain multi-day attendance\",\n      \"Leverage LinkedIn and professional networks for primary outreach\",\n      \"Use Google Ads targeting for AI/ML professionals with 25-45 age range\",\n      \"Implement Google Ads remarketing campaigns for website visitors\",\n      \"Deploy personalized email campaigns with speaker spotlights and agenda highlights\",\n      \"Leverage WhatsApp groups and community channels for direct engagement and updates\"\n    ],\n    \"risk_mitigation\": [\n      \"Secure backup speakers for critical keynote slots\",\n      \"Implement hybrid attendance options for weather contingency\",\n      \"Monitor competitor event announcements and adjust pricing accordingly\",\n      \"Create waitlist system due to strong predicted demand vs venue capacity\"\n    ]\n  },\n  \"actionable_metrics\": {\n    \"conversion_rates\": {\n      \"awareness_to_interest\": \"49.4%\",\n      \"interest_to_registration\": \"59.5%\",\n      \"registration_to_attendance\": \"75.0%\"\n    },\n    \"revenue_projections\": {\n      \"total_revenue\": \"$1,875,000\",\n      \"average_ticket_price\": \"$750\",\n      \"break_even_attendance\": \"1,200\"\n    },\n    \"capacity_utilization\": {\n      \"day_1\": \"37.5%\",\n      \"day_2\": \"47.1%\", \n      \"day_3\": \"71.3%\"\n    }\n  }\n}\n```\n\n## VALIDATION CHECKLIST\n\n### ✅ Mathematical Validation\n- [ ] All percentages sum correctly (pie charts, industry breakdown)\n- [ ] Revenue calculations are accurate (attendance × price)\n- [ ] Conversion rates follow logical progression\n- [ ] Capacity utilization percentages are realistic\n- [ ] Geographic distribution totals match expected attendance\n\n### ✅ Chart Data Validation  \n- [ ] All chart types have complete data structures\n- [ ] Color codes are valid and consistent\n- [ ] Categories and series arrays have matching lengths\n- [ ] Numerical ranges are within realistic bounds\n- [ ] Chart configurations include all required parameters\n\n### ✅ Business Logic Validation\n- [ ] Conversion rates align with industry standards\n- [ ] Multi-day attendance shows realistic decline patterns\n- [ ] Marketing channel effectiveness reflects current trends\n- [ ] Pricing strategy matches target demographic capabilities\n- [ ] Risk assessments include probability × impact calculations\n\n### ✅ Completeness Validation\n- [ ] All 9 required visualizations are present\n- [ ] Recommendations include specific, actionable items\n- [ ] Key insights are supported by data evidence\n- [ ] Confidence factors are justified and measurable\n- [ ] Economic and competitive analysis is comprehensive\n\n## CRITICAL SUCCESS METRICS\n\n1. **Accuracy Improvement**: Achieve >95% mathematical accuracy in all calculations\n2. **Realism Enhancement**: Ensure all projections fall within industry-standard ranges\n3. **Completeness Score**: Validate 100% completion of all required data fields\n4. **Business Viability**: Confirm all recommendations are feasible and actionable\n5. **Confidence Calibration**: Adjust confidence levels based on data quality and market realism\n\n## FINAL VALIDATION PROTOCOL\n\nBefore outputting corrected data:\n1. Run final mathematical verification on all calculations\n2. Cross-reference industry benchmarks for all conversion rates\n3. Validate chart data completeness and formatting\n4. Ensure business recommendations are specific and measurable\n5. Calibrate confidence levels based on data quality assessment\n\nRemember: Your role is to be the quality assurance layer that ensures the Event Analytics AI output is accurate, complete, and actionable for business decision-making.\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1648,
+        -160
+      ],
+      "id": "2f168e1f-ce60-4f5e-92ea-63e8247ceec6",
+      "name": "AI Agent"
+    }
+  ],
+  "pinData": {
+    "Event Data Input Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.talentexpo.eu",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+            "accept": "application/json, text/plain, */*",
+            "sec-ch-ua": "\"Not;A=Brand\";v=\"99\", \"Brave\";v=\"139\", \"Chromium\";v=\"139\"",
+            "content-type": "application/json",
+            "sec-ch-ua-mobile": "?0",
+            "sec-gpc": "1",
+            "accept-language": "fr-FR,fr;q=0.9",
+            "origin": "http://localhost:3031",
+            "sec-fetch-site": "cross-site",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
+            "referer": "http://localhost:3031/",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "x-forwarded-proto": "https",
+            "x-forwarded-port": "443",
+            "x-forwarded-for": "197.26.49.66, 197.26.49.66",
+            "x-forwarded-host": "n8n.talentexpo.eu",
+            "x-forwarded-server": "n8n.talentexpo.eu",
+            "content-length": "12521",
+            "connection": "Keep-Alive"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "event_name": "Global AI & Innovation Summit 2025",
+            "event_description": "A comprehensive 3-day conference bringing together AI researchers, tech entrepreneurs, and industry leaders to explore cutting-edge developments in artificial intelligence, machine learning, and digital transformation. Features hands-on workshops, networking sessions, and startup showcases.",
+            "city": "San Francisco",
+            "number_of_days": 3,
+            "state": "California",
+            "population": "884,363",
+            "coordinates": [
+              37.7749,
+              -122.4194
+            ],
+            "days": [
+              {
+                "event_date": "2025-10-15",
+                "start_time": "09:00",
+                "end_time": "18:00",
+                "venue_name": "Moscone Center West Hall",
+                "venue_capacity": "5000",
+                "primary_sector": "Artificial Intelligence & Machine Learning",
+                "speakers": "Dr. Sarah Chen - Director of AI Research, Stanford University\nMarcus Rodriguez - Chief AI Officer, Google DeepMind  \nProf. Elena Volkov - Machine Learning Pioneer, MIT\nJames Park - Founder & CEO, OpenAI\nDr. Raj Patel - VP of AI Ethics, Microsoft",
+                "activities": "9:00 AM - Registration & Welcome Coffee\n9:30 AM - Opening Keynote: \"The Future of AGI\"\n10:30 AM - AI Ethics Panel Discussion\n12:00 PM - Networking Lunch & Tech Expo\n2:00 PM - Machine Learning Workshop\n4:00 PM - Startup Pitch Competition\n5:30 PM - Welcome Reception & Networking",
+                "additional_info": "• Business professional dress code recommended\n• All meals and refreshments provided\n• Live streaming available for virtual attendees\n• Simultaneous translation in Spanish and Mandarin\n• Parking available at Moscone Garage ($25/day)"
+              },
+              {
+                "event_date": "2025-10-16",
+                "start_time": "08:30",
+                "end_time": "19:00",
+                "venue_name": "Moscone Center South Hall",
+                "venue_capacity": "3500",
+                "primary_sector": "Digital Transformation & Enterprise AI",
+                "speakers": "Lisa Wang - CTO, Salesforce\nDavid Kumar - Head of AI Strategy, IBM\nDr. Michelle Foster - Digital Innovation Leader, Accenture\nAlex Thompson - VP Engineering, NVIDIA\nMaria Santos - AI Product Manager, Meta",
+                "activities": "8:30 AM - Continental Breakfast & Networking\n9:00 AM - Enterprise AI Implementation Keynote\n10:00 AM - Industry Use Cases Panel\n11:30 AM - Hands-on AI Development Workshop\n1:00 PM - Networking Lunch & Solution Showcase\n3:00 PM - Technical Deep-dive Sessions\n5:00 PM - Innovation Awards Ceremony\n6:30 PM - Evening Gala Dinner",
+                "additional_info": "• Laptops required for hands-on workshops\n• Technical skill level: Intermediate to Advanced\n• GitHub account needed for coding sessions\n• Awards ceremony features industry recognition\n• Formal attire for evening gala"
+              },
+              {
+                "event_date": "2025-10-17",
+                "start_time": "09:00",
+                "end_time": "16:30",
+                "venue_name": "San Francisco Convention Center",
+                "venue_capacity": "2000",
+                "primary_sector": "AI Startups & Future Technologies",
+                "speakers": "Robert Chang - Managing Partner, Andreessen Horowitz\nDr. Amanda Liu - Quantum Computing Researcher, IBM Research\nCarlos Mendez - AI Startup Accelerator Director, Y Combinator\nJennifer Kim - Venture Capitalist, Sequoia Capital\nProf. Michael Zhang - Robotics & AI, UC Berkeley",
+                "activities": "9:00 AM - Startup Breakfast & Demo Setup\n9:30 AM - Future Tech Trends Keynote\n10:30 AM - Investor-Entrepreneur Panel\n12:00 PM - Startup Demo Showcase (20 companies)\n2:00 PM - Funding & Investment Workshop\n3:30 PM - Closing Keynote: \"AI in 2030\"\n4:15 PM - Final Networking & Wrap-up",
+                "additional_info": "• Startup Demo Day featuring 20 selected companies\n• Investor meetings available by appointment\n• Business cards strongly recommended\n• Final networking focused on partnerships\n• Event app available for continued connections"
+              }
+            ],
+            "marketing_strategy": {
+              "facebook": {
+                "audience": "Tech professionals aged 25-45, AI researchers, startup founders, and decision-makers in technology companies",
+                "placement": "Facebook ads targeting tech professionals, Event page promotion in AI/ML groups, Sponsored posts in technology communities, Partner company shares",
+                "reach": "150,000 impressions, 8,000 engagements, 500 event page visits",
+                "reaction": "3% CTR, 200 registrations, 1,200 shares and comments",
+                "budget": "$3,500",
+                "timeline": "6 weeks before event launch, intensive 2 weeks prior",
+                "content_type": "Event announcement videos, Speaker spotlight posts, Countdown graphics, Live Q&A sessions with speakers",
+                "additional_info": "Partner with tech companies for employee sharing, utilize AI/ML Facebook groups with 50K+ members",
+                "influencer_partnerships": [
+                  {
+                    "name": "TechGuru Mike",
+                    "followers_count": "250,000",
+                    "expected_reach": "75,000 impressions",
+                    "expected_reaction": "3,000 engagements, 150 registrations"
+                  },
+                  {
+                    "name": "AI Insights Sarah",
+                    "followers_count": "180,000",
+                    "expected_reach": "54,000 impressions",
+                    "expected_reaction": "2,200 engagements, 110 registrations"
+                  }
+                ]
+              },
+              "instagram": {
+                "audience": "Young tech professionals, AI enthusiasts, startup community, visual learners aged 22-40",
+                "placement": "Instagram Stories ads, Influencer partnerships with tech personalities, AI/tech hashtag campaigns, Visual event teasers",
+                "reach": "100,000 impressions, 5,000 story views, 2,000 profile visits",
+                "reaction": "4% engagement rate, 300 story interactions, 150 DMs",
+                "budget": "$2,500",
+                "timeline": "4 weeks campaign with daily posts 2 weeks before",
+                "content_type": "Visual speaker cards, Behind-the-scenes venue prep, IGTV speaker interviews, Stories polls and Q&As",
+                "additional_info": "Collaborate with tech influencers, create branded hashtag #AIInnovationSF2025",
+                "influencer_partnerships": [
+                  {
+                    "name": "CodeWithEmily",
+                    "followers_count": "320,000",
+                    "expected_reach": "80,000 story views",
+                    "expected_reaction": "5,000 engagements, 200 registrations"
+                  },
+                  {
+                    "name": "StartupLifeAlex",
+                    "followers_count": "150,000",
+                    "expected_reach": "45,000 post reach",
+                    "expected_reaction": "3,500 engagements, 140 registrations"
+                  },
+                  {
+                    "name": "TechReelsJenna",
+                    "followers_count": "280,000",
+                    "expected_reach": "70,000 reel views",
+                    "expected_reaction": "4,200 engagements, 180 registrations"
+                  }
+                ]
+              },
+              "linkedin": {
+                "audience": "Senior tech professionals, C-level executives, industry leaders, enterprise decision-makers, career-focused individuals",
+                "placement": "LinkedIn sponsored content, Professional network posts, Industry leader endorsements, LinkedIn Events promotion, Company page updates",
+                "reach": "200,000 impressions, 10,000 clicks, 3,000 professional connections",
+                "reaction": "2.5% CTR, 400 professional registrations, 50 company team registrations",
+                "budget": "$4,000",
+                "timeline": "8 weeks professional campaign, executive outreach 3 weeks prior",
+                "content_type": "Professional articles about AI trends, Thought leadership posts, Speaker professional achievements, Industry insights",
+                "additional_info": "Target Fortune 500 tech companies, leverage speaker professional networks, create LinkedIn Event page",
+                "influencer_partnerships": [
+                  {
+                    "name": "Dr. Robert Chen (CTO)",
+                    "followers_count": "95,000",
+                    "expected_reach": "28,500 professional impressions",
+                    "expected_reaction": "1,400 engagements, 85 registrations"
+                  },
+                  {
+                    "name": "Lisa Martinez (AI Director)",
+                    "followers_count": "120,000",
+                    "expected_reach": "36,000 professional reach",
+                    "expected_reaction": "1,800 engagements, 110 registrations"
+                  }
+                ]
+              },
+              "x_twitter": {
+                "audience": "Tech community, AI researchers, startup ecosystem, tech journalists, early adopters aged 25-50",
+                "placement": "Twitter promoted tweets, Tech hashtag campaigns (#AIConf2025 #TechSummitSF), Live tweeting strategy, Speaker quote cards",
+                "reach": "80,000 impressions, 3,000 retweets, 1,500 replies",
+                "reaction": "5% engagement rate, 250 registrations via Twitter, 500 hashtag uses",
+                "budget": "$1,500",
+                "timeline": "Continuous 6-week campaign, live-tweeting during event",
+                "content_type": "Tweet threads about AI trends, Speaker quote graphics, Real-time event updates, Polls and tech discussions",
+                "additional_info": "Engage with tech Twitter community, partner with tech journalists for coverage, create event Twitter moment",
+                "influencer_partnerships": [
+                  {
+                    "name": "@TechThreadGuru",
+                    "followers_count": "180,000",
+                    "expected_reach": "54,000 impressions",
+                    "expected_reaction": "2,700 engagements, 135 registrations"
+                  },
+                  {
+                    "name": "@AINewsNow",
+                    "followers_count": "220,000",
+                    "expected_reach": "66,000 impressions",
+                    "expected_reaction": "3,300 engagements, 165 registrations"
+                  }
+                ]
+              },
+              "youtube": {
+                "audience": "Tech tutorial viewers, AI/ML learners, startup enthusiasts, professional development seekers",
+                "placement": "Pre-roll ads on tech channels, Speaker interview teasers, Event highlight videos, Educational content tie-ins",
+                "reach": "50,000 video views, 2,000 subscribers, 500 comments",
+                "reaction": "6% view-through rate, 100 registrations from YouTube, 300 channel subscriptions",
+                "budget": "$2,000",
+                "timeline": "4 weeks of video content, speaker interviews 3 weeks before",
+                "content_type": "Speaker introduction videos, Event preview trailers, AI tutorial tie-ins, Behind-the-scenes venue setup",
+                "additional_info": "Create dedicated event playlist, collaborate with tech YouTubers, post-event content strategy",
+                "influencer_partnerships": [
+                  {
+                    "name": "TechExplainedTV",
+                    "followers_count": "450,000",
+                    "expected_reach": "135,000 video views",
+                    "expected_reaction": "8,100 engagements, 270 registrations"
+                  },
+                  {
+                    "name": "CodeWithMike",
+                    "followers_count": "280,000",
+                    "expected_reach": "84,000 video views",
+                    "expected_reaction": "5,000 engagements, 168 registrations"
+                  },
+                  {
+                    "name": "AITutorialsDaily",
+                    "followers_count": "350,000",
+                    "expected_reach": "105,000 video views",
+                    "expected_reaction": "6,300 engagements, 210 registrations"
+                  }
+                ]
+              },
+              "google_ads": {
+                "audience": "Tech professionals, AI/ML enthusiasts, startup founders, conference attendees",
+                "placement": "Google search ads, Display ads on tech websites, YouTube ads",
+                "reach": "100,000 impressions, 5,000 clicks, 300 conversions",
+                "reaction": "3% CTR, 150 registrations from Google Ads",
+                "budget": "$3,000",
+                "timeline": "4 weeks of ad campaigns, ramping up 2 weeks before the event",
+                "content_type": "Search ads targeting AI keywords, Display banners showcasing event highlights, Video ads featuring speaker testimonials",
+                "additional_info": "Utilize remarketing strategies for website visitors, A/B test ad creatives for optimization"
+              },
+              "email_campaign": {
+                "audience": "Tech professionals, newsletter subscribers, past event attendees, AI/ML community members aged 25-50",
+                "placement": "Newsletter campaigns, Targeted email lists, Automated drip campaigns, Speaker introduction emails, Registration reminder sequences",
+                "reach": "15,000 emails sent, 10,275 opened, 4,245 clicked, 750 conversions",
+                "reaction": "68.5% open rate, 28.3% click rate, 18.7% conversion rate, 420 registrations",
+                "budget": "$1,200",
+                "timeline": "6-week email sequence: Welcome → Speaker spotlights → Early bird → Agenda reveal → Final call → Day-of updates",
+                "content_type": "HTML newsletters with event details, Personalized speaker invitations, Interactive countdown timers, Early bird promotion emails, Event agenda highlights",
+                "additional_info": "A/B test subject lines, Segment by industry and experience level, Include calendar invites and venue directions"
+              },
+              "whatsapp_campaign": {
+                "audience": "Tech community members, professional networks, AI enthusiasts, startup founders, personal contacts aged 22-45",
+                "placement": "WhatsApp groups (8 industry-specific), Personal invites, Community channels, Status updates, Direct messaging campaigns",
+                "reach": "1,200 group members, 420 active participants, 850 messages sent, 575 responses",
+                "reaction": "35.2% engagement rate, 67.8% message response rate, 15.0% conversion rate, 180 registrations",
+                "budget": "$700",
+                "timeline": "6-week community building: Group creation → Member invites → Daily engagement → Event announcements → Live updates",
+                "content_type": "Event announcements, Speaker introduction videos, Interactive polls, Voice messages from speakers, Behind-the-scenes content",
+                "additional_info": "Create 8 groups max 150 members each, Assign 2-3 moderators per group, Cross-promote with email signatures"
+              },
+              "offline_publicity": {
+                "audience": "Local tech community, university students, co-working space members, conference center visitors",
+                "placement": "Tech conference flyers, University bulletin boards (Stanford, UC Berkeley), Co-working space posters, SF tech hub displays",
+                "reach": "25,000 physical impressions, 1,000 flyers distributed, 50 partner locations",
+                "reaction": "2% conversion rate from physical materials, 50 walk-in inquiries, 100 QR code scans",
+                "budget": "$1,000",
+                "timeline": "3 weeks of poster/flyer distribution, concentrated 1 week before",
+                "content_type": "Professional event flyers with QR codes, Branded banners for partner locations, Direct mail to tech companies",
+                "additional_info": "Partner with local tech meetups, place materials in Moscone Center area, SF tech district visibility"
+              }
+            }
+          },
+          "webhookUrl": "https://n8n.talentexpo.eu/webhook/simulate-event",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Strategic Analysis Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Event Analytics AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weather Forecast Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Event Analytics AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unemployment & Sector Research": {
+      "ai_tool": [
+        [
+          {
+            "node": "Event Analytics AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Competitor & Market Analysis": {
+      "ai_tool": [
+        [
+          {
+            "node": "Event Analytics AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Statistical Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "Event Analytics AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Target Audience Database": {
+      "ai_tool": [
+        [
+          {
+            "node": "Event Analytics AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4 Analysis Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Event Analytics AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Event Analytics AI Agent": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Event Data Input Webhook": {
+      "main": [
+        [
+          {
+            "node": "JWT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JWT": {
+      "main": [
+        [
+          {
+            "node": "Event Analytics AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Event Analytics AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Prediction Results Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e1c2fecb-9978-4545-bc33-965350e2f8e8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "526ddbb61f18ca2507f7b7f9435b0e05091a005004eca4149815c482f0442faa"
+  },
+  "id": "OuXuOKoDcTA2tFaE",
+  "tags": []
+}

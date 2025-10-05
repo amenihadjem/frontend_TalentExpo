@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { Box, Grid, Button, Divider, Typography, CircularProgress, Chip } from '@mui/material';
+import {
+  Box,
+  Grid,
+  Button,
+  Divider,
+  Typography,
+  CircularProgress,
+  Chip,
+  Avatar,
+} from '@mui/material';
 import axios, { endpoints } from 'src/lib/axios';
 import { SocialMediaLinks } from 'src/components/social-media-links';
 
@@ -126,9 +135,8 @@ export default function CandidateCVDisplay({ data, onReset }) {
     <Box
       sx={{
         p: 3,
-        maxWidth: '1000px',
-        margin: 'auto',
-
+        mx: 'auto',
+        width: { xs: '100%', md: 1000 }, // fixed width on md+ screens
         backgroundColor: 'background.paper',
         borderRadius: 2,
         boxShadow: 3,
@@ -149,25 +157,79 @@ export default function CandidateCVDisplay({ data, onReset }) {
         </Button>
       </Box>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} sm={4} sx={{ display: 'flex', justifyContent: 'center' }}>
+      {/* Left + Divider + Right */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 2 }}>
+        {/* LEFT: Picture + Contact + Social */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            width: '100%',
+          }}
+        >
+          {/* Avatar */}
           <Box
             sx={{
-              width: 120,
-              height: 120,
               borderRadius: '50%',
-              backgroundColor: 'primary.main',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: 48,
+              width: '50%',
             }}
           >
-            {candidate.full_name?.charAt(0)?.toUpperCase() || '?'}
+            <Avatar
+              src={data.photo_url || ''}
+              alt={candidate.full_name || 'Candidate Avatar'}
+              sx={{ width: 140, height: 140, fontSize: 40, bgcolor: 'primary.main' }}
+            >
+              {candidate.full_name?.charAt(0)?.toUpperCase() || '?'}
+            </Avatar>
           </Box>
-        </Grid>
 
+          {/* Contact Info */}
+          <Box sx={{ mt: 2, width: '50%' }}>
+            <Typography variant="body2">
+              <strong>Email: </strong> {candidate.email || 'N/A'}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Phone: </strong> {candidate.phone || 'N/A'}
+            </Typography>
+
+            <Typography
+              variant="body2"
+              sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}
+            >
+              <strong>Location: </strong>
+              {countryCode && (
+                <img
+                  src={`https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png`}
+                  alt={`${candidate.country} flag`}
+                  style={{ width: 24, height: 18, borderRadius: 2 }}
+                />
+              )}
+              <span>{formatLocation()}</span>
+            </Typography>
+
+            {candidate.address && (
+              <Typography variant="body2" sx={{ mt: 0.5 }}>
+                <strong>Address: </strong>
+                <span>{candidate.address}</span>
+              </Typography>
+            )}
+          </Box>
+
+          {/* Social Media */}
+          {socialMedia.length > 0 && (
+            <Box sx={{ mt: 2, width: '100%' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                Social Media
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                <SocialMediaLinks social_media={socialMedia} />
+              </Box>
+            </Box>
+          )}
+        </Box>
+
+        <Divider orientation="vertical" flexItem />
+        {/* RIGHT COLUMN: Name + Role + Summary + Professional Info + Company Info */}
         <Grid item xs={12} sm={8}>
           <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
             {candidate.full_name}
@@ -241,33 +303,6 @@ export default function CandidateCVDisplay({ data, onReset }) {
             </Box>
           )}
 
-          {/* Contact Info */}
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            <strong>Email: </strong> {candidate.email || 'N/A'}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Phone: </strong> {candidate.phone || 'N/A'}
-          </Typography>
-
-          <Typography variant="body2" sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <strong>Location: </strong>
-            {countryCode && (
-              <img
-                src={`https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png`}
-                alt={`${candidate.country} flag`}
-                style={{ width: 24, height: 18, borderRadius: 2 }}
-              />
-            )}
-            <span>{formatLocation()}</span>
-          </Typography>
-
-          {candidate.address && (
-            <Typography variant="body2" sx={{ mt: 0.5 }}>
-              <strong>Address: </strong>
-              <span>{candidate.address}</span>
-            </Typography>
-          )}
-
           {/* Company Info */}
           {(candidate.job_company_size || candidate.job_company_industry) && (
             <>
@@ -287,23 +322,11 @@ export default function CandidateCVDisplay({ data, onReset }) {
               )}
             </>
           )}
-
-          {socialMedia.length > 0 && (
-            <>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                Social Media
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                <SocialMediaLinks social_media={socialMedia} />
-              </Box>
-            </>
-          )}
         </Grid>
-      </Grid>
-
+      </Box>
       <Divider sx={{ my: 3 }} />
 
+      {/* Education & Experience with balanced margins */}
       <Grid container spacing={3}>
         <Grid item xs={12} sm={6}>
           <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
@@ -369,7 +392,6 @@ export default function CandidateCVDisplay({ data, onReset }) {
                   border: '1px solid',
                   borderColor: exp.is_primary ? 'primary.main' : 'divider',
                   borderRadius: 1,
-                  mr: 2,
                   bgcolor: 'transparent',
                 }}
               >

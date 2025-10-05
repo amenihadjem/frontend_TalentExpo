@@ -5,34 +5,21 @@ import axios, { endpoints } from 'src/lib/axios';
 
 import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
-import { Box } from '@mui/material'; // Import Box for spacing
+import { Box } from '@mui/material';
 
 import { DashboardContent } from 'src/layouts/dashboard';
-import {
-  _analyticTasks,
-  _analyticPosts,
-  _analyticTraffic,
-  _analyticOrderTimeline,
-} from 'src/_mock';
 
 import { AnalyticsWidgetSummary } from '../analytics-widget-summary';
 
 import { CONFIG } from 'src/global-config';
 
 import { CvUploadsChart } from '../cv-uploads-chart';
-import { AnalyticsTasks } from '../analytics-tasks';
-import { AnalyticsOrderTimeline } from '../analytics-order-timeline';
-import { AnalyticsTrafficBySite } from '../analytics-traffic-by-site';
-import { AnalyticsConversionRates } from '../analytics-conversion-rates';
-import { countryCounts } from 'src/_mock/mockCandidates';
-
 import { AnalyticsTopSkillsFromCVs } from '../analytics-top-skills-from-cvs';
 import { AnalyticsExperienceSegments } from '../analytics-experience-segments';
-import { AnalyticsLanguageLocationMap } from '../analytics-language-location-map';
 import { AnalyticsIndustrySkills } from '../analytics-industry-skills';
 import { CVsByLanguage } from '../cvs-by-language';
 import { AnalyticsCandidateMap } from '../analytics-candidate-map';
-import { AnalyticsCandidatesBarChart } from '../analytics-candidates-bar-chart'; // <-- import new chart component
+import { AnalyticsCandidatesBarChart } from '../analytics-candidates-bar-chart';
 import AnalyticsIndustrySkillsHeatmap from '../analytics-industry-skills-heatmap';
 import AnalyticsEducationLevelDistribution from '../analytics-edudcation-level-distribution';
 
@@ -54,33 +41,57 @@ function formatChartData(rawData) {
     name: industry,
     skills,
   }));
-  console.log('Formatted Chart Data:', series);
 
   return { series };
 }
 
+// Updated to use the new 8/4 layout as requested
 export function OverviewAnalyticsView() {
   const [filter, setFilter] = useState('daily');
 
-  const [totalCVs, setTotalCVs] = useState(0);
-  const [newCVs, setNewCVs] = useState(0);
-  const [avgSkillsCount, setAvgSkillsCount] = useState(0);
-  const [avgExperience, setAvgExperience] = useState(0);
+  // Main stats from the new unified endpoint
+  const [mainStats, setMainStats] = useState({
+    total_cvs: 0,
+    new_cvs_today: 0,
+    cvs_with_phone: { count: 0, percentage: '0' },
+    cvs_with_email: { count: 0, percentage: '0' },
+    avg_experience_years: 0,
+    top_countries: [],
+    top_industries: [],
+    experience_segments: [],
+  });
+
+  // Additional data that needs separate endpoints
   const [cvByLanguageData, setCvByLanguageData] = useState([]);
   const [cvWithSocialMedia, setCvWithSocialMedia] = useState(0);
-  const [cvWithPhoneNumber, setCvWithPhoneNumber] = useState(0);
-  const [experienceSegments, setExperienceSegments] = useState([]);
   const [topSkills, setTopSkills] = useState({ categories: [], series: [] });
   const [industrySkillsData, setIndustrySkillsData] = useState([]);
   const [cvUploadsData, setCvUploadsData] = useState({ daily: [], weekly: [] });
+  const [mapData, setMapData] = useState([]);
 
-  // New state for CV processing status
+  // CV processing status
   const [cvProcessingStatus, setCvProcessingStatus] = useState({
     total_processed: 0,
     success_count: 0,
     fail_count: 0,
     cv_in_queue: 0,
   });
+
+  // Fetch main statistics from the unified endpoint
+  useEffect(() => {
+    const fetchMainStats = async () => {
+      try {
+        const response = await axios.get(endpoints.analytics.stats);
+        if (response.data.success) {
+          setMainStats(response.data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch main stats:', error);
+      }
+    };
+
+    fetchMainStats();
+  }, []);
 
   // Function to fetch CV processing status
   const fetchCvProcessingStatus = async () => {
@@ -103,206 +114,176 @@ export function OverviewAnalyticsView() {
 
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);
-  }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
-
-  useEffect(() => {
-    const fetchTotalCVs = async () => {
-      try {
-        const response = await axios.get(endpoints.analytics.totalCv);
-        const count = response.data.data?.total_cvs || 0; // adjust based on API response
-
-        setTotalCVs(count);
-      } catch (error) {
-        console.error('Failed to fetch total CVs:', error);
-      }
-    };
-
-    fetchTotalCVs();
-  }, []);
-  useEffect(() => {
-    const fetchNewCVs = async () => {
-      try {
-        const response = await axios.get(endpoints.analytics.newCv);
-        const count = response.data.data?.new_candidates || 0; // adjust based on API response
-
-        setNewCVs(count);
-      } catch (error) {
-        console.error('Failed to fetch new CVs:', error);
-      }
-    };
-    fetchNewCVs();
   }, []);
 
+  // Fetch additional data that's not in the main stats endpoint
   useEffect(() => {
-    const fetchAvgSkillsCount = async () => {
-      try {
-        const response = await axios.get(endpoints.analytics.avgSkillsCount);
-        const count = response.data.data?.avg_skill_count || 0; // adjust based on API response
+    const fetchAdditionalData = async () => {
+      console.log('🔍 Starting fetchAdditionalData...');
 
-        setAvgSkillsCount(count);
+      try {
+        console.log('📡 Fetching CVs with social media...');
+        // Fetch CVs with social media
+        try {
+          const socialMediaResponse = await axios.get(endpoints.analytics.candidateWithSocialMedia);
+          console.log('✅ Social media response:', socialMediaResponse.data);
+          const socialMediaData = socialMediaResponse.data?.data || {};
+          setCvWithSocialMedia(socialMediaData.count_with_social_media || 0);
+        } catch (socialError) {
+          console.error('❌ Social media fetch failed:', socialError);
+          // Continue with other fetches even if this one fails
+        }
+
+        console.log('📡 Fetching top skills...');
+        // Fetch top skills
+        try {
+          const skillsResponse = await axios.get(endpoints.analytics.topSkills);
+          console.log('✅ Skills response:', skillsResponse.data);
+          const skillsData = skillsResponse.data?.data || [];
+          const categories = skillsData.map((item) => item.skill_name);
+          const thisMonthSeries = skillsData.map((item) => parseInt(item.this_month, 10));
+          const lastMonthSeries = skillsData.map((item) => parseInt(item.last_month, 10));
+          setTopSkills({
+            categories,
+            series: [
+              { name: 'This Month', data: thisMonthSeries },
+              { name: 'Last Month', data: lastMonthSeries },
+            ],
+          });
+        } catch (skillsError) {
+          console.error('❌ Skills fetch failed:', skillsError);
+          // Continue with other fetches even if this one fails
+        }
+
+        console.log('📡 Fetching industry skills...');
+        // Fetch industry skills
+        try {
+          const industrySkillsResponse = await axios.get(
+            endpoints.analytics.topSkillsByTopIndustries
+          );
+          console.log('✅ Industry skills response:', industrySkillsResponse.data);
+          const industrySkillsRawData = industrySkillsResponse.data?.data || [];
+          const formattedIndustrySkills = formatChartData({ data: industrySkillsRawData });
+          setIndustrySkillsData(formattedIndustrySkills.series);
+        } catch (industryError) {
+          console.error('❌ Industry skills fetch failed:', industryError);
+          // Continue with other fetches even if this one fails
+        }
+
+        console.log('📡 Fetching map data...');
+        // Fetch map data
+        try {
+          const mapResponse = await axios.get(endpoints.analytics.candidatesByCountry);
+          console.log('✅ Map response:', mapResponse.data);
+          setMapData(mapResponse.data?.data || []);
+        } catch (mapError) {
+          console.error('❌ Map fetch failed:', mapError);
+          // Continue with other fetches even if this one fails
+        }
+
+        console.log('📡 Fetching details for language distribution...');
+        console.log('🔗 Using endpoint:', endpoints.analytics.details);
+
+        // 🔹 THIS IS THE IMPORTANT PART - Fetch language distribution (limit to top 3)
+        try {
+          const detailsResponse = await axios.get(endpoints.analytics.details);
+          console.log('✅ Details response status:', detailsResponse.status);
+          console.log('✅ Full details response:', detailsResponse.data);
+
+          if (!detailsResponse.data) {
+            console.error('❌ No data in details response');
+            setCvByLanguageData([]);
+            return;
+          }
+
+          if (!detailsResponse.data.data) {
+            console.error('❌ No data.data in details response');
+            console.log('📋 Available keys:', Object.keys(detailsResponse.data));
+            setCvByLanguageData([]);
+            return;
+          }
+
+          const langRaw = detailsResponse.data.data.language_distribution || [];
+          console.log('🗣️ Raw language data:', langRaw);
+          console.log('🗣️ Language data type:', typeof langRaw);
+          console.log('🗣️ Language data length:', langRaw.length);
+
+          if (langRaw.length === 0) {
+            console.warn('⚠️ Language data is empty');
+            setCvByLanguageData([]);
+            return;
+          }
+
+          const top3Languages = langRaw
+            .slice() // clone so we don't mutate
+            .sort((a, b) => {
+              console.log(`Comparing ${a.key} (${a.doc_count}) vs ${b.key} (${b.doc_count})`);
+              return b.doc_count - a.doc_count;
+            })
+            .slice(0, 3)
+            .map((item) => {
+              console.log(`Mapping ${item.key}: ${item.doc_count}`);
+              return {
+                label: item.key,
+                value: item.doc_count,
+              };
+            });
+
+          console.log('🎯 Transformed top 3 languages:', top3Languages);
+          console.log('🎯 Setting cvByLanguageData to:', top3Languages);
+          setCvByLanguageData(top3Languages);
+
+          console.log('✅ Language data fetch completed successfully');
+        } catch (languageError) {
+          console.error('❌ Language data fetch failed:', languageError);
+          console.error('❌ Language error details:', {
+            message: languageError.message,
+            status: languageError.response?.status,
+            statusText: languageError.response?.statusText,
+            data: languageError.response?.data,
+          });
+          setCvByLanguageData([]);
+        }
+
+        console.log('✅ fetchAdditionalData completed successfully');
       } catch (error) {
-        console.error('Failed to fetch average skills count:', error);
+        console.error('❌ Failed to fetch additional data:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          config: error.config,
+        });
       }
     };
-    fetchAvgSkillsCount();
+
+    console.log('🚀 Starting fetchAdditionalData useEffect...');
+    fetchAdditionalData();
   }, []);
+
+  // Fetch CV uploads data
   useEffect(() => {
-    const fetchAvgExperience = async () => {
+    const fetchCvUploadsData = async () => {
       try {
-        const response = await axios.get(endpoints.analytics.avgExperience);
-        const count = response.data.data?.avg_experience_years || 0; // adjust based on API response
+        const [dailyResponse, weeklyResponse] = await Promise.all([
+          axios.get(endpoints.analytics.cvUploadsDaily),
+          axios.get(endpoints.analytics.cvUploadsWeekly),
+        ]);
 
-        setAvgExperience(count);
-      } catch (error) {
-        console.error('Failed to fetch average experience:', error);
-      }
-    };
-    fetchAvgExperience();
-  }, []);
-  useEffect(() => {
-    const fetchCvByLanguage = async () => {
-      try {
-        const response = await axios.get(endpoints.analytics.cvByLanguage);
-        const data = response.data?.data || [];
-
-        const parsedData = data.map((item) => ({
-          label: item.language,
-          value: item.count,
-        }));
-
-        setCvByLanguageData(parsedData);
-      } catch (error) {
-        console.error('Failed to fetch CVs by language:', error);
-      }
-    };
-
-    fetchCvByLanguage();
-  }, []);
-  useEffect(() => {
-    const fetchCvsWithSocialMedia = async () => {
-      try {
-        const response = await axios.get(endpoints.analytics.candidateWithSocialMedia);
-        const data = response.data?.data || [];
-        console.log('CVs with Social Media:', data);
-        setCvWithSocialMedia(data.count_with_social_media);
-      } catch (error) {
-        console.error('Failed to count cvs with social media:', error);
-      }
-    };
-
-    fetchCvsWithSocialMedia();
-  }, []);
-  useEffect(() => {
-    const fetchCvsWithPhoneNumber = async () => {
-      try {
-        const response = await axios.get(endpoints.analytics.candidateWithPhoneNumber);
-        const data = response.data?.data || {};
-        const percent = parseFloat(data.percent_with_phone || '0');
-
-        // Convert percentage to actual count using totalCVs
-        const count = Math.round((percent / 100) * totalCVs);
-
-        setCvWithPhoneNumber(count);
-      } catch (error) {
-        console.error('Failed to count cvs with phone number:', error);
-      }
-    };
-
-    if (totalCVs > 0) {
-      fetchCvsWithPhoneNumber();
-    }
-  }, [totalCVs]); // depends on totalCVs being fetched
-
-  useEffect(() => {
-    const fetchExperienceSegments = async () => {
-      try {
-        const response = await axios.get(endpoints.analytics.experienceSegments);
-        const data = response.data?.data?.segments || [];
-
-        const parsedSegments = data.map((segment) => ({
-          label: segment.segment,
-          value: segment.count,
-        }));
-
-        setExperienceSegments(parsedSegments);
-      } catch (error) {
-        console.error('Failed to fetch experience segments:', error);
-      }
-    };
-
-    fetchExperienceSegments();
-  }, []);
-  useEffect(() => {
-    const fetchTopSkills = async () => {
-      try {
-        const response = await axios.get(endpoints.analytics.topSkills);
-        const data = response.data?.data || [];
-
-        const categories = data.map((item) => item.skill_name);
-        const thisMonthSeries = data.map((item) => parseInt(item.this_month, 10));
-        const lastMonthSeries = data.map((item) => parseInt(item.last_month, 10));
-
-        setTopSkills({
-          categories,
-          series: [
-            { name: 'This Month', data: thisMonthSeries },
-            { name: 'Last Month', data: lastMonthSeries },
-          ],
+        setCvUploadsData({
+          daily: dailyResponse.data.data || [],
+          weekly: weeklyResponse.data.data || [],
         });
       } catch (error) {
-        console.error('Failed to fetch top skills:', error);
+        console.error('Failed to fetch CV uploads data:', error);
       }
     };
 
-    fetchTopSkills();
-  }, []);
-  useEffect(() => {
-    const fetchIndustrySkills = async () => {
-      try {
-        const response = await axios.get(endpoints.analytics.topSkillsByTopIndustries);
-        const rawData = response.data?.data || [];
-        console.log('Industry Skills Data:', rawData);
-
-        const formatted = formatChartData({ data: rawData });
-        setIndustrySkillsData(formatted.series);
-        console.log('Formatted Industry Skills Data:', formatted.series);
-      } catch (error) {
-        console.error('Failed to fetch industry skills data:', error);
-      }
-    };
-
-    fetchIndustrySkills();
-  }, []);
-  useEffect(() => {
-    const fetchDailyCvUploads = async () => {
-      try {
-        const response = await axios.get(endpoints.analytics.cvUploadsDaily);
-        setCvUploadsData((prev) => ({
-          ...prev,
-          daily: response.data.data,
-        }));
-      } catch (error) {
-        console.error('Failed to fetch daily CV uploads:', error);
-      }
-    };
-
-    const fetchWeeklyCvUploads = async () => {
-      try {
-        const response = await axios.get(endpoints.analytics.cvUploadsWeekly); // Assuming you have this endpoint
-        setCvUploadsData((prev) => ({
-          ...prev,
-          weekly: response.data.data,
-        }));
-      } catch (error) {
-        console.error('Failed to fetch weekly CV uploads:', error);
-      }
-    };
-
-    fetchDailyCvUploads();
-    fetchWeeklyCvUploads();
+    fetchCvUploadsData();
   }, []);
 
-  const formattedChart = { series: industrySkillsData };
+  // Prepare chart data
   const cvUploadsChartData = {
     daily: {
       categories: cvUploadsData.daily.map((item) => item.label),
@@ -314,20 +295,31 @@ export function OverviewAnalyticsView() {
     },
   };
 
+  // Prepare experience segments data for the chart
+  const experienceSegmentsChartData = mainStats.experience_segments.map((segment) => ({
+    label: segment.level,
+    value: segment.count,
+  }));
+
+  // Prepare country data for bar chart (top 10 countries)
+  const countryChartData = mainStats.top_countries.slice(0, 10).map((country) => ({
+    country: country.country,
+    count: country.count,
+  }));
+
   return (
     <DashboardContent maxWidth="xl">
       <Typography variant="h4" sx={{ mb: { xs: 3, md: 5 } }}>
         Hi, Welcome back 👋
       </Typography>
 
-      {/* Group 1: Initial AnalyticsWidgetSummary components */}
-      {/* This Box ensures consistent outer spacing for the first row of widgets */}
+      {/* Group 1: Main Statistics Widgets */}
       <Box sx={{ mb: 5 }}>
-        <Grid container spacing={3} justifyContent="space-between">
-          <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
+        <Grid container spacing={1} justifyContent="space-between">
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
             <AnalyticsWidgetSummary
               title="Total CVs"
-              total={totalCVs}
+              total={mainStats.total_cvs}
               color="secondary"
               icon={
                 <img
@@ -337,10 +329,10 @@ export function OverviewAnalyticsView() {
               }
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
             <AnalyticsWidgetSummary
-              title="New CVs"
-              total={newCVs}
+              title="New CVs Today"
+              total={mainStats.new_cvs_today}
               color="error"
               icon={
                 <img
@@ -350,23 +342,24 @@ export function OverviewAnalyticsView() {
               }
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
             <AnalyticsWidgetSummary
-              title="Avg. Skills per CV"
-              total={avgSkillsCount}
+              title="CVs with Email"
+              total={mainStats.cvs_with_email.count}
+              subheader={`${mainStats.cvs_with_email.percentage}%`}
               color="info"
               icon={
                 <img
-                  alt="Avg Skills"
-                  src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-skills.svg`}
+                  alt="CVs with Email"
+                  src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-email.svg`}
                 />
               }
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
             <AnalyticsWidgetSummary
-              title="Avg. Exp years"
-              total={avgExperience}
+              title="Avg. Experience"
+              total={mainStats.avg_experience_years}
               subheader="Years"
               color="secondary"
               icon={
@@ -380,87 +373,112 @@ export function OverviewAnalyticsView() {
         </Grid>
       </Box>
 
-      {/* Main content grid begins here */}
+      {/* Main content grid */}
       <Grid container spacing={3} justifyContent="space-between">
-        <Grid size={{ xs: 12, md: 12, lg: 12 }}>
-          <Grid item xs={12} md={12} lg={12}>
-            <CvUploadsChart
-              filter={filter}
-              onFilterChange={(newFilter) => setFilter(newFilter)}
-              title="Uploaded CVs"
-              subheader={`Showing ${filter} uploads`}
-              chart={cvUploadsChartData}
-            />
-          </Grid>
-        </Grid>
-        {/* Container for the four components in the same row (Experience Segments, CVs by Language, etc.) */}
+        {/* CV Uploads Chart */}
+        {/* <Grid size={{ xs: 12, md: 12, lg: 12 }}>
+          <CvUploadsChart
+            filter={filter}
+            onFilterChange={(newFilter) => setFilter(newFilter)}
+            title="Uploaded CVs"
+            subheader={`Showing ${filter} uploads`}
+            chart={cvUploadsChartData}
+          />
+        </Grid> */}
+
+        {/* Charts Row */}
         <Grid
           container
           spacing={2}
           justifyContent="space-between"
           sx={{ display: 'flex', alignItems: 'stretch' }}
         >
+          {/* Candidate Map */}
           <Grid size={12}>
             <AnalyticsCandidateMap />
           </Grid>
+
+          {/* Top Countries Bar Chart - using map data */}
           <Grid size={12}>
-            <AnalyticsCandidatesBarChart countryCounts={countryCounts} />
+            <AnalyticsCandidatesBarChart
+              title="Top 10 Countries by Candidate Count"
+              countryCounts={countryChartData}
+            />
           </Grid>
-          <Grid size={12}>
-            <AnalyticsIndustrySkillsHeatmap />
-          </Grid>
-          {/* Centered and isolated AnalyticsEducationLevelDistribution */}
-          <Grid container justifyContent="center" sx={{ width: '100%', my: 3 }}>
-            <Grid item xs={12} md={10} lg={8}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                <AnalyticsEducationLevelDistribution />
-              </Box>
+
+          {/* Heatmap and Education Level Distribution Side by Side - 8/4 layout */}
+          <Grid container spacing={3} sx={{ width: '100%', mt: 2 }}>
+            {/* Industry Skills Heatmap - Takes 8/12 columns */}
+            <Grid size={{ xs: 12, md: 8 }}>
+              <AnalyticsIndustrySkillsHeatmap />
+            </Grid>
+
+            {/* Education Level Distribution - Takes 4/12 columns */}
+            <Grid size={{ xs: 12, md: 4 }}>
+              <AnalyticsEducationLevelDistribution />
             </Grid>
           </Grid>
 
-          <Grid item xs={12} md={6} lg={3}>
-            <AnalyticsExperienceSegments
-              chart={{
-                series: experienceSegments,
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={6} lg={3}>
-            <CVsByLanguage
-              total={cvByLanguageData.reduce((sum, lang) => sum + lang.value, 0)}
-              chart={{
-                series: cvByLanguageData,
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={6} lg={3}>
-            <CVsByLanguage
-              title="CVs with Phone Number"
-              total={totalCVs}
-              chart={{
-                series: [
-                  { label: 'Yes', value: cvWithPhoneNumber },
-                  { label: 'No', value: totalCVs - cvWithPhoneNumber },
-                ],
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={6} lg={3}>
-            <CVsByLanguage
-              title="CVs with Social Media"
-              total={totalCVs}
-              chart={{
-                series: [
-                  { label: 'No', value: totalCVs - cvWithSocialMedia },
-                  { label: 'Yes', value: cvWithSocialMedia },
-                ],
-              }}
-            />
+          {/* Four pie charts in a row */}
+          <Grid container spacing={2} sx={{ width: '100%', mt: 2 }}>
+            <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+              <AnalyticsExperienceSegments
+                title="Experience Levels"
+                chart={{
+                  series: experienceSegmentsChartData,
+                }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+              <CVsByLanguage
+                title="CVs by Language"
+                total={cvByLanguageData.reduce((sum, lang) => sum + lang.value, 0)}
+                chart={{
+                  series: cvByLanguageData,
+                }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+              <CVsByLanguage
+                title="CVs with Phone Number"
+                total={mainStats.total_cvs}
+                chart={{
+                  series: [
+                    { label: 'With Phone', value: mainStats.cvs_with_phone.count },
+                    {
+                      label: 'Without Phone',
+                      value: mainStats.total_cvs - mainStats.cvs_with_phone.count,
+                    },
+                  ],
+                }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+              <CVsByLanguage
+                title="CVs with Social Media"
+                total={mainStats.total_cvs}
+                chart={{
+                  series: [
+                    { label: 'With Social Media', value: cvWithSocialMedia },
+                    {
+                      label: 'Without Social Media',
+                      value: mainStats.total_cvs - cvWithSocialMedia,
+                    },
+                  ],
+                }}
+              />
+            </Grid>
           </Grid>
         </Grid>
+
+        {/* Skills and Industry Analysis */}
         <Grid size={{ xs: 12, md: 6, lg: 6 }}>
           <AnalyticsTopSkillsFromCVs chart={topSkills} />
         </Grid>
+
         <Grid size={{ xs: 12, md: 6, lg: 6 }}>
           <AnalyticsIndustrySkills
             title="Industry Skills Overview"
@@ -471,79 +489,74 @@ export function OverviewAnalyticsView() {
           />
         </Grid>
 
-        {/* CV Processing Status section - Group 2: AnalyticsWidgetSummary components */}
-        {/* Full width grid item for the title */}
-        <Grid item xs={12}>
+        {/* CV Processing Status Section */}
+        {/* <Grid item xs={12}>
           <Typography variant="h5" sx={{ mb: 3, mt: 5 }}>
             CV Processing Status
           </Typography>
-        </Grid>
-        {/* This Box ensures consistent outer spacing for the second row of widgets */}
-        <Box sx={{ mb: 5 }}>
-          {' '}
-          {/* Added Box wrapper here */}
-          <Grid
-            container
-            spacing={3}
-            justifyContent="space-between"
-            sx={{ display: 'flex', alignItems: 'stretch' }}
-          >
-            <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-              <AnalyticsWidgetSummary
-                title="Total Processed"
-                total={cvProcessingStatus.total_processed}
-                color="primary"
-                icon={
-                  <img
-                    alt="Total Processed"
-                    src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-total.svg`}
-                  />
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-              <AnalyticsWidgetSummary
-                title="Successful"
-                total={cvProcessingStatus.success_count}
-                color="success"
-                icon={
-                  <img
-                    alt="Successful"
-                    src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-done.svg`}
-                  />
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-              <AnalyticsWidgetSummary
-                title="Failed"
-                total={cvProcessingStatus.fail_count}
-                color="error"
-                icon={
-                  <img
-                    alt="Failed"
-                    src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-failed.svg`}
-                  />
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-              <AnalyticsWidgetSummary
-                title="CVs In Queue"
-                total={cvProcessingStatus.cv_in_queue}
-                color="warning"
-                icon={
-                  <img
-                    alt="CVs In Queue"
-                    src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-progress.svg`}
-                  />
-                }
-              />
-            </Grid>
-          </Grid>
-        </Box>
-        {/* End of new section */}
+        </Grid> */}
       </Grid>
+
+      {/* CV Processing Status Widgets */}
+      {/* <Box sx={{ mb: 5 }}>
+        <Grid container spacing={1} justifyContent="space-between">
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
+            <AnalyticsWidgetSummary
+              title="Total Processed"
+              total={cvProcessingStatus.total_processed}
+              color="primary"
+              icon={
+                <img
+                  alt="Total Processed"
+                  src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-total.svg`}
+                />
+              }
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
+            <AnalyticsWidgetSummary
+              title="Successful"
+              total={cvProcessingStatus.success_count}
+              color="success"
+              icon={
+                <img
+                  alt="Successful"
+                  src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-done.svg`}
+                />
+              }
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
+            <AnalyticsWidgetSummary
+              title="Failed"
+              total={cvProcessingStatus.fail_count}
+              color="error"
+              icon={
+                <img
+                  alt="Failed"
+                  src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-failed.svg`}
+                />
+              }
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3} lg={3} xl={3} width="24%">
+            <AnalyticsWidgetSummary
+              title="CVs In Queue"
+              total={cvProcessingStatus.cv_in_queue}
+              color="warning"
+              icon={
+                <img
+                  alt="CVs In Queue"
+                  src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-progress.svg`}
+                />
+              }
+            />
+          </Grid>
+        </Grid>
+      </Box> */}
     </DashboardContent>
   );
 }
+
+// Make sure to export as default as well
+export default OverviewAnalyticsView;

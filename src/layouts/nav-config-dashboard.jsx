@@ -55,15 +55,20 @@ export const navData = [
         children: [
           { title: 'Cards', path: paths.dashboard.user.cards },
           { title: 'List', path: paths.dashboard.user.list },
-          { title: 'CVs', path: paths.dashboard.user.root },
+          // { title: 'CVs', path: paths.dashboard.user.root },
         ],
       },
       {
-        title: 'Users',
-        path: paths.dashboard.users.root,
-        icon: ICONS.user,
-        children: [{ title: 'List', path: paths.dashboard.users.root }],
-      },
+        title: 'Simulate Events',
+        path: paths.dashboard.event.list,
+        icon: ICONS.analytics,
+      }
+      // {
+      //   title: 'Users',
+      //   path: paths.dashboard.users.root,
+      //   icon: ICONS.user,
+      //   children: [{ title: 'List', path: paths.dashboard.users.root }],
+      // },
     ],
   },
   /**

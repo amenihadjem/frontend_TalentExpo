@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
 import { Outlet, RouterProvider, createBrowserRouter } from 'react-router';
+import './global.css';
 
 import App from './app';
 import { routesSection } from './routes/sections';
