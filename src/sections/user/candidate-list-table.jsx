@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Dialog from '@mui/material/Dialog';
@@ -41,6 +41,9 @@ import { Add, Close } from '@mui/icons-material';
 
 export default function CandidateListTable() {
   // Fetch saved tabs from API and fetch candidates for each tab
+
+  // Refs to prevent unnecessary re-fetches
+  const isMountedRef = useRef(false);
   const fetchSavedTabsAndCandidates = async (companyId) => {
     try {
       // Fetch tabs from the API with filter parameter
@@ -151,7 +154,7 @@ export default function CandidateListTable() {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const [size, setSize] = useState(10);
+  const [size, setSize] = useState(100);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -185,44 +188,57 @@ export default function CandidateListTable() {
   const [sortBy, setSortBy] = useState('relevance');
   const [sortOrder, setSortOrder] = useState('desc');
 
+  const fetchData = useCallback(async () => {
+    // Example: fetch saved tabs and candidates before fetching candidates normally
+    const response = await fetchSavedTabsAndCandidates('YOUR_COMPANY_ID');
+    if (response.data.items.length > 0) fetchCandidates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fetchFilterOptions = async () => {
+    try {
+      const res = await axios.get(endpoints.candidates.agg, {
+        params: {
+          includeSkills: true,
+          includeLocations: true,
+          includeEducation: true,
+          includeExperience: true,
+          includeCertifications: true,
+          includeLanguages: true,
+          includeConnections: true,
+          includeJobInfo: true,
+          includeCompanyInfo: false,
+          size: 1000,
+        },
+      });
+      const agg = res.data?.data?.body?.aggregations || {};
+      const mapBuckets = (buckets) => (buckets || []).map((b) => b.key);
+
+      const countries = mapBuckets(agg.available_countries?.buckets).map((c) => {
+        const name = countriesList.getName(c.toUpperCase(), 'en', { select: 'official' });
+        return name || c;
+      });
+
+      setFilterOptions({
+        countries,
+        industries: mapBuckets(agg.available_industries?.buckets),
+        skills: mapBuckets(agg.available_skills?.buckets),
+        majors: mapBuckets(agg.available_majors?.values?.buckets),
+        degrees: mapBuckets(agg.available_degrees?.values?.buckets),
+        jobTitles: mapBuckets(agg.available_job_titles?.buckets),
+      });
+    } catch (err) {
+      console.error('Error fetching filter options:', err);
+    }
+  };
+
+  // OPTIMIZED: Initial data fetch only once
   useEffect(() => {
-    const fetchFilterOptions = async () => {
-      try {
-        const res = await axios.get(endpoints.candidates.agg, {
-          params: {
-            includeSkills: true,
-            includeLocations: true,
-            includeEducation: true,
-            includeExperience: true,
-            includeCertifications: true,
-            includeLanguages: true,
-            includeConnections: true,
-            includeJobInfo: true,
-            includeCompanyInfo: false,
-            size: 1000,
-          },
-        });
-        const agg = res.data?.data?.body?.aggregations || {};
-        const mapBuckets = (buckets) => (buckets || []).map((b) => b.key);
-
-        const countries = mapBuckets(agg.available_countries?.buckets).map((c) => {
-          const name = countriesList.getName(c.toUpperCase(), 'en', { select: 'official' });
-          return name || c;
-        });
-
-        setFilterOptions({
-          countries,
-          industries: mapBuckets(agg.available_industries?.buckets),
-          skills: mapBuckets(agg.available_skills?.buckets),
-          majors: mapBuckets(agg.available_majors?.values?.buckets),
-          degrees: mapBuckets(agg.available_degrees?.values?.buckets),
-          jobTitles: mapBuckets(agg.available_job_titles?.buckets),
-        });
-      } catch (err) {
-        console.error('Error fetching filter options:', err);
-      }
-    };
-    fetchFilterOptions();
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      fetchFilterOptions();
+      fetchData();
+    }
   }, []);
 
   useEffect(() => setPage(1), [search, size, sortBy, sortOrder, activeTab, searchTabs]);
@@ -277,7 +293,7 @@ export default function CandidateListTable() {
       setLoading(true);
       const res = await axios.get(endpoints.candidates.search, { params });
       const allItems = res.data?.data?.items || [];
-      const total = res.data?.data?.total?.value || allItems.length;
+      const total = res.data?.data?.total || allItems.length;
       console.log(`Page ${page}:`, allItems, `Total: ${total}, Adjusted Size: ${adjustedSize}`);
 
       // Recalculate total pages with updated total
@@ -324,24 +340,10 @@ export default function CandidateListTable() {
       if (searchTabs[activeTab]?.filters?.countries) setGeoLocationStatuse(false);
     }
   };
-  const fetchData = async () => {
-    // Example: fetch saved tabs and candidates before fetching candidates normally
-    await fetchSavedTabsAndCandidates('YOUR_COMPANY_ID');
-    fetchCandidates();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  };
 
-  useEffect(
-    () => {
-      fetchData();
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
-  useEffect(() => {
-    fetchCandidates();
-  }, [geoRange, activeTab]);
+  // useEffect(() => {
+  //   fetchCandidates();
+  // }, [geoRange]);
 
   // Tab logic
   const handleTabChange = (event, newValue) => {
@@ -833,18 +835,11 @@ export default function CandidateListTable() {
       value: searchTabs[activeTab]?.filters?.skills || [],
       onChange: (val) => handleTabFilterChange('skills', val),
     },
-    {
-      key: 'jobTitleRoles',
-      label: 'Job Title',
-      type: 'autocomplete',
-      options: filterOptions.jobTitles,
-      value: searchTabs[activeTab]?.filters?.jobTitleRoles || [],
-      onChange: (val) => handleTabFilterChange('jobTitleRoles', val),
-    },
+
     {
       key: 'countries',
       label: 'Country',
-      type: 'select',
+      type: 'autocomplete',
       options: filterOptions.countries,
       value: searchTabs[activeTab]?.filters?.countries || '',
       onChange: (val) => handleTabFilterChange('countries', val),
@@ -852,7 +847,7 @@ export default function CandidateListTable() {
     {
       key: 'industries',
       label: 'Industry',
-      type: 'select',
+      type: 'autocomplete',
       options: filterOptions.industries,
       value: searchTabs[activeTab]?.filters?.industries || '',
       onChange: (val) => handleTabFilterChange('industries', val),
@@ -912,7 +907,14 @@ export default function CandidateListTable() {
   }
   console.log({ geoRange });
 
-  const displayCount = totalCount >= 10000 ? '+10k' : totalCount;
+  const displayCount =
+    totalCount >= 10000 && totalCount < 100000
+      ? '+10k'
+      : totalCount >= 100000 && totalCount < 1000000
+        ? '+100k'
+        : totalCount > 1000000
+          ? '+1M'
+          : totalCount;
   return (
     <Box sx={{ width: '100%', mx: 'auto', px: 2 }}>
       <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1056,7 +1058,7 @@ export default function CandidateListTable() {
               mt: { xs: 1, sm: 0 },
             }}
           >
-            {displayCount} candidate{totalCount !== 1 ? 's' : ''} found
+            {totalCount.toLocaleString()} candidate{totalCount !== 1 ? 's' : ''} found
           </Box>
         )}
       </Box>
