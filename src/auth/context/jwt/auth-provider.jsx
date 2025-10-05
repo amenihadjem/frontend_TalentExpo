@@ -13,6 +13,8 @@ export function AuthProvider({ children }) {
       const response = await axios.get(endpoints.auth.me, {
         withCredentials: true,
       });
+      console.log('User session response:', response.data);
+
       setState({ user: response.data, loading: false });
     } catch (error) {
       setState({ user: null, loading: false });

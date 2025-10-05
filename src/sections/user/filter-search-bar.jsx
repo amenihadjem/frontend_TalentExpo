@@ -10,6 +10,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 import InputAdornment from '@mui/material/InputAdornment';
 
 import { Iconify } from 'src/components/iconify'; // adjust or replace if needed
+import { Chip } from '@mui/material';
 
 export default function FilterSearchBar({
   searchValue,
@@ -80,10 +81,49 @@ export default function FilterSearchBar({
               size="small"
               options={options}
               value={value}
+              freeSolo
               onChange={(e, newVal) => onChange(newVal)}
-              renderInput={(params) => <TextField {...params} label={label} placeholder={label} />}
-              sx={{ minWidth: 180 }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={label}
+                  placeholder={value.length === 0 ? label : ''}
+                  sx={{ minWidth: 300 }}
+                />
+              )}
+              sx={{
+                minWidth: 300,
+                '& .MuiAutocomplete-inputRoot': {
+                  flexWrap: 'wrap',
+                  padding: '4px',
+                },
+                '& .MuiAutocomplete-tag': {
+                  margin: '2px',
+                  height: '24px',
+                },
+                '& .MuiAutocomplete-input': {
+                  minWidth: '120px !important', // Ensures typing space
+                  flexGrow: 1,
+                },
+              }}
               isOptionEqualToValue={(option, val) => option === val}
+              renderTags={(tagValue, getTagProps) =>
+                tagValue.map((option, index) => (
+                  <Chip
+                    key={index}
+                    label={option}
+                    size="small"
+                    sx={{
+                      height: '24px',
+                      fontSize: '0.75rem',
+                      '& .MuiChip-label': {
+                        padding: '0 8px',
+                      },
+                    }}
+                    {...getTagProps({ index })}
+                  />
+                ))
+              }
             />
           );
         }
