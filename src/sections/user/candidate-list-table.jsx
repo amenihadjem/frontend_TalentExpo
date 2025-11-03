@@ -29,15 +29,17 @@ import {
   DialogActions,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { Add, Close, Star, StarBorder, Update } from '@mui/icons-material';
+
+import countriesList from 'i18n-iso-countries';
+import jsPDF from 'jspdf';
+
+import axios, { endpoints } from 'src/lib/axios';
+import { SocialMediaLinks } from 'src/components/social-media-links';
+import GeoCircleSelector from 'src/components/map/GeoCircleSelector';
 
 import FilterSearchBar from './filter-search-bar';
 import CandidateCVDisplay from './candidate-cv-display';
-import { SocialMediaLinks } from 'src/components/social-media-links';
-import axios, { endpoints } from 'src/lib/axios';
-import countriesList from 'i18n-iso-countries';
-import jsPDF from 'jspdf';
-import GeoCircleSelector from 'src/components/map/GeoCircleSelector';
-import { Add, Close } from '@mui/icons-material';
 
 export default function CandidateListTable() {
   // Fetch saved tabs from API and fetch candidates for each tab
@@ -131,11 +133,11 @@ export default function CandidateListTable() {
       name: 'Default Search',
       search: '',
       filters: {
-        countries: '',
+        countries: [],
         industries: '',
         skills: [],
         majors: [],
-        degrees: '',
+        degrees: [],
         jobTitleRoles: [],
         minExperience: '',
         maxExperience: '',
@@ -257,13 +259,19 @@ export default function CandidateListTable() {
       const tabSearch = searchTabs[activeTab]?.search?.trim() || '';
       const params = {
         ...(tabSearch ? { query: tabSearch } : {}),
-        ...(tabFilters.countries ? { countries: normalize(tabFilters.countries) } : {}),
+        ...(tabFilters.countries?.length
+          ? { countries: tabFilters.countries.map(normalize).join(',') }
+          : {}),
         ...(tabFilters.industries ? { industries: normalize(tabFilters.industries) } : {}),
         ...(tabFilters.skills?.length
           ? { skills: tabFilters.skills.map(normalize).join(',') }
           : {}),
-        ...(tabFilters.majors ? { majors: normalize(tabFilters.majors) } : {}),
-        ...(tabFilters.degrees ? { degrees: normalize(tabFilters.degrees) } : {}),
+        ...(tabFilters.majors?.length
+          ? { majors: tabFilters.majors.map(normalize).join(',') }
+          : {}),
+        ...(tabFilters.degrees?.length
+          ? { degrees: tabFilters.degrees.map(normalize).join(',') }
+          : {}),
         ...(tabFilters.jobTitleRoles?.length
           ? { jobTitleRoles: tabFilters.jobTitleRoles.map(normalize).join(',') }
           : {}),
@@ -280,9 +288,9 @@ export default function CandidateListTable() {
         ...(sortBy ? { sortBy } : {}),
         ...(sortOrder ? { sortOrder } : {}),
 
-        lat: tabFilters.countries ? null : geoRange?.lat,
-        lon: tabFilters.countries ? null : geoRange?.lng,
-        distance: tabFilters.countries
+        lat: tabFilters.countries?.length ? null : geoRange?.lat,
+        lon: tabFilters.countries?.length ? null : geoRange?.lng,
+        distance: tabFilters.countries?.length
           ? null
           : geoRange?.distance
             ? geoRange?.distance + 'km'
@@ -337,7 +345,7 @@ export default function CandidateListTable() {
       setOpenToast(true);
     } finally {
       setLoading(false);
-      if (searchTabs[activeTab]?.filters?.countries) setGeoLocationStatuse(false);
+      if (searchTabs[activeTab]?.filters?.countries?.length) setGeoLocationStatuse(false);
     }
   };
 
@@ -390,7 +398,9 @@ export default function CandidateListTable() {
         // Update local state
         setSearchTabs((prev) =>
           prev.map((tab, idx) =>
-            idx === activeTab ? { ...tab, name: saveName, saved: true } : tab
+            idx === activeTab
+              ? { ...tab, name: saveName, saved: true, id: response.data._id || response.data.id }
+              : tab
           )
         );
 
@@ -403,6 +413,51 @@ export default function CandidateListTable() {
     } catch (error) {
       console.error('Error saving tab:', error);
       // You could show an error message to the user here
+    }
+  };
+
+  const handleUpdateTab = async (tabIndex = activeTab) => {
+    try {
+      // Get current tab data
+      const tab = searchTabs[tabIndex];
+
+      if (!tab.saved || !tab.id) {
+        console.error('Cannot update unsaved tab');
+        return;
+      }
+
+      // Prepare API payload for update (same format as save)
+      const payload = {
+        type: 'filter',
+        title: tab.name,
+        content: {
+          name: tab.name,
+          search: tab.search,
+          filters: tab.filters,
+          params: {
+            page,
+            size,
+            sortBy,
+            sortOrder,
+          },
+        },
+        _id: tab.id, // Include the ID to indicate this is an update
+      };
+
+      console.log('Updating tab with payload:', payload);
+
+      // Use the same save endpoint for update
+      const response = await axios.post(endpoints.tabs.save, payload);
+
+      if (response.data) {
+        console.log('Tab updated successfully:', response.data);
+
+        // Show success message
+        setOpenToast(true);
+      }
+    } catch (error) {
+      console.error('Error updating tab:', error);
+      alert('Error updating tab: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -831,9 +886,8 @@ export default function CandidateListTable() {
       key: 'skills',
       label: 'Skills',
       type: 'autocomplete',
-      // options: filterOptions.skills,
-
       options: [],
+
       value: searchTabs[activeTab]?.filters?.skills || [],
       onChange: (val) => handleTabFilterChange('skills', val),
     },
@@ -842,9 +896,8 @@ export default function CandidateListTable() {
       key: 'countries',
       label: 'Country',
       type: 'autocomplete',
-      // options: filterOptions.countries,
-      options: [],
-      value: searchTabs[activeTab]?.filters?.countries || '',
+      options: filterOptions.countries,
+      value: searchTabs[activeTab]?.filters?.countries || [],
       onChange: (val) => handleTabFilterChange('countries', val),
     },
     {
@@ -862,7 +915,7 @@ export default function CandidateListTable() {
       label: 'Education Major',
       type: 'autocomplete',
       options: filterOptions.majors,
-      value: searchTabs[activeTab]?.filters?.majors || '',
+      value: searchTabs[activeTab]?.filters?.majors || [],
       onChange: (val) => handleTabFilterChange('majors', val),
     },
     {
@@ -870,7 +923,7 @@ export default function CandidateListTable() {
       label: 'Education Degree',
       type: 'autocomplete',
       options: filterOptions.degrees,
-      value: searchTabs[activeTab]?.filters?.degrees || '',
+      value: searchTabs[activeTab]?.filters?.degrees || [],
       onChange: (val) => handleTabFilterChange('degrees', val),
     },
     {
@@ -926,7 +979,6 @@ export default function CandidateListTable() {
         <Box
           sx={{
             display: 'flex',
-            width: '85%',
             alignItems: 'center',
             flexGrow: 1,
             overflowX: 'auto',
@@ -937,39 +989,135 @@ export default function CandidateListTable() {
             onChange={handleTabChange}
             variant="scrollable"
             scrollButtons="auto"
+            sx={{
+              '& .MuiTab-root': {
+                minHeight: 48,
+                textTransform: 'none',
+                borderRadius: '8px 8px 0 0',
+                position: 'relative',
+                '&:not(.Mui-selected)': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                  color: 'text.secondary',
+                },
+                '&.Mui-selected': {
+                  backgroundColor: 'background.paper',
+                  color: 'primary.main',
+                  fontWeight: 600,
+                },
+              },
+            }}
           >
             {searchTabs.map((tab, idx) => (
               <Tab
                 key={idx}
-                label={tab.name + (tab.saved ? ' (saved)' : '')}
-                value={idx}
-                wrapped
-                sx={{ minWidth: 120, maxWidth: 200 }}
-                onClick={() => setActiveTab(idx)}
-                icon={
-                  searchTabs.length > 1 ? (
-                    <IconButton
-                      size="small"
-                      sx={{ ml: 0.5 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // If tab is not saved, delete immediately without confirmation
-                        if (!searchTabs[idx].saved) {
-                          handleDeleteTab(idx);
-                        } else {
-                          setTabToClose(idx);
-                          setCloseDialogOpen(true);
-                        }
-                      }}
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                    <Box
+                      sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                     >
-                      <Close fontSize="small" />
-                    </IconButton>
-                  ) : null
+                      {tab.name}
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+                      <IconButton
+                        size="small"
+                        sx={{
+                          p: 0.3,
+                          color: tab.saved ? 'warning.main' : 'action.disabled',
+                          '&:hover': {
+                            backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                            color: 'warning.main',
+                          },
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!tab.saved) {
+                            setSaveDialogOpen(true);
+                            setActiveTab(idx); // Set active tab to the one being saved
+                          }
+                        }}
+                        title={tab.saved ? 'Already saved' : 'Save tab'}
+                      >
+                        {tab.saved ? <Star fontSize="small" /> : <StarBorder fontSize="small" />}
+                      </IconButton>
+                      {tab.saved && (
+                        <IconButton
+                          size="small"
+                          sx={{
+                            p: 0.3,
+                            color: 'info.main',
+                            '&:hover': {
+                              backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                              color: 'info.dark',
+                            },
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleUpdateTab(idx);
+                          }}
+                          title="Update saved filters"
+                        >
+                          <Update fontSize="small" />
+                        </IconButton>
+                      )}
+                      {searchTabs.length > 1 && (
+                        <IconButton
+                          size="small"
+                          sx={{
+                            p: 0.3,
+                            color: 'action.disabled',
+                            '&:hover': {
+                              backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                              color: 'error.main',
+                            },
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // If tab is not saved, delete immediately without confirmation
+                            if (!searchTabs[idx].saved) {
+                              handleDeleteTab(idx);
+                            } else {
+                              setTabToClose(idx);
+                              setCloseDialogOpen(true);
+                            }
+                          }}
+                          title="Close tab"
+                        >
+                          <Close fontSize="small" />
+                        </IconButton>
+                      )}
+                    </Box>
+                  </Box>
                 }
-                iconPosition="end"
+                value={idx}
+                sx={{
+                  minWidth: 160,
+                  maxWidth: 280,
+                  px: 2,
+                  position: 'relative',
+                }}
+                onClick={() => setActiveTab(idx)}
               />
             ))}
           </Tabs>
+
+          {/* Add Tab Button */}
+          <IconButton
+            onClick={handleNewTab}
+            sx={{
+              ml: 1,
+              p: 1,
+              backgroundColor: 'action.hover',
+              borderRadius: '8px',
+              '&:hover': {
+                backgroundColor: 'primary.main',
+                color: 'primary.contrastText',
+              },
+            }}
+            title="Add new tab"
+          >
+            <Add />
+          </IconButton>
+
           <Dialog open={closeDialogOpen} onClose={() => setCloseDialogOpen(false)}>
             <DialogTitle>Confirm Delete Saved Tab</DialogTitle>
             <DialogContent>
@@ -991,33 +1139,6 @@ export default function CandidateListTable() {
               </Box>
             </DialogActions>
           </Dialog>
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            width: '15%',
-          }}
-        >
-          {' '}
-          <Button
-            variant="contained"
-            size="small"
-            color="success"
-            sx={{ width: '100px', fontSize: '18px' }}
-            onClick={() => setSaveDialogOpen(true)}
-          >
-            Save Tab
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            sx={{ width: '100px', fontSize: '18px' }}
-            onClick={handleNewTab}
-          >
-            Add Tab
-          </Button>
         </Box>
       </Box>
       <Dialog
@@ -1119,14 +1240,18 @@ export default function CandidateListTable() {
             sx={{ width: 140 }}
             inputProps={{ min: 1, max: 50 }}
           />
-          <Badge color="error" variant="dot" invisible={searchTabs[activeTab]?.filters?.countries}>
+          <Badge
+            color="error"
+            variant="dot"
+            invisible={!searchTabs[activeTab]?.filters?.countries?.length}
+          >
             <GeoCircleSelector
               handleGeorange={(range) => {
                 setGeoRange(range);
                 setGeoLocationStatuse(true);
                 setSearchTabs((prevTabs) =>
                   prevTabs.map((tab, idx) =>
-                    idx === activeTab ? { ...tab, filters: { ...tab.filters, countries: '' } } : tab
+                    idx === activeTab ? { ...tab, filters: { ...tab.filters, countries: [] } } : tab
                   )
                 );
               }}
@@ -1307,17 +1432,62 @@ export default function CandidateListTable() {
           sx={{
             mt: 3,
             display: 'flex',
-            justifyContent: 'center',
+            justifyContent: 'space-between',
             alignItems: 'center',
             gap: 2,
             flexWrap: 'wrap',
           }}
         >
-          <Box sx={{ color: 'text.secondary', fontSize: '0.9em' }}>
-            Page {page} of {totalPages}
+          <Box
+            sx={{
+              color: 'text.secondary',
+              fontSize: '0.9em',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            <Box>
+              Page {page} of {totalPages}
+            </Box>
+            <Box>
+              • Showing {(page - 1) * size + 1}-{Math.min(page * size, totalCount)} of{' '}
+              {totalCount.toLocaleString()} candidates
+            </Box>
           </Box>
 
-          <Pagination page={page} count={totalPages} onChange={(e, val) => setPage(val)} />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {totalPages > 10 && (
+              <TextField
+                size="small"
+                label="Go to page"
+                type="number"
+                sx={{ width: 100 }}
+                inputProps={{ min: 1, max: totalPages }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const newPage = parseInt(e.target.value);
+                    if (newPage >= 1 && newPage <= totalPages) {
+                      setPage(newPage);
+                    }
+                    e.target.blur();
+                  }
+                }}
+              />
+            )}
+            <Pagination
+              page={page}
+              count={totalPages}
+              onChange={(e, val) => setPage(val)}
+              showFirstButton
+              showLastButton
+              size="medium"
+              variant="outlined"
+              shape="rounded"
+              siblingCount={1}
+              boundaryCount={1}
+            />
+          </Box>
         </Box>
       )}
 

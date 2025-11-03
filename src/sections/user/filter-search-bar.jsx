@@ -81,7 +81,7 @@ export default function FilterSearchBar({
               size="small"
               options={options}
               value={value}
-              freeSolo
+              freeSolo={key !== 'countries'} // Disable freeSolo for countries
               onChange={(e, newVal) => onChange(newVal)}
               renderInput={(params) => (
                 <TextField
@@ -191,6 +191,7 @@ export default function FilterSearchBar({
                       size="small"
                       options={options}
                       value={value}
+                      freeSolo={key !== 'countries'} // Disable freeSolo for countries
                       onChange={(e, newVal) => onChange(newVal)}
                       renderInput={(params) => (
                         <TextField {...params} label={label} placeholder={label} />
