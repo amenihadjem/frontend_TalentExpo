@@ -64,6 +64,7 @@ export const endpoints = {
   tabs: {
     save: '/tabs',
     search: '/tabs/search',
+    update: (id) => `/tabs/${id}`,
     delete: (id) => `/tabs/${id}`,
   },
   analytics: {

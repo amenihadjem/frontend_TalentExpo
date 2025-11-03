@@ -44,8 +44,10 @@ import CandidateCVDisplay from './candidate-cv-display';
 export default function CandidateListTable() {
   // Fetch saved tabs from API and fetch candidates for each tab
 
+  const [size, setSize] = useState(10);
   // Refs to prevent unnecessary re-fetches
   const isMountedRef = useRef(false);
+  const hasInitialSearched = useRef(false);
   const fetchSavedTabsAndCandidates = async (companyId) => {
     try {
       // Fetch tabs from the API with filter parameter
@@ -78,30 +80,17 @@ export default function CandidateListTable() {
             name: 'New Search',
             search: '',
             filters: {},
+            params: {},
             saved: false,
           });
         }
 
         setSearchTabs(formattedTabs);
 
-        // For each saved tab, you can fetch candidates using its params if needed
-        for (const tab of formattedTabs) {
-          if (tab.saved && tab.search) {
-            try {
-              const params = {
-                ...(tab.search ? { query: tab.search } : {}),
-                ...tab.filters,
-                page: tab.params?.page || 1,
-                size: tab.params?.size || 10,
-                ...(tab.params?.sortBy ? { sortBy: tab.params.sortBy } : {}),
-                ...(tab.params?.sortOrder ? { sortOrder: tab.params.sortOrder } : {}),
-              };
-              const candidatesRes = await axios.get(endpoints.candidates.search, { params });
-              const candidates = candidatesRes.data?.data?.items || [];
-            } catch (err) {
-              console.error(`Error fetching candidates for tab '${tab.name}':`, err);
-            }
-          }
+        // Just set up the tabs, don't automatically search
+        // Initialize size from the first tab if it has saved params
+        if (formattedTabs.length > 0 && formattedTabs[0].params?.size) {
+          setSize(formattedTabs[0].params.size);
         }
       } else {
         // Set default tabs if no saved tabs found
@@ -156,7 +145,6 @@ export default function CandidateListTable() {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const [size, setSize] = useState(100);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -191,10 +179,8 @@ export default function CandidateListTable() {
   const [sortOrder, setSortOrder] = useState('desc');
 
   const fetchData = useCallback(async () => {
-    // Example: fetch saved tabs and candidates before fetching candidates normally
-    const response = await fetchSavedTabsAndCandidates('YOUR_COMPANY_ID');
-    if (response.data.items.length > 0) fetchCandidates();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Just fetch saved tabs, don't automatically search
+    await fetchSavedTabsAndCandidates('YOUR_COMPANY_ID');
   }, []);
 
   const fetchFilterOptions = async () => {
@@ -210,7 +196,7 @@ export default function CandidateListTable() {
           includeConnections: true,
           includeJobInfo: true,
           includeCompanyInfo: false,
-          size: 1000,
+          size: false,
         },
       });
       const agg = res.data?.data?.body?.aggregations || {};
@@ -243,8 +229,23 @@ export default function CandidateListTable() {
     }
   }, []);
 
-  useEffect(() => setPage(1), [search, size, sortBy, sortOrder, activeTab, searchTabs]);
+  // Initial search on first page load for saved tabs
+  useEffect(() => {
+    if (!hasInitialSearched.current && searchTabs.length > 0) {
+      hasInitialSearched.current = true;
+      // Search on the first saved tab if it exists and has search content
+      if (searchTabs[0]?.saved && searchTabs[0]?.search) {
+        fetchCandidates();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTabs]);
 
+  // Removed automatic page reset - manual control only
+  useEffect(() => {
+    fetchCandidates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
   const fetchCandidates = async () => {
     try {
       const normalize = (val) => (typeof val === 'string' ? val.trim().replace(/\s+/g, '-') : val);
@@ -284,7 +285,7 @@ export default function CandidateListTable() {
           ? { maxLinkedinConnections: tabFilters.maxLinkedinConnections }
           : {}),
         page,
-        size: adjustedSize,
+        size: searchTabs[activeTab]?.params?.size || adjustedSize,
         ...(sortBy ? { sortBy } : {}),
         ...(sortOrder ? { sortOrder } : {}),
 
@@ -326,9 +327,6 @@ export default function CandidateListTable() {
       setCandidates(allItems);
       setTotalPages(newTotalPages);
       setTotalCount(total);
-      setCandidates(allItems);
-      setTotalPages(newTotalPages);
-      setTotalCount(total);
 
       if (
         search !== lastTrigger.search ||
@@ -349,13 +347,34 @@ export default function CandidateListTable() {
     }
   };
 
-  // useEffect(() => {
-  //   fetchCandidates();
-  // }, [geoRange]);
+  // Removed automatic search - only manual search button triggers search
 
   // Tab logic
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
+
+    // Update size from the tab's saved parameters
+    const selectedTab = searchTabs[newValue];
+    if (selectedTab?.params?.size) {
+      setSize(selectedTab.params.size);
+    }
+
+    // Update sort parameters from the tab's saved parameters
+    if (selectedTab?.params?.sortBy) {
+      setSortBy(selectedTab.params.sortBy);
+    }
+    if (selectedTab?.params?.sortOrder) {
+      setSortOrder(selectedTab.params.sortOrder);
+    }
+    if (selectedTab?.params?.page) {
+      setPage(selectedTab.params.page);
+    }
+
+    // No automatic search - only manual search button
+    // Clear candidates when switching tabs
+    setCandidates([]);
+    setTotalPages(1);
+    setTotalCount(0);
   };
   const handleNewTab = () => {
     setSearchTabs((prev) => [
@@ -368,7 +387,6 @@ export default function CandidateListTable() {
     try {
       // Get current tab data
       const tab = searchTabs[activeTab];
-      const params = { search: tab.search, filters: tab.filters, page, size, sortBy, sortOrder };
 
       // Prepare API payload
       const payload = {
@@ -397,10 +415,21 @@ export default function CandidateListTable() {
 
         // Update local state
         setSearchTabs((prev) =>
-          prev.map((tab, idx) =>
+          prev.map((savedTab, idx) =>
             idx === activeTab
-              ? { ...tab, name: saveName, saved: true, id: response.data._id || response.data.id }
-              : tab
+              ? {
+                  ...savedTab,
+                  name: saveName,
+                  saved: true,
+                  id: response.data._id || response.data.id,
+                  params: {
+                    page,
+                    size,
+                    sortBy,
+                    sortOrder,
+                  },
+                }
+              : savedTab
           )
         );
 
@@ -447,7 +476,7 @@ export default function CandidateListTable() {
       console.log('Updating tab with payload:', payload);
 
       // Use the same save endpoint for update
-      const response = await axios.post(endpoints.tabs.save, payload);
+      const response = await axios.put(endpoints.tabs.update(tab.id), payload);
 
       if (response.data) {
         console.log('Tab updated successfully:', response.data);
@@ -1217,14 +1246,38 @@ export default function CandidateListTable() {
             labelId="sort-by-label"
             value={sortBy}
             size="small"
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={(e) => {
+              const newSortBy = e.target.value;
+              setSortBy(newSortBy);
+              // Update the current tab's params
+              setSearchTabs((prev) =>
+                prev.map((tab, idx) =>
+                  idx === activeTab ? { ...tab, params: { ...tab.params, sortBy: newSortBy } } : tab
+                )
+              );
+            }}
           >
             <MenuItem value="relevance">Relevance</MenuItem>
             <MenuItem value="experience">Experience</MenuItem>
             <MenuItem value="connections">Connections</MenuItem>
             <MenuItem value="job_start_date">Job Start Date</MenuItem>
           </Select>
-          <Select value={sortOrder} size="small" onChange={(e) => setSortOrder(e.target.value)}>
+          <Select
+            value={sortOrder}
+            size="small"
+            onChange={(e) => {
+              const newSortOrder = e.target.value;
+              setSortOrder(newSortOrder);
+              // Update the current tab's params
+              setSearchTabs((prev) =>
+                prev.map((tab, idx) =>
+                  idx === activeTab
+                    ? { ...tab, params: { ...tab.params, sortOrder: newSortOrder } }
+                    : tab
+                )
+              );
+            }}
+          >
             <MenuItem value="asc">Asc</MenuItem>
             <MenuItem value="desc">Desc</MenuItem>
           </Select>
@@ -1235,7 +1288,16 @@ export default function CandidateListTable() {
             type="number"
             label="Page Size"
             value={size}
-            onChange={(e) => setSize(Number(e.target.value))}
+            onChange={(e) => {
+              const newSize = Number(e.target.value);
+              setSize(newSize);
+              // Update the current tab's params
+              setSearchTabs((prev) =>
+                prev.map((tab, idx) =>
+                  idx === activeTab ? { ...tab, params: { ...tab.params, size: newSize } } : tab
+                )
+              );
+            }}
             size="small"
             sx={{ width: 140 }}
             inputProps={{ min: 1, max: 50 }}

@@ -70,12 +70,6 @@ export default function CandidateCardList() {
   const [sortBy, setSortBy] = useState('relevance');
   const [sortOrder, setSortOrder] = useState('desc');
 
-  // Track if filters have changed
-  const [filtersChanged, setFiltersChanged] = useState(false);
-
-  // Track initial load
-  const [initialLoad, setInitialLoad] = useState(true);
-
   // Helper function to generate cache key
   const generateCacheKey = (searchTerm, filtersObj, sortByVal, sortOrderVal, pageNum, sizeVal) => {
     const filterStr = JSON.stringify(filtersObj);
@@ -122,176 +116,161 @@ export default function CandidateCardList() {
     fetchFilterOptions();
   }, []);
 
-  // Reset page when filters change
-  useEffect(() => {
-    if (page !== 1) {
-      setPage(1);
-    }
-  }, [filters, search, sortBy, sortOrder]);
-
   const normalize = (val) => (typeof val === 'string' ? val.trim().replace(/\s+/g, '-') : val);
 
-  // Fetch candidates only when explicitly triggered
-  const fetchCandidates = async () => {
-    const cacheKey = generateCacheKey(search, filters, sortBy, sortOrder, page, size);
+  useEffect(() => {
+    console.log('useEffect triggered with page:', page, 'size:', size);
+    const fetchCandidates = async () => {
+      const cacheKey = generateCacheKey(search, filters, sortBy, sortOrder, page, size);
+      console.log('Generated cache key:', cacheKey);
 
-    if (cache.has(cacheKey)) {
-      const cachedData = cache.get(cacheKey);
-      setCandidates(cachedData.candidates);
-      setTotalPages(cachedData.totalPages);
-      setTotalCount(cachedData.totalCount);
-      setCurrentCacheKey(cacheKey);
-      console.log('Using cached data for page:', page, 'Cache key:', cacheKey);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Calculate total pages and adjust size for the last page
-      const actualTotalPages = Math.max(1, Math.ceil(totalCount / size));
-      const isLastPage = page === actualTotalPages;
-      const remainingItems = totalCount - (page - 1) * size;
-      const adjustedSize = isLastPage && remainingItems > 0 ? Math.min(size, remainingItems) : size;
-
-      const params = {
-        ...(search ? { query: search } : {}),
-        ...(filters.countries ? { countries: normalize(filters.countries) } : {}),
-        ...(filters.industries ? { industries: normalize(filters.industries) } : {}),
-        ...(filters.skills.length ? { skills: filters.skills.map(normalize).join(',') } : {}),
-        ...(filters.majors ? { majors: normalize(filters.majors) } : {}),
-        ...(filters.degrees ? { degrees: normalize(filters.degrees) } : {}),
-        ...(filters.jobTitleRoles.length
-          ? { jobTitleRoles: filters.jobTitleRoles.map(normalize).join(',') }
-          : {}),
-        ...(filters.minExperience ? { minExperience: filters.minExperience } : {}),
-        ...(filters.maxExperience ? { maxExperience: filters.maxExperience } : {}),
-        ...(filters.minLinkedinConnections
-          ? { minLinkedinConnections: filters.minLinkedinConnections }
-          : {}),
-        ...(filters.maxLinkedinConnections
-          ? { maxLinkedinConnections: filters.maxLinkedinConnections }
-          : {}),
-        page,
-        size: adjustedSize,
-        ...(sortBy ? { sortBy } : {}),
-        ...(sortOrder ? { sortOrder } : {}),
-      };
-
-      console.log('API Request Params:', params);
-      const res = await axios.get(endpoints.candidates.search, { params });
-      const items = res.data?.data?.items || [];
-      const total = res.data?.data?.total?.value || 0;
-      console.log(`Page ${page}:`, items, `Total: ${total}, Adjusted Size: ${adjustedSize}`);
-
-      // Recalculate total pages with updated total
-      const newTotalPages = Math.max(1, Math.ceil(total / size));
-
-      // If the requested page exceeds the total pages, adjust it
-      if (page > newTotalPages && newTotalPages !== 0) {
-        console.log(`Adjusting page from ${page} to ${newTotalPages}`);
-        setPage(newTotalPages);
-        setLoading(false);
+      if (cache.has(cacheKey)) {
+        const cachedData = cache.get(cacheKey);
+        setCandidates(cachedData.candidates);
+        setTotalPages(cachedData.totalPages);
+        setTotalCount(cachedData.totalCount);
+        setCurrentCacheKey(cacheKey);
+        console.log('Using cached data for page:', page, 'Cache key:', cacheKey);
         return;
       }
 
-      setCandidates(items);
-      setTotalPages(newTotalPages);
-      setTotalCount(total);
+      setLoading(true);
+      try {
+        const params = {
+          ...(search ? { query: search } : {}),
+          ...(filters.countries ? { countries: normalize(filters.countries) } : {}),
+          ...(filters.industries ? { industries: normalize(filters.industries) } : {}),
+          ...(filters.skills.length ? { skills: filters.skills.map(normalize).join(',') } : {}),
+          ...(filters.majors ? { majors: normalize(filters.majors) } : {}),
+          ...(filters.degrees ? { degrees: normalize(filters.degrees) } : {}),
+          ...(filters.jobTitleRoles.length
+            ? { jobTitleRoles: filters.jobTitleRoles.map(normalize).join(',') }
+            : {}),
+          ...(filters.minExperience ? { minExperience: filters.minExperience } : {}),
+          ...(filters.maxExperience ? { maxExperience: filters.maxExperience } : {}),
+          ...(filters.minLinkedinConnections
+            ? { minLinkedinConnections: filters.minLinkedinConnections }
+            : {}),
+          ...(filters.maxLinkedinConnections
+            ? { maxLinkedinConnections: filters.maxLinkedinConnections }
+            : {}),
+          page,
+          size,
+          ...(sortBy ? { sortBy } : {}),
+          ...(sortOrder ? { sortOrder } : {}),
+        };
 
-      const cacheData = {
-        candidates: items,
-        totalPages: newTotalPages,
-        totalCount: total,
-        timestamp: Date.now(),
-      };
+        console.log('API Request Params:', params);
+        const res = await axios.get(endpoints.candidates.search, { params });
+        const items = res.data?.data?.items || [];
+        const total = res.data?.data?.total?.value || 0;
+        console.log(`Page ${page}:`, items, `Total: ${total}, Size: ${size}`);
 
-      setCache((prevCache) => {
-        const newCache = new Map(prevCache);
-        newCache.set(cacheKey, cacheData);
-        if (newCache.size > 50) {
-          const entries = Array.from(newCache.entries());
-          entries.sort((a, b) => b[1].timestamp - a[1].timestamp);
-          return new Map(entries.slice(0, 50));
+        // Calculate total pages based on the API response
+        const newTotalPages = Math.max(1, Math.ceil(total / size));
+
+        // If the requested page exceeds the total pages, adjust it
+        if (page > newTotalPages && newTotalPages > 0) {
+          console.log(`Adjusting page from ${page} to ${newTotalPages}`);
+          setPage(newTotalPages);
+          setLoading(false);
+          return;
         }
-        return newCache;
-      });
 
-      setCurrentCacheKey(cacheKey);
+        setCandidates(items);
+        setTotalPages(newTotalPages);
+        setTotalCount(total);
 
-      if (
-        search !== lastTrigger.search ||
-        JSON.stringify(filters) !== JSON.stringify(lastTrigger.filters)
-      ) {
+        const cacheData = {
+          candidates: items,
+          totalPages: newTotalPages,
+          totalCount: total,
+          timestamp: Date.now(),
+        };
+
+        setCache((prevCache) => {
+          const newCache = new Map(prevCache);
+          newCache.set(cacheKey, cacheData);
+          if (newCache.size > 50) {
+            const entries = Array.from(newCache.entries());
+            entries.sort((a, b) => b[1].timestamp - a[1].timestamp);
+            return new Map(entries.slice(0, 50));
+          }
+          return newCache;
+        });
+
+        setCurrentCacheKey(cacheKey);
+
+        if (
+          search !== lastTrigger.search ||
+          JSON.stringify(filters) !== JSON.stringify(lastTrigger.filters)
+        ) {
+          setOpenToast(true);
+          setLastTrigger({ search, filters });
+        }
+      } catch (err) {
+        console.error('Error fetching candidates:', err);
+        setCandidates([]);
+        setTotalPages(1);
+        setTotalCount(0);
         setOpenToast(true);
-        setLastTrigger({ search, filters });
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Error fetching candidates:', err);
-      setCandidates([]);
-      setTotalPages(1);
-      setTotalCount(0);
-      setOpenToast(true);
-    } finally {
-      setLoading(false);
-      setFiltersChanged(false);
-      setInitialLoad(false);
-    }
-  };
+    };
 
-  // Fetch candidates when page changes (pagination)
-  useEffect(() => {
-    if (
-      !initialLoad &&
-      (search ||
-        Object.values(filters).some(
-          (value) =>
-            (Array.isArray(value) && value.length > 0) ||
-            (typeof value === 'string' && value !== '')
-        ))
-    ) {
-      fetchCandidates();
-    }
-  }, [page]);
-
-  // Load initial candidates on component mount
-  useEffect(() => {
     fetchCandidates();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, filters, page, size, sortBy, sortOrder]);
 
-  const handleSearchInputChange = (value) => {
-    setSearchInput(value);
-    setFiltersChanged(true);
-  };
+  const handleSearchInputChange = (value) => setSearchInput(value);
 
   const handleSearchSubmit = () => {
     const newSearch = searchInput.trim();
-    if (newSearch !== search || filtersChanged) {
+    if (newSearch !== search) {
       setCache(new Map());
       setPage(1);
     }
     setSearch(newSearch);
-    fetchCandidates();
   };
 
+  const sendToOdoo = async () => {
+    setLoadingOdoo(true);
+    try {
+      // Placeholder for sending candidates to Odoo
+      // add the filters used
+      console.log('Sending candidates to Odoo with filters:', filters);
+      // await axios.post('/your-odoo-endpoint', { filters });
+    } catch (error) {
+      console.error('Error sending to Odoo:', error);
+    } finally {
+      setTimeout(() => {
+        setLoadingOdoo(false);
+      }, 1000);
+    }
+  };
   const handleFilterChange = (key, value) => {
+    setCache(new Map());
     setFilters((prev) => ({ ...prev, [key]: value }));
-    setFiltersChanged(true);
+    setPage(1);
   };
 
   const handleSortChange = (newSortBy) => {
+    setCache(new Map());
     setSortBy(newSortBy);
-    setFiltersChanged(true);
+    setPage(1);
   };
 
   const handleSortOrderChange = (newSortOrder) => {
+    setCache(new Map());
     setSortOrder(newSortOrder);
-    setFiltersChanged(true);
+    setPage(1);
   };
 
   const handlePageSizeChange = (newSize) => {
+    setCache(new Map());
     setSize(newSize);
     setPage(1);
-    setFiltersChanged(true);
   };
 
   const handleViewCV = async (candidate) => {
@@ -321,14 +300,14 @@ export default function CandidateCardList() {
       value: filters.skills,
       onChange: (val) => handleFilterChange('skills', val),
     },
-    // {
-    //   key: 'jobTitleRoles',
-    //   label: 'Job Title',
-    //   type: 'autocomplete',
-    //   options: filterOptions.jobTitles,
-    //   value: filters.jobTitleRoles,
-    //   onChange: (val) => handleFilterChange('jobTitleRoles', val),
-    // },
+    {
+      key: 'jobTitleRoles',
+      label: 'Job Title',
+      type: 'autocomplete',
+      options: filterOptions.jobTitles,
+      value: filters.jobTitleRoles,
+      onChange: (val) => handleFilterChange('jobTitleRoles', val),
+    },
     {
       key: 'countries',
       label: 'Country',
@@ -458,12 +437,6 @@ export default function CandidateCardList() {
           </Select>
         </Box>
 
-        {!loading && (
-          <Box sx={{ fontWeight: 'bold', color: 'primary.main', mt: { xs: 1, sm: 0 } }}>
-            {displayCount} candidate{totalCount !== 1 ? 's' : ''} found
-          </Box>
-        )}
-
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: { xs: 1, sm: 0 } }}>
           <TextField
             type="number"
@@ -476,6 +449,15 @@ export default function CandidateCardList() {
           />{' '}
           <Button variant="contained" size="small" onClick={handleSearchSubmit}>
             Search
+          </Button>
+          <Button
+            variant="contained"
+            color="info"
+            size="small"
+            onClick={sendToOdoo}
+            disabled={loadingOdoo}
+          >
+            {loadingOdoo ? <CircularProgress size={20} /> : 'Send To Odoo'}
           </Button>
         </Box>
       </Box>
@@ -569,12 +551,22 @@ export default function CandidateCardList() {
               <Box sx={{ color: 'text.secondary', fontSize: '0.9em' }}>
                 Page {page} of {totalPages}
               </Box>
-
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleGoToSecondLastPage}
+                disabled={totalPages <= 1 || page === totalPages - 1}
+              >
+                Go to Second-to-Last Page
+              </Button>
               <Pagination
                 page={page}
                 count={totalPages}
                 shape="circular"
-                onChange={(e, newPage) => setPage(newPage)}
+                onChange={(e, newPage) => {
+                  console.log('Pagination clicked, changing page from', page, 'to', newPage);
+                  setPage(newPage);
+                }}
                 siblingCount={1}
                 boundaryCount={1}
               />
