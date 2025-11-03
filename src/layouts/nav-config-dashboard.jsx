@@ -53,7 +53,7 @@ export const navData = [
         path: paths.dashboard.user.root,
         icon: ICONS.user,
         children: [
-          { title: 'Cards', path: paths.dashboard.user.cards },
+          // { title: 'Cards', path: paths.dashboard.user.cards },
           { title: 'List', path: paths.dashboard.user.list },
           // { title: 'CVs', path: paths.dashboard.user.root },
         ],
@@ -62,7 +62,7 @@ export const navData = [
         title: 'Simulate Events',
         path: paths.dashboard.event.list,
         icon: ICONS.analytics,
-      }
+      },
       // {
       //   title: 'Users',
       //   path: paths.dashboard.users.root,
