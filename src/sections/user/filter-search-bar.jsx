@@ -92,7 +92,7 @@ export default function FilterSearchBar({
                 />
               )}
               sx={{
-                minWidth: 300,
+                minWidth: 400,
                 '& .MuiAutocomplete-inputRoot': {
                   flexWrap: 'wrap',
                   padding: '4px',
