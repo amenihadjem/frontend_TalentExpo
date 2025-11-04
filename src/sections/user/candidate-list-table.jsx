@@ -123,11 +123,12 @@ export default function CandidateListTable() {
       search: '',
       filters: {
         countries: [],
-        industries: '',
+        industries: [],
         skills: [],
         majors: [],
         degrees: [],
         jobTitleRoles: [],
+        languages: [],
         minExperience: '',
         maxExperience: '',
         minLinkedinConnections: '',
@@ -152,6 +153,9 @@ export default function CandidateListTable() {
   const [openToast, setOpenToast] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
 
+  // Per-tab results cache
+  const [tabResults, setTabResults] = useState({});
+
   const handleSelectRow = (id) => {
     setSelectedRows((prev) => {
       const newSelected = prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id];
@@ -172,6 +176,7 @@ export default function CandidateListTable() {
     majors: [],
     degrees: [],
     jobTitles: [],
+    languages: [],
   });
   const [lastTrigger, setLastTrigger] = useState({ search: '', filters: {} });
 
@@ -214,6 +219,7 @@ export default function CandidateListTable() {
         majors: mapBuckets(agg.available_majors?.values?.buckets),
         degrees: mapBuckets(agg.available_degrees?.values?.buckets),
         jobTitles: mapBuckets(agg.available_job_titles?.buckets),
+        languages: mapBuckets(agg.available_languages?.buckets),
       });
     } catch (err) {
       console.error('Error fetching filter options:', err);
@@ -231,21 +237,16 @@ export default function CandidateListTable() {
 
   // Initial search on first page load for saved tabs
   useEffect(() => {
-    if (!hasInitialSearched.current && searchTabs.length > 0) {
-      hasInitialSearched.current = true;
+    if (searchTabs.length > 0) {
       // Search on the first saved tab if it exists and has search content
-      if (searchTabs[0]?.saved && searchTabs[0]?.search) {
+      if (searchTabs[activeTab]?.saved && searchTabs[activeTab]?.search) {
         fetchCandidates();
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTabs]);
 
-  // Removed automatic page reset - manual control only
-  useEffect(() => {
-    fetchCandidates();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+
   const fetchCandidates = async () => {
     try {
       const normalize = (val) => (typeof val === 'string' ? val.trim().replace(/\s+/g, '-') : val);
@@ -263,7 +264,9 @@ export default function CandidateListTable() {
         ...(tabFilters.countries?.length
           ? { countries: tabFilters.countries.map(normalize).join(',') }
           : {}),
-        ...(tabFilters.industries ? { industries: normalize(tabFilters.industries) } : {}),
+        ...(tabFilters.industries?.length
+          ? { industries: tabFilters.industries.map(normalize).join(',') }
+          : {}),
         ...(tabFilters.skills?.length
           ? { skills: tabFilters.skills.map(normalize).join(',') }
           : {}),
@@ -275,6 +278,9 @@ export default function CandidateListTable() {
           : {}),
         ...(tabFilters.jobTitleRoles?.length
           ? { jobTitleRoles: tabFilters.jobTitleRoles.map(normalize).join(',') }
+          : {}),
+        ...(tabFilters.languages?.length
+          ? { languages: tabFilters.languages.map(normalize).join(',') }
           : {}),
         ...(tabFilters.minExperience ? { minExperience: tabFilters.minExperience } : {}),
         ...(tabFilters.maxExperience ? { maxExperience: tabFilters.maxExperience } : {}),
@@ -328,6 +334,18 @@ export default function CandidateListTable() {
       setTotalPages(newTotalPages);
       setTotalCount(total);
 
+      // Cache the results for the current tab
+      const tabKey = `tab-${activeTab}`;
+      setTabResults((prev) => ({
+        ...prev,
+        [tabKey]: {
+          candidates: allItems,
+          totalPages: newTotalPages,
+          totalCount: total,
+          timestamp: Date.now(),
+        },
+      }));
+
       if (
         search !== lastTrigger.search ||
         JSON.stringify(searchTabs[activeTab]?.filters || {}) !== JSON.stringify(lastTrigger.filters)
@@ -371,10 +389,18 @@ export default function CandidateListTable() {
     }
 
     // No automatic search - only manual search button
-    // Clear candidates when switching tabs
-    setCandidates([]);
-    setTotalPages(1);
-    setTotalCount(0);
+    // Restore cached results for the selected tab if they exist
+    const tabKey = `tab-${newValue}`;
+    if (tabResults[tabKey]) {
+      setCandidates(tabResults[tabKey].candidates);
+      setTotalPages(tabResults[tabKey].totalPages);
+      setTotalCount(tabResults[tabKey].totalCount);
+    } else {
+      // Clear candidates only if no cached results exist
+      setCandidates([]);
+      setTotalPages(1);
+      setTotalCount(0);
+    }
   };
   const handleNewTab = () => {
     setSearchTabs((prev) => [
@@ -541,6 +567,15 @@ export default function CandidateListTable() {
   };
   const handleSearchSubmit = () => {
     setSearch(searchTabs[activeTab].search.trim());
+
+    // Clear cache for current tab since we're doing a new search
+    const tabKey = `tab-${activeTab}`;
+    setTabResults((prev) => {
+      const newResults = { ...prev };
+      delete newResults[tabKey];
+      return newResults;
+    });
+
     fetchCandidates();
   };
   // Removed unused global filter setter
@@ -550,6 +585,14 @@ export default function CandidateListTable() {
         idx === activeTab ? { ...tab, filters: { ...tab.filters, [key]: value } } : tab
       )
     );
+
+    // Clear cache for current tab since filters changed
+    const tabKey = `tab-${activeTab}`;
+    setTabResults((prev) => {
+      const newResults = { ...prev };
+      delete newResults[tabKey];
+      return newResults;
+    });
   };
 
   const handleViewCV = async (candidate) => {
@@ -933,11 +976,18 @@ export default function CandidateListTable() {
       key: 'industries',
       label: 'Industry',
       type: 'autocomplete',
-      // options: filterOptions.industries,
-
-      options: [],
-      value: searchTabs[activeTab]?.filters?.industries || '',
+      options: filterOptions.industries,
+      value: searchTabs[activeTab]?.filters?.industries || [],
       onChange: (val) => handleTabFilterChange('industries', val),
+    },
+
+    {
+      key: 'languages',
+      label: 'Languages',
+      type: 'autocomplete',
+      options: filterOptions.languages,
+      value: searchTabs[activeTab]?.filters?.languages || [],
+      onChange: (val) => handleTabFilterChange('languages', val),
     },
     {
       key: 'majors',
@@ -1223,7 +1273,7 @@ export default function CandidateListTable() {
           onSearchChange={handleSearchInputChange}
           onSearchSubmit={handleSearchSubmit}
           filtersConfig={filtersConfig}
-          mainFiltersCount={3}
+          mainFiltersCount={4}
         />{' '}
         <Button variant="contained" size="medium" onClick={handleSearchSubmit}>
           Search
@@ -1531,6 +1581,7 @@ export default function CandidateListTable() {
                     const newPage = parseInt(e.target.value);
                     if (newPage >= 1 && newPage <= totalPages) {
                       setPage(newPage);
+
                     }
                     e.target.blur();
                   }
@@ -1540,7 +1591,11 @@ export default function CandidateListTable() {
             <Pagination
               page={page}
               count={totalPages}
-              onChange={(e, val) => setPage(val)}
+              onChange={(e, val) => {
+                
+                setPage(val);
+                fetchCandidates()
+              }}
               showFirstButton
               showLastButton
               size="medium"
