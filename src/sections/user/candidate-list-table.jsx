@@ -220,6 +220,7 @@ export default function CandidateListTable() {
         degrees: mapBuckets(agg.available_degrees?.values?.buckets),
         jobTitles: mapBuckets(agg.available_job_titles?.buckets),
         languages: mapBuckets(agg.available_languages?.buckets),
+        experienceCountries: countries,
       });
     } catch (err) {
       console.error('Error fetching filter options:', err);
@@ -245,7 +246,6 @@ export default function CandidateListTable() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTabs]);
-
 
   const fetchCandidates = async () => {
     try {
@@ -289,6 +289,9 @@ export default function CandidateListTable() {
           : {}),
         ...(tabFilters.maxLinkedinConnections
           ? { maxLinkedinConnections: tabFilters.maxLinkedinConnections }
+          : {}),
+        ...(tabFilters.experienceCountries?.length
+          ? { experienceCountries: tabFilters.experienceCountries.map(normalize).join(',') }
           : {}),
         page,
         size: searchTabs[activeTab]?.params?.size || adjustedSize,
@@ -990,6 +993,14 @@ export default function CandidateListTable() {
       onChange: (val) => handleTabFilterChange('languages', val),
     },
     {
+      key: 'experienceCountries',
+      label: 'Experience Countries',
+      type: 'autocomplete',
+      options: filterOptions.countries,
+      value: searchTabs[activeTab]?.filters?.experienceCountries || [],
+      onChange: (val) => handleTabFilterChange('experienceCountries', val),
+    },
+    {
       key: 'majors',
       label: 'Education Major',
       type: 'autocomplete',
@@ -1273,7 +1284,7 @@ export default function CandidateListTable() {
           onSearchChange={handleSearchInputChange}
           onSearchSubmit={handleSearchSubmit}
           filtersConfig={filtersConfig}
-          mainFiltersCount={4}
+          mainFiltersCount={5}
         />{' '}
         <Button variant="contained" size="medium" onClick={handleSearchSubmit}>
           Search
@@ -1581,7 +1592,6 @@ export default function CandidateListTable() {
                     const newPage = parseInt(e.target.value);
                     if (newPage >= 1 && newPage <= totalPages) {
                       setPage(newPage);
-
                     }
                     e.target.blur();
                   }
@@ -1592,9 +1602,8 @@ export default function CandidateListTable() {
               page={page}
               count={totalPages}
               onChange={(e, val) => {
-                
                 setPage(val);
-                fetchCandidates()
+                fetchCandidates();
               }}
               showFirstButton
               showLastButton
