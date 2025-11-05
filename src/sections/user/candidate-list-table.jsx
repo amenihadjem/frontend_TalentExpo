@@ -1380,7 +1380,7 @@ export default function CandidateListTable() {
               }}
             />
           </Badge>{' '}
-          <Button
+          {/* <Button
             variant="contained"
             color="info"
             size="small"
@@ -1388,7 +1388,7 @@ export default function CandidateListTable() {
             disabled={loadingOdoo || selectedRows.length === 0}
           >
             {loadingOdoo ? <CircularProgress size={20} /> : 'Send To Odoo'}
-          </Button>
+          </Button> */}
         </Box>
       </Box>
 
@@ -1442,7 +1442,7 @@ export default function CandidateListTable() {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell padding="checkbox">
+                {/* <TableCell padding="checkbox">
                   <Checkbox
                     indeterminate={
                       selectedRows.length > 0 && selectedRows.length < candidates.length
@@ -1462,7 +1462,7 @@ export default function CandidateListTable() {
                     }}
                     color="primary"
                   />
-                </TableCell>
+                </TableCell> */}
                 <TableCell>Name</TableCell>
                 <TableCell>Phone</TableCell>
                 <TableCell>Email</TableCell>
@@ -1477,13 +1477,13 @@ export default function CandidateListTable() {
               {candidates.length > 0 ? (
                 candidates.map((c) => (
                   <TableRow key={c.id} hover>
-                    <TableCell padding="checkbox">
+                    {/* <TableCell padding="checkbox">
                       <Checkbox
                         checked={selectedRows.includes(c.id)}
                         onChange={() => handleSelectRow(c.id)}
                         color="primary"
                       />
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Avatar sx={{ mr: 1, bgcolor: theme.palette.primary.main }}>

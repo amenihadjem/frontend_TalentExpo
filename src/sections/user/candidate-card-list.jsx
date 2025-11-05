@@ -240,7 +240,7 @@ export default function CandidateCardList() {
       // Placeholder for sending candidates to Odoo
       // add the filters used
       console.log('Sending candidates to Odoo with filters:', filters);
-      // await axios.post('/your-odoo-endpoint', { filters });
+      await axios.post('/your-odoo-endpoint', { filters });
     } catch (error) {
       console.error('Error sending to Odoo:', error);
     } finally {
@@ -450,7 +450,7 @@ export default function CandidateCardList() {
           <Button variant="contained" size="small" onClick={handleSearchSubmit}>
             Search
           </Button>
-          <Button
+          {/* <Button
             variant="contained"
             color="info"
             size="small"
@@ -458,7 +458,7 @@ export default function CandidateCardList() {
             disabled={loadingOdoo}
           >
             {loadingOdoo ? <CircularProgress size={20} /> : 'Send To Odoo'}
-          </Button>
+          </Button> */}
         </Box>
       </Box>
 
