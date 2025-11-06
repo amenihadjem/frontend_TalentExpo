@@ -1,0 +1,39 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+	<defs>
+		<linearGradient id="g1" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(43.504,28.266,-28.45,43.788,4,17.036)">
+			<stop offset="0" stop-color="#8aff82"/>
+			<stop offset="1" stop-color="#30ff49"/>
+		</linearGradient>
+		<linearGradient id="g2" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(38.738,43.042,-43.322,38.99,16.719,17.07)">
+			<stop offset="0" stop-color="#30ff5a"/>
+			<stop offset="1" stop-color="#1db718"/>
+		</linearGradient>
+		<linearGradient id="g3" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(38.738,43.042,-43.322,38.99,16.719,17.07)">
+			<stop offset="0" stop-color="#30ff5a"/>
+			<stop offset="1" stop-color="#1db718"/>
+		</linearGradient>
+		<clipPath clipPathUnits="userSpaceOnUse" id="cp1">
+			<path d="m56.8 20.27c-2.06-2.05-4.85-3.2-7.75-3.2h-21.38c-6.06 0-10.95 4.89-10.95 10.93v17.09c0 6.04 4.91 10.93 10.95 10.93h21.38c6.04 0 10.95-4.89 10.95-10.93v-17.09c0-2.9-1.15-5.67-3.2-7.73z"/>
+		</clipPath>
+		<linearGradient id="g4" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(13.469,14.08,-14.705,14.067,24.17,35.665)">
+			<stop offset="0" stop-color="#c1fbbd"/>
+			<stop offset="1" stop-color="#ffffff"/>
+		</linearGradient>
+	</defs>
+	<style>
+		.s0 { opacity: .74;fill: url(#g1) } 
+		.s1 { fill: url(#g2) } 
+		.s2 { opacity: .48;fill: url(#g3) } 
+		.s3 { fill: #000000 } 
+		.s4 { fill: url(#g4) } 
+	</style>
+	<path class="s0" d="m39.43 10.52c-2.26-1.31-4.94-1.65-7.45-0.98l-18.5 4.96c-5.25 1.4-8.35 6.77-6.95 11.99l3.97 14.8c1.4 5.22 6.78 8.32 12.01 6.92l18.5-4.96c5.23-1.4 8.34-6.77 6.94-12l-3.96-14.79c-0.67-2.51-2.31-4.64-4.56-5.94z"/>
+	<path class="s1" d="m56.8 20.27c-2.06-2.05-4.85-3.2-7.75-3.2h-21.38c-6.06 0-10.95 4.89-10.95 10.93v17.09c0 6.04 4.91 10.93 10.95 10.93h21.38c6.04 0 10.95-4.89 10.95-10.93v-17.09c0-2.9-1.15-5.67-3.2-7.73z"/>
+	<path class="s2" d="m56.8 20.27c-2.06-2.05-4.85-3.2-7.75-3.2h-21.38c-6.06 0-10.95 4.89-10.95 10.93v17.09c0 6.04 4.91 10.93 10.95 10.93h21.38c6.04 0 10.95-4.89 10.95-10.93v-17.09c0-2.9-1.15-5.67-3.2-7.73z"/>
+	<g style="opacity: .04">
+		<g id="Clip-Path" clip-path="url(#cp1)">
+			<path class="s3" d="m57.5 19.57c-2.24-2.25-5.29-3.5-8.45-3.5v2c2.64 0 5.17 1.04 7.04 2.91zm-8.46-3.5h-21.38v2h21.38zm-21.38 0c-6.61 0-11.95 5.34-11.95 11.93h2c0-5.48 4.44-9.93 9.95-9.93zm-11.95 11.93v17.1h2v-17.1zm0 17.1c0 6.59 5.36 11.93 11.95 11.93v-2c-5.49 0-9.95-4.45-9.95-9.93zm11.95 11.93h21.38v-2h-21.38zm21.38 0c6.59 0 11.95-5.34 11.95-11.93h-2c0 5.48-4.46 9.93-9.95 9.93zm11.95-11.93v-17.1h-2v17.1zm0-17.1c0-3.17-1.25-6.19-3.49-8.43l-1.42 1.41c1.87 1.87 2.91 4.39 2.91 7.02z"/>
+		</g>
+	</g>
+	<path class="s4" d="m52.66 31.05l-0.17 0.17-9.76 7.81c-1.21 0.96-2.71 1.48-4.24 1.48-1.54 0-3.01-0.52-4.22-1.48l-9.85-7.68-0.28-0.28c-0.5-0.65-0.43-1.58 0.15-2.16 0.56-0.59 1.49-0.65 2.17-0.15l9.74 7.79c1.27 1.04 3.07 1.04 4.32 0l9.76-7.79c0.33-0.31 0.76-0.46 1.22-0.44 0.43 0.05 0.84 0.24 1.14 0.57 0.54 0.62 0.54 1.53 0.02 2.16z"/>
+</svg>

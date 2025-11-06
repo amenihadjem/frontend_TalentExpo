@@ -347,11 +347,11 @@ export function OverviewAnalyticsView() {
               title="CVs with Email"
               total={mainStats.cvs_with_email.count}
               subheader={`${mainStats.cvs_with_email.percentage}%`}
-              color="info"
+              color="success"
               icon={
                 <img
                   alt="CVs with Email"
-                  src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-email.svg`}
+                  src={`${CONFIG.assetsDir}/assets/icons/glass/ic-glass-message-success.svg`}
                 />
               }
             />
