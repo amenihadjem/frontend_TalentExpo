@@ -34,130 +34,143 @@ export default function FilterSearchBar({
   return (
     <Box sx={{ display: 'flex', alignItems: 'start', flexWrap: 'wrap' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, width: '95%' }}>
-        {/* Search input */}
-        <TextField
-          size="small"
-          placeholder="Search..."
-          value={searchValue}
-          onChange={(e) => onSearchChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          sx={{ minWidth: 240, flexGrow: 1, maxWidth: 400 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Iconify icon="eva:search-fill" width={20} />
-              </InputAdornment>
-            ),
-          }}
-        />
+        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+          {/* Search input */}
+          <TextField
+            size="small"
+            placeholder="Search..."
+            value={searchValue}
+            onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            sx={{ minWidth: 240, flexGrow: 1, maxWidth: 400 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Iconify icon="eva:search-fill" width={20} />
+                </InputAdornment>
+              ),
+            }}
+          />
 
-        {/* Main Filters inline */}
-        {mainFilters.map(({ key, label, type, options, value, onChange }) => {
-          if (type === 'select') {
-            return (
-              <TextField
-                key={key}
-                select
-                label={label}
-                size="small"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                sx={{ minWidth: 140 }}
-              >
-                <MenuItem value="">All</MenuItem>
-                {options.map((opt) => (
-                  <MenuItem key={opt} value={opt}>
-                    {opt}
-                  </MenuItem>
-                ))}
-              </TextField>
-            );
-          }
+          {/* Main Filters inline */}
+          {mainFilters.map(({ key, label, type, options, value, onChange }) => {
+            if (type === 'select') {
+              return (
+                <TextField
+                  key={key}
+                  select
+                  label={label}
+                  size="small"
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                  sx={{ minWidth: 140 }}
+                >
+                  <MenuItem value="">All</MenuItem>
+                  {options.map((opt) => (
+                    <MenuItem key={opt} value={opt}>
+                      {opt}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              );
+            }
 
-          if (type === 'autocomplete') {
-            return (
-              <Autocomplete
-                key={key}
-                multiple
-                size="small"
-                options={options}
-                value={value}
-                freeSolo={key !== 'countries'} // Disable freeSolo for countries
-                onChange={(e, newVal) => onChange(newVal)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label={label}
-                    placeholder={value.length === 0 ? label : ''}
-                    sx={{ minWidth: 300 }}
-                  />
-                )}
-                sx={{
-                  minWidth: 400,
-                  '& .MuiAutocomplete-inputRoot': {
-                    flexWrap: 'wrap',
-                    padding: '4px',
-                  },
-                  '& .MuiAutocomplete-tag': {
-                    margin: '2px',
-                    height: '24px',
-                  },
-                  '& .MuiAutocomplete-input': {
-                    minWidth: '120px !important', // Ensures typing space
-                    flexGrow: 1,
-                  },
-                }}
-                isOptionEqualToValue={(option, val) => option === val}
-                renderTags={(tagValue, getTagProps) =>
-                  tagValue.map((option, index) => (
-                    <Chip
-                      key={index}
-                      label={option}
-                      size="small"
-                      sx={{
-                        height: '24px',
-                        fontSize: '0.75rem',
-                        '& .MuiChip-label': {
-                          padding: '0 8px',
-                        },
-                      }}
-                      {...getTagProps({ index })}
+            if (type === 'autocomplete') {
+              return (
+                <Autocomplete
+                  key={key}
+                  multiple
+                  size="small"
+                  options={options}
+                  value={value}
+                  freeSolo={key !== 'countries'} // Disable freeSolo for countries
+                  onChange={(e, newVal) => onChange(newVal)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={label}
+                      placeholder={value.length === 0 ? label : ''}
+                      sx={{ minWidth: 300 }}
                     />
-                  ))
-                }
-              />
-            );
-          }
+                  )}
+                  sx={{
+                    minWidth: '25%',
+                    '& .MuiAutocomplete-inputRoot': {
+                      flexWrap: 'wrap',
+                      padding: '4px',
+                    },
+                    '& .MuiAutocomplete-tag': {
+                      margin: '2px',
+                      height: '24px',
+                    },
+                    '& .MuiAutocomplete-input': {
+                      minWidth: '120px !important', // Ensures typing space
+                      flexGrow: 1,
+                    },
+                  }}
+                  isOptionEqualToValue={(option, val) => option === val}
+                  renderTags={(tagValue, getTagProps) =>
+                    tagValue.map((option, index) => (
+                      <Chip
+                        key={index}
+                        label={option}
+                        size="small"
+                        sx={{
+                          height: '24px',
+                          fontSize: '0.75rem',
+                          '& .MuiChip-label': {
+                            padding: '0 8px',
+                          },
+                        }}
+                        {...getTagProps({ index })}
+                      />
+                    ))
+                  }
+                />
+              );
+            }
 
-          if (type === 'checkbox') {
-            return (
-              <FormControlLabel
-                key={key}
-                control={
-                  <Checkbox
-                    checked={value}
-                    onChange={(e) => onChange(e.target.checked)}
-                    size="small"
-                  />
-                }
-                label={label}
-                sx={{ minWidth: 140 }}
-              />
-            );
-          }
+            if (type === 'checkbox' && key !== 'withEmail' && key !== 'withPhoneNumber') {
+              return (
+                <FormControlLabel
+                  key={key}
+                  control={
+                    <Checkbox
+                      checked={value}
+                      onChange={(e) => onChange(e.target.checked)}
+                      size="small"
+                    />
+                  }
+                  label={label}
+                  sx={{ minWidth: 140 }}
+                />
+              );
+            }
 
-          // fallback: simple text field
-          return (
-            <TextField
-              key={key}
-              label={label}
-              size="small"
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              sx={{ minWidth: 140 }}
-            />
-          );
-        })}
+            // fallback: simple text field
+          })}
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+          {mainFilters.map(({ key, label, type, options, value, onChange }) => {
+            if (type === 'checkbox' && (key === 'withEmail' || key === 'withPhoneNumber'))
+              return (
+                <FormControlLabel
+                  key={key}
+                  control={
+                    <Checkbox
+                      checked={value}
+                      onChange={(e) => onChange(e.target.checked)}
+                      size="small"
+                    />
+                  }
+                  label={label}
+                  sx={{ minWidth: 140 }}
+                />
+              );
+
+            return null;
+          })}
+        </Box>
       </Box>
       <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', width: '5%' }}>
         {/* More filters button */}
