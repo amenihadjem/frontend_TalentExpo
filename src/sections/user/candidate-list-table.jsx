@@ -1148,7 +1148,6 @@ export default function CandidateListTable() {
       label: 'Skills',
       type: 'autocomplete',
       options: [],
-
       value: searchTabs[activeTab]?.filters?.skills || [],
       onChange: (val) => handleTabFilterChange('skills', val),
     },
