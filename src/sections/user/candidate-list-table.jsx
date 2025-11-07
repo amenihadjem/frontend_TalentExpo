@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Dialog from '@mui/material/Dialog';
@@ -24,9 +24,9 @@ import {
   Select,
   InputLabel,
   Badge,
-  Checkbox,
   IconButton,
   DialogActions,
+  Divider,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -137,10 +137,13 @@ export default function CandidateListTable() {
         degrees: [],
         jobTitleRoles: [],
         languages: [],
+        experienceCountries: [],
         minExperience: '',
         maxExperience: '',
         minLinkedinConnections: '',
         maxLinkedinConnections: '',
+        withEmail: false,
+        withPhoneNumber: false,
       },
       saved: false,
     },
@@ -474,6 +477,8 @@ export default function CandidateListTable() {
         ...(tabFilters.experienceCountries?.length
           ? { experienceCountries: tabFilters.experienceCountries.map(normalize).join(',') }
           : {}),
+        ...(tabFilters.withEmail ? { withEmail: true } : {}),
+        ...(tabFilters.withPhoneNumber ? { withPhoneNumber: true } : {}),
         page,
         size: searchTabs[activeTab]?.params?.size || adjustedSize,
         ...(sortBy ? { sortBy } : {}),
@@ -1182,6 +1187,20 @@ export default function CandidateListTable() {
       onChange: (val) => handleTabFilterChange('experienceCountries', val),
     },
     {
+      key: 'withEmail',
+      label: 'Has Email',
+      type: 'checkbox',
+      value: searchTabs[activeTab]?.filters?.withEmail || false,
+      onChange: (val) => handleTabFilterChange('withEmail', val),
+    },
+    {
+      key: 'withPhoneNumber',
+      label: 'Has Phone Number',
+      type: 'checkbox',
+      value: searchTabs[activeTab]?.filters?.withPhoneNumber || false,
+      onChange: (val) => handleTabFilterChange('withPhoneNumber', val),
+    },
+    {
       key: 'majors',
       label: 'Education Major',
       type: 'autocomplete',
@@ -1445,11 +1464,11 @@ export default function CandidateListTable() {
         </DialogActions>
       </Dialog>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
         {!loading && (
           <Box
             sx={{
-              fontSize: '30px',
+              fontSize: '20px',
               fontWeight: 'bold',
               color: 'primary.main',
               mt: { xs: 1, sm: 0 },
@@ -1458,6 +1477,9 @@ export default function CandidateListTable() {
             {totalCount.toLocaleString()} candidate{totalCount !== 1 ? 's' : ''} found
           </Box>
         )}
+        <Button variant="contained" size="medium" onClick={handleSearchSubmit}>
+          Search
+        </Button>{' '}
       </Box>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
         <FilterSearchBar
@@ -1465,11 +1487,8 @@ export default function CandidateListTable() {
           onSearchChange={handleSearchInputChange}
           onSearchSubmit={handleSearchSubmit}
           filtersConfig={filtersConfig}
-          mainFiltersCount={5}
-        />{' '}
-        <Button variant="contained" size="medium" onClick={handleSearchSubmit}>
-          Search
-        </Button>{' '}
+          mainFiltersCount={7}
+        />
       </Box>
 
       <Box
@@ -1525,7 +1544,25 @@ export default function CandidateListTable() {
           </Select>
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: { xs: 1, sm: 0 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: { xs: 1, sm: 2 } }}>
+          <Badge
+            color="error"
+            variant="dot"
+            invisible={!searchTabs[activeTab]?.filters?.countries?.length}
+          >
+            <GeoCircleSelector
+              handleGeorange={(range) => {
+                setGeoRange(range);
+                setGeoLocationStatuse(true);
+                setSearchTabs((prevTabs) =>
+                  prevTabs.map((tab, idx) =>
+                    idx === activeTab ? { ...tab, filters: { ...tab.filters, countries: [] } } : tab
+                  )
+                );
+              }}
+            />
+          </Badge>{' '}
+          <Divider orientation="vertical" flexItem />
           <TextField
             type="number"
             label="Page Size"
@@ -1544,23 +1581,21 @@ export default function CandidateListTable() {
             sx={{ width: 140 }}
             inputProps={{ min: 1, max: 50 }}
           />
-          <Badge
-            color="error"
-            variant="dot"
-            invisible={!searchTabs[activeTab]?.filters?.countries?.length}
-          >
-            <GeoCircleSelector
-              handleGeorange={(range) => {
-                setGeoRange(range);
-                setGeoLocationStatuse(true);
-                setSearchTabs((prevTabs) =>
-                  prevTabs.map((tab, idx) =>
-                    idx === activeTab ? { ...tab, filters: { ...tab.filters, countries: [] } } : tab
-                  )
-                );
-              }}
-            />
-          </Badge>{' '}
+          <Pagination
+            page={page}
+            count={totalPages}
+            onChange={(e, val) => {
+              setPage(val);
+              fetchCandidates();
+            }}
+            showFirstButton
+            showLastButton
+            size="medium"
+            variant="outlined"
+            shape="rounded"
+            siblingCount={1}
+            boundaryCount={1}
+          />
           {/* <Button
             variant="contained"
             color="info"
@@ -1667,10 +1702,8 @@ export default function CandidateListTable() {
                         {c.full_name || 'N/A'}
                       </Box>
                     </TableCell>
-                    <TableCell>
-                      {c.phone_numbers?.map((p) => p.number).join(', ') || 'N/A'}
-                    </TableCell>
-                    <TableCell>{c.emails?.map((e) => e.address).join(', ') || 'N/A'}</TableCell>
+                    <TableCell>{c.phone_numbers[0] || 'N/A'}</TableCell>
+                    <TableCell>{c.emails[0]?.address || 'N/A'}</TableCell>
                     <TableCell>{c.industry || c.job_title || 'N/A'}</TableCell>
                     <TableCell>{c.inferred_years_experience ?? 'N/A'}</TableCell>
                     <TableCell>
