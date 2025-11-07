@@ -191,8 +191,13 @@ export default function CandidateListTable() {
   });
   const [lastTrigger, setLastTrigger] = useState({ search: '', filters: {} });
 
+  // API sorting states (sent to API)
   const [sortBy, setSortBy] = useState('relevance');
   const [sortOrder, setSortOrder] = useState('desc');
+
+  // Local sorting states (for column header sorting, not sent to API)
+  const [localSortBy, setLocalSortBy] = useState('');
+  const [localSortOrder, setLocalSortOrder] = useState('asc');
 
   // Define sortable columns
   const tableColumns = [
@@ -283,25 +288,20 @@ export default function CandidateListTable() {
   const handleSort = (columnId) => {
     let newSortOrder;
 
-    if (sortBy === columnId) {
+    if (localSortBy === columnId) {
       // Toggle sort order if same column
-      newSortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+      newSortOrder = localSortOrder === 'asc' ? 'desc' : 'asc';
     } else {
-      // Set new column and default to desc
-      newSortOrder = 'desc';
+      // Set default sort order based on column type
+      // For text-based columns (name, email, phone, industry, country), start with ascending (alphabetical)
+      // For numeric columns (experience), start with descending (highest first)
+      const textColumns = ['full_name', 'email', 'phone', 'industry', 'location_country'];
+      newSortOrder = textColumns.includes(columnId) ? 'asc' : 'desc';
     }
 
-    // Update sort state
-    setSortOrder(newSortOrder);
-
-    // Update the current tab's params
-    setSearchTabs((prev) =>
-      prev.map((tab, idx) =>
-        idx === activeTab
-          ? { ...tab, params: { ...tab.params, sortBy: columnId, sortOrder: newSortOrder } }
-          : tab
-      )
-    );
+    // Update local sort state
+    setLocalSortBy(columnId);
+    setLocalSortOrder(newSortOrder);
 
     // Sort candidates locally without API calls
     const sortedCandidates = sortCandidatesLocally(candidates, columnId, newSortOrder);
@@ -325,8 +325,8 @@ export default function CandidateListTable() {
       return <TableCell>{children}</TableCell>;
     }
 
-    const isActive = sortBy === column.id;
-    const isAsc = isActive && sortOrder === 'asc';
+    const isActive = localSortBy === column.id;
+    const isAsc = isActive && localSortOrder === 'asc';
 
     return (
       <TableCell
@@ -573,6 +573,10 @@ export default function CandidateListTable() {
     if (selectedTab?.params?.sortOrder) {
       setSortOrder(selectedTab.params.sortOrder);
     }
+
+    // Reset local sorting when switching tabs
+    setLocalSortBy('');
+    setLocalSortOrder('asc');
     if (selectedTab?.params?.page) {
       setPage(selectedTab.params.page);
     }
@@ -1464,18 +1468,22 @@ export default function CandidateListTable() {
       </Dialog>
 
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-        {!loading && (
-          <Box
-            sx={{
-              fontSize: '20px',
-              fontWeight: 'bold',
-              color: 'primary.main',
-              mt: { xs: 1, sm: 0 },
-            }}
-          >
-            {totalCount.toLocaleString()} candidate{totalCount !== 1 ? 's' : ''} found
-          </Box>
-        )}
+        <Box
+          sx={{
+            fontSize: '20px',
+            fontWeight: 'bold',
+            color: 'primary.main',
+            mt: { xs: 1, sm: 0 },
+          }}
+        >
+          {!loading ? (
+            <>
+              {totalCount.toLocaleString()} candidate{totalCount !== 1 ? 's' : ''} found
+            </>
+          ) : (
+            <Skeleton variant="text" width={200} />
+          )}
+        </Box>
         <Button variant="contained" size="medium" onClick={handleSearchSubmit}>
           Search
         </Button>{' '}
@@ -1501,7 +1509,7 @@ export default function CandidateListTable() {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-          <InputLabel id="sort-by-label">Sort by:</InputLabel>
+          <InputLabel id="sort-by-label">API Sort by:</InputLabel>
           <Select
             labelId="sort-by-label"
             value={sortBy}
