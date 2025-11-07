@@ -29,7 +29,15 @@ import {
   DialogActions,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { Add, Close, Star, StarBorder, Update } from '@mui/icons-material';
+import {
+  Add,
+  Close,
+  Star,
+  StarBorder,
+  Update,
+  ArrowUpward,
+  ArrowDownward,
+} from '@mui/icons-material';
 
 import countriesList from 'i18n-iso-countries';
 import jsPDF from 'jspdf';
@@ -182,6 +190,179 @@ export default function CandidateListTable() {
 
   const [sortBy, setSortBy] = useState('relevance');
   const [sortOrder, setSortOrder] = useState('desc');
+
+  // Define sortable columns
+  const tableColumns = [
+    { id: 'full_name', label: 'Name', sortable: true },
+    { id: 'phone', label: 'Phone', sortable: true },
+    { id: 'email', label: 'Email', sortable: true },
+    { id: 'industry', label: 'Industry / Job Title', sortable: true },
+    { id: 'experience', label: 'Experience (Years)', sortable: true },
+    { id: 'social_media', label: 'Social Media', sortable: true },
+    { id: 'location_country', label: 'Country', sortable: true },
+    { id: 'actions', label: 'Actions', sortable: false },
+  ];
+
+  // Local sorting function
+  const sortCandidatesLocally = (candidateList, sortField, sortDirection) => {
+    const sorted = [...candidateList].sort((a, b) => {
+      let aVal, bVal;
+
+      // Handle different field types
+      switch (sortField) {
+        case 'full_name':
+          aVal = (a.full_name || '').toLowerCase();
+          bVal = (b.full_name || '').toLowerCase();
+          break;
+        case 'phone':
+          aVal = (a.phone_numbers?.[0]?.number || '').toLowerCase();
+          bVal = (b.phone_numbers?.[0]?.number || '').toLowerCase();
+          break;
+        case 'email':
+          aVal = (a.emails?.[0]?.address || '').toLowerCase();
+          bVal = (b.emails?.[0]?.address || '').toLowerCase();
+          break;
+        case 'industry':
+          aVal = (a.industry || a.job_title || '').toLowerCase();
+          bVal = (b.industry || b.job_title || '').toLowerCase();
+          break;
+        case 'experience':
+          aVal = Number(a.inferred_years_experience) || 0;
+          bVal = Number(b.inferred_years_experience) || 0;
+          break;
+        case 'social_media': {
+          // Count social media links for sorting
+          const aSocialCount = [
+            a.linkedin_url,
+            a.facebook_url,
+            a.twitter_url,
+            a.instagram_url,
+            a.github_url,
+          ].filter(Boolean).length;
+          const bSocialCount = [
+            b.linkedin_url,
+            b.facebook_url,
+            b.twitter_url,
+            b.instagram_url,
+            b.github_url,
+          ].filter(Boolean).length;
+          aVal = aSocialCount;
+          bVal = bSocialCount;
+          break;
+        }
+        case 'location_country':
+          aVal = (a.location_country || '').toLowerCase();
+          bVal = (b.location_country || '').toLowerCase();
+          break;
+        default:
+          return 0;
+      }
+
+      // Compare values
+      if (typeof aVal === 'string') {
+        if (sortDirection === 'asc') {
+          return aVal.localeCompare(bVal);
+        } else {
+          return bVal.localeCompare(aVal);
+        }
+      } else {
+        if (sortDirection === 'asc') {
+          return aVal - bVal;
+        } else {
+          return bVal - aVal;
+        }
+      }
+    });
+    return sorted;
+  };
+
+  // Handle column sorting (local sorting without API calls)
+  const handleSort = (columnId) => {
+    let newSortOrder;
+
+    if (sortBy === columnId) {
+      // Toggle sort order if same column
+      newSortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+      // Set new column and default to desc
+      newSortOrder = 'desc';
+    }
+
+    // Update sort state
+    setSortOrder(newSortOrder);
+
+    // Update the current tab's params
+    setSearchTabs((prev) =>
+      prev.map((tab, idx) =>
+        idx === activeTab
+          ? { ...tab, params: { ...tab.params, sortBy: columnId, sortOrder: newSortOrder } }
+          : tab
+      )
+    );
+
+    // Sort candidates locally without API calls
+    const sortedCandidates = sortCandidatesLocally(candidates, columnId, newSortOrder);
+    setCandidates(sortedCandidates);
+
+    // Update cached results with sorted data
+    const tabKey = `tab-${activeTab}`;
+    setTabResults((prev) => ({
+      ...prev,
+      [tabKey]: {
+        ...prev[tabKey],
+        candidates: sortedCandidates,
+        timestamp: Date.now(),
+      },
+    }));
+  };
+
+  // Sortable header component
+  const SortableHeaderCell = ({ column, children }) => {
+    if (!column.sortable) {
+      return <TableCell>{children}</TableCell>;
+    }
+
+    const isActive = sortBy === column.id;
+    const isAsc = isActive && sortOrder === 'asc';
+
+    return (
+      <TableCell
+        width={200}
+        sx={{
+          cursor: 'pointer',
+          userSelect: 'none',
+          '&:hover': {
+            backgroundColor: 'action.hover',
+          },
+          fontWeight: isActive ? 600 : 400,
+        }}
+        onClick={() => handleSort(column.id)}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          {children}
+          {isActive ? (
+            isAsc ? (
+              <ArrowUpward fontSize="small" color="primary" />
+            ) : (
+              <ArrowDownward fontSize="small" color="primary" />
+            )
+          ) : (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                opacity: 0.3,
+                '&:hover': { opacity: 0.7 },
+              }}
+            >
+              <ArrowUpward sx={{ fontSize: 12, lineHeight: 0.5 }} />
+              <ArrowDownward sx={{ fontSize: 12, lineHeight: 0.5, mt: -0.5 }} />
+            </Box>
+          )}
+        </Box>
+      </TableCell>
+    );
+  };
 
   const fetchData = useCallback(async () => {
     // Just fetch saved tabs, don't automatically search
@@ -1397,14 +1578,11 @@ export default function CandidateListTable() {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Phone</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Industry / Job Title</TableCell>
-                <TableCell>Experience (Years)</TableCell>
-                <TableCell>Social Media</TableCell>
-                <TableCell>Country</TableCell>
-                <TableCell>Actions</TableCell>
+                {tableColumns.map((column) => (
+                  <SortableHeaderCell key={column.id} column={column}>
+                    {column.label}
+                  </SortableHeaderCell>
+                ))}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1463,14 +1641,11 @@ export default function CandidateListTable() {
                     color="primary"
                   />
                 </TableCell> */}
-                <TableCell>Name</TableCell>
-                <TableCell>Phone</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Industry / Job Title</TableCell>
-                <TableCell>Experience (Years)</TableCell>
-                <TableCell>Social Media</TableCell>
-                <TableCell>Country</TableCell>
-                <TableCell>Actions</TableCell>
+                {tableColumns.map((column) => (
+                  <SortableHeaderCell key={column.id} column={column}>
+                    {column.label}
+                  </SortableHeaderCell>
+                ))}
               </TableRow>
             </TableHead>
             <TableBody>
