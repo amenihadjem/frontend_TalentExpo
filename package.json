@@ -111,4 +111,12 @@
     "vite": "^6.0.3",
     "vite-plugin-checker": "^0.8.0"
   }
+  "scripts": {
+  "dev": " vite",
+  "start": "vite preview",
+  "build": "vite build",
+  "test": "echo \"No tests yet\"",
+  ...
+}
+
 }
